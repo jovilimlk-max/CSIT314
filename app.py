@@ -1,3 +1,4 @@
+
 '''
 What this code does?
 - Entry point for Flask.
@@ -81,6 +82,13 @@ class RenovoApp:
         create_account_view = CreateUserAccountPage.as_view(
             "create_user_account",
             self.create_account_controller
+        )
+
+        # Display Create User Account page
+        self.app.add_url_rule(
+            "/user-admin/accounts/create",
+            view_func=create_account_view,
+            methods=["GET"]
         )
 
         # Process account creation

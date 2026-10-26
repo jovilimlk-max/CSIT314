@@ -1,5 +1,6 @@
 '''
 What this code does?
+- Display the Create User Account HTML page.
 - Receive new user account details.
 - Clean the appropriate inputs.
 - Validate required fields, email format and selected role.
@@ -8,7 +9,7 @@ What this code does?
 '''
 
 import re
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from flask.views import MethodView
 
 
@@ -56,6 +57,10 @@ class CreateUserAccountPage(MethodView):
             return "Please select a valid user type."
 
         return None
+
+    # Display the Create User Account HTML page
+    def get(self):
+        return render_template("createUserAccount.html")
 
     # Process the account creation request
     def post(self):
