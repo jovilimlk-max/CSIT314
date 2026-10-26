@@ -7,7 +7,7 @@ What this code does?
 - Retrieve all user profiles.
 - Retrieve a specific user profile using its ID.
 - Update an existing user profile.
-- Set newly created profiles to Active by default.
+- Set newly created profiles to active by default.
 - Initialise the database.
 '''
 
@@ -64,12 +64,12 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # New profiles are automatically assigned Active status
+            # New profiles are automatically assigned active status
             cursor.execute(
                 """
                 INSERT INTO user_profiles
                 (profile_name, description, status)
-                VALUES (?, ?, 'Active')
+                VALUES (?, ?, 'active')
                 """,
                 (profile_name, description)
             )
@@ -187,7 +187,7 @@ class UserProfile:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     profile_name TEXT NOT NULL UNIQUE COLLATE NOCASE,
                     description TEXT NOT NULL,
-                    status TEXT NOT NULL DEFAULT 'Active',
+                    status TEXT NOT NULL DEFAULT 'active',
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )

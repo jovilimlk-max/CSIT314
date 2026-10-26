@@ -45,7 +45,8 @@ class RenovoApp:
 
         # Initialise Controllers
         self.login_controller = UserLoginController(
-            self.user_account
+            self.user_account,
+            self.user_profile
         )
 
         self.create_account_controller = CreateUserAccountController(

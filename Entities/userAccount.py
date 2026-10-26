@@ -4,8 +4,8 @@ What this code does?
 - Responsible for handling user account data and interacting with the database.
 - Retrieve user account information.
 - Verify passwords and authenticate users.
-- Create new user accounts.
-- Initialise the database.
+- Create new user accounts without an assigned User Profile.
+- Initialise the database with optional User Profile support.
 '''
 
 import sqlite3
@@ -33,7 +33,8 @@ class UserAccount:
             # Uses SQL placeholders to pass values safely
             cursor.execute(
                 """
-                SELECT id, name, email, password_hash, role, status
+                SELECT id, name, email, password_hash,
+                       role, status, profile_id
                 FROM user_accounts
                 WHERE email = ? COLLATE NOCASE
                 """,
@@ -70,7 +71,8 @@ class UserAccount:
             "id": user["id"],
             "email": user["email"],
             "role": user["role"],
-            "status": user["status"]
+            "status": user["status"],
+            "profile_id": user["profile_id"]
         }
 
     # Create a new user account in the database
@@ -118,7 +120,8 @@ class UserAccount:
                     email TEXT NOT NULL UNIQUE COLLATE NOCASE,
                     password_hash TEXT NOT NULL,
                     role TEXT NOT NULL,
-                    status TEXT NOT NULL DEFAULT 'active'
+                    status TEXT NOT NULL DEFAULT 'active',
+                    profile_id INTEGER DEFAULT NULL
                 )
             """)
 
