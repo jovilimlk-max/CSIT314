@@ -23,7 +23,34 @@
 
     <br><br>
 
-    <p>Profile listing and search will be added later.</p>
+    <!-- Display existing user profiles retrieved from the database -->
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Profile Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile.profile_name }}</td>
+                <td>{{ profile.description }}</td>
+                <td>{{ profile.status }}</td>
+                <td>
+                    <button onclick="window.location.href='/user-admin/profiles/{{ profile.id }}'">
+                        View
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
 
     <!-- Return to the User Admin Dashboard -->
     <button onclick="window.location.href='/user-admin/dashboard'">
@@ -31,13 +58,13 @@
     </button>
 
     <script>
-        // Check whether the user has just created a profile
+        // Check whether a profile was just created successfully
         const params = new URLSearchParams(window.location.search);
 
         if (params.get("created") === "1") {
             document.getElementById("successMessage").hidden = false;
 
-            // Remove the success indicator to avoid showing it after refreshing
+            // Remove the success indicator from the URL
             window.history.replaceState(
                 {},
                 "",

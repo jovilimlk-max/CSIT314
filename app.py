@@ -15,11 +15,13 @@ from Boundary.createUserAccountPage import CreateUserAccountPage
 from Boundary.createUserProfilePage import CreateUserProfilePage
 from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.userProfilesPage import UserProfilesPage
+from Boundary.viewUserProfilePage import ViewUserProfilePage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
+from Controllers.viewUserProfileController import ViewUserProfileController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -49,6 +51,10 @@ class RenovoApp:
         )
 
         self.create_profile_controller = CreateUserProfileController(
+            self.user_profile
+        )
+
+        self.view_profile_controller = ViewUserProfileController(
             self.user_profile
         )
 
@@ -124,7 +130,8 @@ class RenovoApp:
 
         # User Profiles Management Boundary
         profiles_view = UserProfilesPage.as_view(
-            "user_profiles"
+            "user_profiles",
+            self.view_profile_controller
         )
 
         # Display User Profiles management page
@@ -152,6 +159,19 @@ class RenovoApp:
             "/user-admin/profiles",
             view_func=create_profile_view,
             methods=["POST"]
+        )
+
+        # View User Profile Boundary
+        view_profile_view = ViewUserProfilePage.as_view(
+            "view_user_profile",
+            self.view_profile_controller
+        )
+
+        # Display the selected user profile
+        self.app.add_url_rule(
+            "/user-admin/profiles/<int:profile_id>",
+            view_func=view_profile_view,
+            methods=["GET"]
         )
 
     # Start the Flask development server

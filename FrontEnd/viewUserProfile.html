@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View User Profile</title>
+</head>
+<body>
+
+    <h1>View User Profile</h1>
+
+    <!-- Return to the User Profiles management page -->
+    <button onclick="window.location.href='/user-admin/profiles'">
+        Back to User Profiles
+    </button>
+
+    <br><br>
+
+    <!-- Display the selected user profile details -->
+    <h2>{{ profile.profile_name }}</h2>
+
+    <p>
+        <strong>Description:</strong>
+        {{ profile.description }}
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ profile.status }}
+    </p>
+
+    <p>
+        <strong>Created At:</strong>
+        {{ profile.created_at }}
+    </p>
+
+    <p>
+        <strong>Last Updated:</strong>
+        {{ profile.updated_at }}
+    </p>
+
+    <br>
+
+    <!-- These features will be implemented in later user stories -->
+    <button type="button" disabled>
+        Edit
+    </button>
+
+    {% if profile.status == "Active" %}
+        <button type="button" disabled>
+            Suspend
+        </button>
+    {% else %}
+        <button type="button" disabled>
+            Reactivate
+        </button>
+    {% endif %}
+
+</body>
+</html>
