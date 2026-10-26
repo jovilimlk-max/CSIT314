@@ -16,12 +16,14 @@ from Boundary.createUserProfilePage import CreateUserProfilePage
 from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
+from Boundary.updateUserProfilePage import UpdateUserProfilePage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
+from Controllers.updateUserProfileController import UpdateUserProfileController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -55,6 +57,10 @@ class RenovoApp:
         )
 
         self.view_profile_controller = ViewUserProfileController(
+            self.user_profile
+        )
+
+        self.update_profile_controller = UpdateUserProfileController(
             self.user_profile
         )
 
@@ -172,6 +178,27 @@ class RenovoApp:
             "/user-admin/profiles/<int:profile_id>",
             view_func=view_profile_view,
             methods=["GET"]
+        )
+
+        # Update User Profile Boundary
+        update_profile_view = UpdateUserProfilePage.as_view(
+            "update_user_profile",
+            self.update_profile_controller,
+            self.view_profile_controller
+        )
+
+        # Display the Update User Profile page
+        self.app.add_url_rule(
+            "/user-admin/profiles/<int:profile_id>/edit",
+            view_func=update_profile_view,
+            methods=["GET"]
+        )
+
+        # Process the profile update
+        self.app.add_url_rule(
+            "/user-admin/profiles/<int:profile_id>/edit",
+            view_func=update_profile_view,
+            methods=["POST"]
         )
 
     # Start the Flask development server

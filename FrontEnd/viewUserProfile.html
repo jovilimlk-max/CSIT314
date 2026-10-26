@@ -9,6 +9,11 @@
 
     <h1>View User Profile</h1>
 
+    <!-- Display a success message after updating a profile -->
+    <p id="successMessage" hidden>
+        User profile updated successfully.
+    </p>
+
     <!-- Return to the User Profiles management page -->
     <button onclick="window.location.href='/user-admin/profiles'">
         Back to User Profiles
@@ -41,11 +46,12 @@
 
     <br>
 
-    <!-- These features will be implemented in later user stories -->
-    <button type="button" disabled>
+    <!-- Navigate to the Update User Profile page -->
+    <button onclick="window.location.href='/user-admin/profiles/{{ profile.id }}/edit'">
         Edit
     </button>
 
+    <!-- Suspend and Reactivate will be implemented in US6 -->
     {% if profile.status == "Active" %}
         <button type="button" disabled>
             Suspend
@@ -55,6 +61,22 @@
             Reactivate
         </button>
     {% endif %}
+
+    <script>
+        // Check whether the user profile was just updated
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("updated") === "1") {
+            document.getElementById("successMessage").hidden = false;
+
+            // Remove the success indicator from the URL
+            window.history.replaceState(
+                {},
+                "",
+                window.location.pathname
+            );
+        }
+    </script>
 
 </body>
 </html>

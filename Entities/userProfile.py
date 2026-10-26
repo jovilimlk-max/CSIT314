@@ -6,6 +6,7 @@ What this code does?
 - Check whether a user profile name already exists.
 - Retrieve all user profiles.
 - Retrieve a specific user profile using its ID.
+- Update an existing user profile.
 - Set newly created profiles to Active by default.
 - Initialise the database.
 '''
@@ -24,21 +25,32 @@ class UserProfile:
         )
 
     # Check whether a user profile name already exists
-    def profile_name_exists(self, profile_name):
+    def profile_name_exists(self, profile_name, exclude_id=None):
         connection = sqlite3.connect(self.db_path)
 
         try:
             cursor = connection.cursor()
 
-            # COLLATE NOCASE allows case-insensitive comparison
-            cursor.execute(
-                """
-                SELECT id
-                FROM user_profiles
-                WHERE profile_name = ? COLLATE NOCASE
-                """,
-                (profile_name,)
-            )
+            # Exclude the current profile when checking for duplicate names
+            if exclude_id is not None:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM user_profiles
+                    WHERE profile_name = ? COLLATE NOCASE
+                    AND id != ?
+                    """,
+                    (profile_name, exclude_id)
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM user_profiles
+                    WHERE profile_name = ? COLLATE NOCASE
+                    """,
+                    (profile_name,)
+                )
 
             return cursor.fetchone() is not None
 
@@ -75,8 +87,6 @@ class UserProfile:
     # Retrieve all existing user profiles
     def get_all_profiles(self):
         connection = sqlite3.connect(self.db_path)
-
-        # Allow database rows to be accessed using column names
         connection.row_factory = sqlite3.Row
 
         try:
@@ -106,7 +116,6 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Use a placeholder to safely retrieve the selected profile
             cursor.execute(
                 """
                 SELECT id, profile_name, description, status,
@@ -123,6 +132,39 @@ class UserProfile:
                 return dict(profile)
 
             return None
+
+        finally:
+            connection.close()
+
+    # Update an existing user profile in the database
+    def update_user_profile(self, profile_id, profile_name, description):
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            # Update the profile details and last updated timestamp
+            cursor.execute(
+                """
+                UPDATE user_profiles
+                SET profile_name = ?,
+                    description = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (profile_name, description, profile_id)
+            )
+
+            # Check whether an existing profile was updated
+            if cursor.rowcount == 0:
+                return False
+
+            connection.commit()
+            return True
+
+        except sqlite3.IntegrityError:
+            connection.rollback()
+            return False
 
         finally:
             connection.close()
