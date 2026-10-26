@@ -1,11 +1,12 @@
 
 '''
 What this code does?
-- Responsible for handling user account data and interacting with the database.
-- Retrieve user account information.
+- Handle user account data and interact with the database.
+- Retrieve all user accounts or a specific account.
 - Verify passwords and authenticate users.
 - Create new user accounts without an assigned User Profile.
-- Initialise the database with optional User Profile support.
+- Store account status, optional profile assignment and last updated date.
+- Initialise the database.
 '''
 
 import sqlite3
@@ -30,7 +31,6 @@ class UserAccount:
         try:
             cursor = connection.cursor()
 
-            # Uses SQL placeholders to pass values safely
             cursor.execute(
                 """
                 SELECT id, name, email, password_hash,
@@ -101,6 +101,57 @@ class UserAccount:
         finally:
             connection.close()
 
+    # Retrieve all existing user accounts
+    def get_all_accounts(self):
+        connection = sqlite3.connect(self.db_path)
+        connection.row_factory = sqlite3.Row
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute(
+                """
+                SELECT id, name, email, role, status, profile_id
+                FROM user_accounts
+                ORDER BY id DESC
+                """
+            )
+
+            accounts = cursor.fetchall()
+
+            return [dict(account) for account in accounts]
+
+        finally:
+            connection.close()
+
+    # Retrieve a specific user account using its ID
+    def get_account_by_id(self, account_id):
+        connection = sqlite3.connect(self.db_path)
+        connection.row_factory = sqlite3.Row
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute(
+                """
+                SELECT id, name, email, role, status,
+                       profile_id, updated_at
+                FROM user_accounts
+                WHERE id = ?
+                """,
+                (account_id,)
+            )
+
+            account = cursor.fetchone()
+
+            if account:
+                return dict(account)
+
+            return None
+
+        finally:
+            connection.close()
+
     # Initialise the database
     def initialise_database(self):
         self.db_path.parent.mkdir(
@@ -113,7 +164,8 @@ class UserAccount:
         try:
             cursor = connection.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS user_accounts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -121,9 +173,11 @@ class UserAccount:
                     password_hash TEXT NOT NULL,
                     role TEXT NOT NULL,
                     status TEXT NOT NULL DEFAULT 'active',
-                    profile_id INTEGER DEFAULT NULL
+                    profile_id INTEGER DEFAULT NULL,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+                """
+            )
 
             connection.commit()
 

@@ -17,6 +17,7 @@ from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
 from Boundary.updateUserProfilePage import UpdateUserProfilePage
+from Boundary.viewUserAccountPage import ViewUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -24,6 +25,7 @@ from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
+from Controllers.viewUserAccountController import ViewUserAccountController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -51,6 +53,11 @@ class RenovoApp:
 
         self.create_account_controller = CreateUserAccountController(
             self.user_account
+        )
+
+        self.view_account_controller = ViewUserAccountController(
+            self.user_account,
+            self.user_profile
         )
 
         self.create_profile_controller = CreateUserProfileController(
@@ -105,7 +112,8 @@ class RenovoApp:
 
         # User Accounts Management Boundary
         accounts_view = UserAccountsPage.as_view(
-            "user_accounts"
+            "user_accounts",
+            self.view_account_controller
         )
 
         # Display User Accounts management page
@@ -133,6 +141,19 @@ class RenovoApp:
             "/user-admin/accounts",
             view_func=create_account_view,
             methods=["POST"]
+        )
+
+        # View User Account Boundary
+        view_account_view = ViewUserAccountPage.as_view(
+            "view_user_account",
+            self.view_account_controller
+        )
+
+        # Display the selected user account
+        self.app.add_url_rule(
+            "/user-admin/accounts/<int:account_id>",
+            view_func=view_account_view,
+            methods=["GET"]
         )
 
         # User Profiles Management Boundary

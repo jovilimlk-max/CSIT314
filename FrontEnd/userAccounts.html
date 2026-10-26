@@ -23,7 +23,56 @@
 
     <br><br>
 
-    <p>Account listing and other management features will be added later.</p>
+    <h2>Account List</h2>
+
+    <table border="1" cellpadding="8">
+        <thead>
+            <tr>
+                <th>Account ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+                <td>{{ account.id }}</td>
+                <td>{{ account.name }}</td>
+                <td>{{ account.email }}</td>
+
+                <td>
+                    {% if account.role == "customer" %}
+                        Customer
+                    {% elif account.role == "designer" %}
+                        Interior Designer
+                    {% elif account.role == "admin" %}
+                        User Admin
+                    {% elif account.role == "manager" %}
+                        Platform Manager
+                    {% endif %}
+                </td>
+
+                <td>{{ account.status | capitalize }}</td>
+
+                <td>
+                    <button onclick="window.location.href='/user-admin/accounts/{{ account.id }}'">
+                        View
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6">No user accounts found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
 
     <!-- Return to the User Admin Dashboard -->
     <button onclick="window.location.href='/user-admin/dashboard'">

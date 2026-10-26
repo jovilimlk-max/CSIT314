@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View User Account</title>
+</head>
+<body>
+
+    <h1>View User Account</h1>
+
+    <p>
+        <strong>Account ID:</strong>
+        {{ account.id }}
+    </p>
+
+    <p>
+        <strong>Name:</strong>
+        {{ account.name }}
+    </p>
+
+    <p>
+        <strong>Email:</strong>
+        {{ account.email }}
+    </p>
+
+    <p>
+        <strong>Role:</strong>
+        {% if account.role == "customer" %}
+            Customer
+        {% elif account.role == "designer" %}
+            Interior Designer
+        {% elif account.role == "admin" %}
+            User Admin
+        {% elif account.role == "manager" %}
+            Platform Manager
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ account.status | capitalize }}
+    </p>
+
+    <p>
+        <strong>User Profile:</strong>
+        {% if account.profile_name %}
+            {{ account.profile_name }}
+        {% else %}
+            No user profile assigned
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Last Updated:</strong>
+        {{ account.updated_at }}
+    </p>
+
+    <button onclick="window.location.href='/user-admin/accounts'">
+        Back to User Accounts
+    </button>
+
+</body>
+</html>
