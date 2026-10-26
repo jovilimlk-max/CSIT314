@@ -1,52 +1,23 @@
 '''
 What this code does?
-- Check that the selected user type is valid.
-- Check that the email and password are provided.
-- Validate the email format.
-- Ask the entity to authenticate the user.
-- Check wheteher the selected user type matches the user's registered role.
+- Ask the Entity to authenticate the user.
+- Check whether the selected user type matches the registered role.
 - Check whether the account is active.
 - Return the login result to the Boundary.
 '''
 
-import re
-
 class UserLoginController:
 
-    VALID_ROLES = {"customer", "designer", "admin", "manager"}
-
-    # Stores a reference to the Entity object so the Controller can call it.
+    # Stores a reference to the Entity object
     def __init__(self, user_account):
         self.user_account = user_account
 
-    # Validates the selected role, email and password fields.
-    def validate_login_details(self, login_details):
-        role = login_details.get("role", "")
-        email = login_details.get("email", "")
-        password = login_details.get("password", "")
-
-        if role not in self.VALID_ROLES:
-            return "Please select a valid user type."
-
-        if not email or not password:
-            return "Please enter your email address and password."
-
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-            return "Please enter a valid email address."
-
-        return None
-
-    # Checks whether the selected role matches the registered account role.
+    # Check whether the selected role matches the registered role
     def validate_user_role(self, selected_role, user):
         return selected_role == user.get("role")
 
-    # Coordinates authentication and returns the result.
+    # Coordinate authentication and return the result
     def login_user(self, login_details):
-        error = self.validate_login_details(login_details)
-
-        if error:
-            return {"success": False, "message": error}, 400
-
         email = login_details["email"]
         password = login_details["password"]
         role = login_details["role"]
@@ -80,5 +51,3 @@ class UserLoginController:
                 "role": user["role"]
             }
         }, 200
-        
-        

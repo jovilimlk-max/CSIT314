@@ -1,7 +1,8 @@
 '''
 What this code does?
-- Entry point for flask
-- Initialise flask, connect the BCE classes and register the HTTP routes
+- Entry point for Flask.
+- Initialise Flask and the database.
+- Connect the BCE classes and register the HTTP routes.
 '''
 
 from flask import Flask
@@ -9,9 +10,11 @@ from flask import Flask
 # Boundaries
 from Boundary.userLoginPage import UserLoginPage
 from Boundary.userAdminDashboardPage import UserAdminDashboardPage
+from Boundary.createUserAccountPage import CreateUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
+from Controllers.createUserAccountController import CreateUserAccountController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -19,22 +22,27 @@ from Entities.userAccount import UserAccount
 
 class RenovoApp:
 
-    # Initialises Flask, creates the Entity and Controller objects, and registers routes.
+    # Initialise Flask, create the BCE objects and register routes
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
 
         # Initialise Entity
         self.user_account = UserAccount()
+        self.user_account.initialise_database()
 
-        # Initialise Controller
+        # Initialise Controllers
         self.login_controller = UserLoginController(
+            self.user_account
+        )
+
+        self.create_account_controller = CreateUserAccountController(
             self.user_account
         )
 
         # Register application routes
         self.register_routes()
 
-    # Connects the /login URL to the UserLoginPage Boundary class.
+    # Connect the URLs to their respective Boundary classes
     def register_routes(self):
 
         # Login Boundary
@@ -69,7 +77,20 @@ class RenovoApp:
             methods=["GET"]
         )
 
-    # Starts the Flask development server.
+        # Create User Account Boundary
+        create_account_view = CreateUserAccountPage.as_view(
+            "create_user_account",
+            self.create_account_controller
+        )
+
+        # Process account creation
+        self.app.add_url_rule(
+            "/user-admin/accounts",
+            view_func=create_account_view,
+            methods=["POST"]
+        )
+
+    # Start the Flask development server
     def run(self):
         self.app.run(debug=True)
 

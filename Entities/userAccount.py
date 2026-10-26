@@ -1,6 +1,11 @@
+
 '''
 What this code does?
 - Responsible for handling user account data and interacting with the database.
+- Retrieve user account information.
+- Verify passwords and authenticate users.
+- Create new user accounts.
+- Initialise the database.
 '''
 
 import sqlite3
@@ -17,7 +22,6 @@ class UserAccount:
             / "userAccount.db"
         )
 
-
     # Retrieve an account using the email
     def get_user_by_email(self, email):
         connection = sqlite3.connect(self.db_path)
@@ -26,10 +30,10 @@ class UserAccount:
         try:
             cursor = connection.cursor()
 
-            # Uses the SQL placeholder ? to pass the email safely rather than inserting it directly into the query
+            # Uses SQL placeholders to pass values safely
             cursor.execute(
                 """
-                SELECT id, email, password_hash, role, status
+                SELECT id, name, email, password_hash, role, status
                 FROM user_accounts
                 WHERE email = ? COLLATE NOCASE
                 """,
@@ -68,7 +72,34 @@ class UserAccount:
             "role": user["role"],
             "status": user["status"]
         }
-    
+
+    # Create a new user account in the database
+    def create_user_account(self, name, email, password_hash, role):
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute(
+                """
+                INSERT INTO user_accounts
+                (name, email, password_hash, role)
+                VALUES (?, ?, ?, ?)
+                """,
+                (name, email, password_hash, role)
+            )
+
+            connection.commit()
+            return True
+
+        except sqlite3.IntegrityError:
+            connection.rollback()
+            return False
+
+        finally:
+            connection.close()
+
+    # Initialise the database
     def initialise_database(self):
         self.db_path.parent.mkdir(
             parents=True,
@@ -83,6 +114,7 @@ class UserAccount:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS user_accounts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
                     email TEXT NOT NULL UNIQUE COLLATE NOCASE,
                     password_hash TEXT NOT NULL,
                     role TEXT NOT NULL,
@@ -94,4 +126,3 @@ class UserAccount:
 
         finally:
             connection.close()
-
