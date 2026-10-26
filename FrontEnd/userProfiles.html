@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profiles</title>
+</head>
+<body>
+
+    <h1>User Profiles</h1>
+
+    <!-- Display a success message after creating a profile -->
+    <p id="successMessage" hidden>
+        User profile created successfully.
+    </p>
+
+    <p>Manage user profiles in Renovo.</p>
+
+    <!-- Navigate to the Create User Profile page -->
+    <button onclick="window.location.href='/user-admin/profiles/create'">
+        Create User Profile
+    </button>
+
+    <br><br>
+
+    <p>Profile listing and search will be added later.</p>
+
+    <!-- Return to the User Admin Dashboard -->
+    <button onclick="window.location.href='/user-admin/dashboard'">
+        Back to Dashboard
+    </button>
+
+    <script>
+        // Check whether the user has just created a profile
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("created") === "1") {
+            document.getElementById("successMessage").hidden = false;
+
+            // Remove the success indicator to avoid showing it after refreshing
+            window.history.replaceState(
+                {},
+                "",
+                window.location.pathname
+            );
+        }
+    </script>
+
+</body>
+</html>

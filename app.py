@@ -2,7 +2,7 @@
 '''
 What this code does?
 - Entry point for Flask.
-- Initialise Flask and the database.
+- Initialise Flask and the databases.
 - Connect the BCE classes and register the HTTP routes.
 '''
 
@@ -12,13 +12,18 @@ from flask import Flask
 from Boundary.userLoginPage import UserLoginPage
 from Boundary.userAdminDashboardPage import UserAdminDashboardPage
 from Boundary.createUserAccountPage import CreateUserAccountPage
+from Boundary.createUserProfilePage import CreateUserProfilePage
+from Boundary.userAccountsPage import UserAccountsPage
+from Boundary.userProfilesPage import UserProfilesPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
 from Controllers.createUserAccountController import CreateUserAccountController
+from Controllers.createUserProfileController import CreateUserProfileController
 
 # Entities
 from Entities.userAccount import UserAccount
+from Entities.userProfile import UserProfile
 
 
 class RenovoApp:
@@ -27,9 +32,12 @@ class RenovoApp:
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
 
-        # Initialise Entity
+        # Initialise Entities
         self.user_account = UserAccount()
         self.user_account.initialise_database()
+
+        self.user_profile = UserProfile()
+        self.user_profile.initialise_database()
 
         # Initialise Controllers
         self.login_controller = UserLoginController(
@@ -38,6 +46,10 @@ class RenovoApp:
 
         self.create_account_controller = CreateUserAccountController(
             self.user_account
+        )
+
+        self.create_profile_controller = CreateUserProfileController(
+            self.user_profile
         )
 
         # Register application routes
@@ -78,6 +90,18 @@ class RenovoApp:
             methods=["GET"]
         )
 
+        # User Accounts Management Boundary
+        accounts_view = UserAccountsPage.as_view(
+            "user_accounts"
+        )
+
+        # Display User Accounts management page
+        self.app.add_url_rule(
+            "/user-admin/accounts",
+            view_func=accounts_view,
+            methods=["GET"]
+        )
+
         # Create User Account Boundary
         create_account_view = CreateUserAccountPage.as_view(
             "create_user_account",
@@ -95,6 +119,38 @@ class RenovoApp:
         self.app.add_url_rule(
             "/user-admin/accounts",
             view_func=create_account_view,
+            methods=["POST"]
+        )
+
+        # User Profiles Management Boundary
+        profiles_view = UserProfilesPage.as_view(
+            "user_profiles"
+        )
+
+        # Display User Profiles management page
+        self.app.add_url_rule(
+            "/user-admin/profiles",
+            view_func=profiles_view,
+            methods=["GET"]
+        )
+
+        # Create User Profile Boundary
+        create_profile_view = CreateUserProfilePage.as_view(
+            "create_user_profile",
+            self.create_profile_controller
+        )
+
+        # Display Create User Profile page
+        self.app.add_url_rule(
+            "/user-admin/profiles/create",
+            view_func=create_profile_view,
+            methods=["GET"]
+        )
+
+        # Process profile creation
+        self.app.add_url_rule(
+            "/user-admin/profiles",
+            view_func=create_profile_view,
             methods=["POST"]
         )
 

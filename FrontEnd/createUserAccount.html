@@ -9,21 +9,28 @@
 
     <h1>Create User Account</h1>
 
+    <!-- Return to User Accounts, confirming unsaved changes -->
+    <button type="button" id="backButton">
+        Back to User Accounts
+    </button>
+
+    <br><br>
+
     <form id="createAccountForm">
 
-        <label>Name:</label>
+        <label for="name">Name:</label>
         <input type="text" id="name">
         <br><br>
 
-        <label>Email:</label>
+        <label for="email">Email:</label>
         <input type="text" id="email">
         <br><br>
 
-        <label>Password:</label>
+        <label for="password">Password:</label>
         <input type="password" id="password">
         <br><br>
 
-        <label>Role:</label>
+        <label for="role">Role:</label>
         <select id="role">
             <option value="">Select Role</option>
             <option value="customer">Customer</option>
@@ -35,47 +42,71 @@
 
         <button type="submit">Create Account</button>
 
+        <button type="button" onclick="window.location.href='/user-admin/accounts'">
+            Cancel
+        </button>
+
     </form>
-
-    <br>
-
-    <button onclick="window.location.href='/user-admin/dashboard'">
-        Back to Dashboard
-    </button>
 
     <p id="message"></p>
 
     <script>
-        document.getElementById("createAccountForm")
-            .addEventListener("submit", async function(event) {
-                event.preventDefault();
+        const form = document.getElementById("createAccountForm");
+        const message = document.getElementById("message");
 
-                const accountDetails = {
-                    name: document.getElementById("name").value,
-                    email: document.getElementById("email").value,
-                    password: document.getElementById("password").value,
-                    role: document.getElementById("role").value
-                };
+        // Confirm before leaving if the form contains unsaved changes
+        document.getElementById("backButton").addEventListener("click", function() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const role = document.getElementById("role").value;
 
-                try {
-                    const response = await fetch("/user-admin/accounts", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(accountDetails)
-                    });
+            if (name.trim() || email.trim() || password || role) {
+                const discard = confirm("Discard unsaved changes?");
 
-                    const result = await response.json();
-
-                    document.getElementById("message").textContent =
-                        result.message;
-
-                } catch (error) {
-                    document.getElementById("message").textContent =
-                        "Unable to connect to the server.";
+                if (!discard) {
+                    return;
                 }
-            });
+            }
+
+            window.location.href = "/user-admin/accounts";
+        });
+
+        // Handle the Create User Account form submission
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const accountDetails = {
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                role: document.getElementById("role").value
+            };
+
+            // Send the account details to the Flask Boundary
+            try {
+                const response = await fetch("/user-admin/accounts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(accountDetails)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Redirect to the account list with a success indicator
+                    window.location.href = "/user-admin/accounts?created=1";
+                } else {
+                    // Display the error and preserve the entered details
+                    message.textContent = result.message;
+                }
+
+            } catch (error) {
+                message.textContent = "Unable to connect to the server.";
+            }
+        });
     </script>
 
 </body>
