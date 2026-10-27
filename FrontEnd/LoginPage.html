@@ -1,1 +1,203 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Login Portal</title>
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+        .shell { width: min(940px, 100%); min-height: 590px; background: white; display: grid; grid-template-columns: 43% 57%; border: 1px solid #e4e9f2; border-radius: 20px; box-shadow: 0 20px 65px #1c34501b; overflow: hidden; }
+        .visual { position: relative; background: linear-gradient(145deg, #14253e, #2d5272); color: white; padding: 44px; display: flex; flex-direction: column; justify-content: space-between; }
+        .brand { font-weight: 850; font-size: 22px; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .art { border: 1px solid #ffffff35; border-radius: 20px; min-height: 250px; display: grid; place-items: center; background: linear-gradient(135deg, #ffffff18, #ffffff03); position: relative; overflow: hidden; }
+        .art::before, .art::after { content: ""; position: absolute; width: 140%; height: 1px; background: #ffffff23; transform: rotate(35deg); }
+        .art::after { transform: rotate(-35deg); }
+        .art svg { width: 64px; height: 64px; opacity: .8; }
+        .visual p { font-size: 14px; line-height: 1.8; color: #d1deec; max-width: 270px; }
+        .main { padding: 52px clamp(24px, 6vw, 72px); display: flex; flex-direction: column; justify-content: center; }
+        .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: #387c83; text-transform: uppercase; }
+        .main h1 { font-size: 30px; margin: 12px 0 7px; }
+        .sub { color: #738096; font-size: 14px; margin: 0 0 26px; line-height: 1.5; }
+        label { font-weight: 650; font-size: 13px; display: block; margin-bottom: 8px; }
+        .field { margin-bottom: 17px; }
+        .control { width: 100%; height: 45px; border: 1px solid #cdd7e4; border-radius: 9px; padding: 0 13px; background: white; color: #26344a; font: inherit; font-size: 14px; outline: none; }
+        .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        .password-box { position: relative; }
+        .password-box .control { padding-right: 52px; }
+        .eye { position: absolute; right: 7px; top: 5px; height: 35px; width: 38px; background: transparent; border: 0; cursor: pointer; color: #5b6980; display: grid; place-items: center; border-radius: 7px; }
+        .eye:hover { background: #eef3f7; }
+        .submit { background: #1c5062; color: white; border: none; border-radius: 9px; height: 46px; font: inherit; font-weight: 700; cursor: pointer; width: 100%; }
+        .submit:hover { background: #256d7f; }
+        .submit:disabled { opacity: .6; cursor: not-allowed; }
+        .status { display: none; margin: 13px 0 0; padding: 11px 13px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+        .status.show { display: block; }
+        .status.error { background: #fff0f0; color: #a22735; }
+        .status.ok { background: #e6f6f0; color: #186b4d; }
+
+        @media (max-width: 720px) {
+            .shell { display: block; width: min(480px, 100%); }
+            .visual { min-height: 125px; padding: 24px; }
+            .visual .art, .visual p { display: none; }
+            .main { padding: 34px 26px; }
+            .main h1 { font-size: 27px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="visual">
+            <div class="brand">RENO<span>VO</span></div>
+            <div class="art" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="1.5">
+                    <path d="M7 30 32 10l25 20v26H7V30Z"/>
+                    <path d="M23 56V34h18v22M4 31 32 7l28 24"/>
+                </svg>
+            </div>
+            <p>One secure portal to connect clients, designers, and the Renovo team.</p>
+        </aside>
+
+        <main class="main">
+            <div class="eyebrow">Welcome to Renovo</div>
+            <h1>Log in</h1>
+            <p class="sub">Select your role and enter your credentials to continue.</p>
+
+            <form id="loginForm" novalidate>
+                <!-- User Type Dropdown-->
+                <div class="field">
+                    <label for="role">Log in as</label>
+                    <select class="control" id="role" required>
+                        <option value="customer">Customer</option>
+                        <option value="designer">Interior Designer</option>
+                        <option value="admin">User Admin</option>
+                        <option value="manager">Platform Manager</option>
+                    </select>
+                </div>
+
+                <!-- Email Field-->
+                <div class="field">
+                    <label for="email">Email address</label>
+                    <input class="control" id="email" type="email" autocomplete="username" placeholder="you@example.com" required>
+                </div>
+
+                <!-- Password Field-->
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="password-box">
+                        <input class="control" id="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                        <button class="eye" id="togglePassword" type="button" aria-label="Show password" aria-pressed="false">
+                            <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12 C4.5 8 8 6 12 6 C16 6 19.5 8 22 12 C19.5 16 16 18 12 18 C8 18 4.5 16 2 12 Z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Login Button -->
+                <button class="submit" type="submit">Log in</button>
+                <div id="message" class="status" role="status" aria-live="polite"></div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        class LoginPage {
+            constructor() {
+                this.form = document.getElementById('loginForm');
+                this.role = document.getElementById('role');
+                this.email = document.getElementById('email');
+                this.password = document.getElementById('password');
+                this.message = document.getElementById('message');
+                this.submitButton = this.form.querySelector('button[type="submit"]');
+                this.eyeButton = document.getElementById('togglePassword');
+                this.eyeIcon = document.getElementById('eyeIcon');
+                this.setupEvents();
+            }
+
+            // Set up event listeners
+            setupEvents() {
+                this.form.addEventListener('submit', event => this.handleLogin(event));
+                this.eyeButton.addEventListener('click', () => this.togglePassword());
+                this.role.addEventListener('change', () => { this.message.className = 'status'; });
+            }
+
+            // Display error or information message
+            showMessage(text, isError = true) {
+                this.message.textContent = text;
+                this.message.className = 'status show ' + (isError ? 'error' : 'ok');
+            }
+
+            // Show or hide password
+            togglePassword() {
+                const reveal = this.password.type === 'password';
+                this.password.type = reveal ? 'text' : 'password';
+                this.eyeButton.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+                this.eyeButton.setAttribute('aria-pressed', String(reveal));
+                this.eyeIcon.style.opacity = reveal ? '.45' : '1';
+            }
+
+            // Handle login submission
+            async handleLogin(event) {
+                event.preventDefault();
+                const role = this.role.value;
+                const email = this.email.value.trim();
+                const password = this.password.value;
+
+                // Front-end validation
+                if (!email || !password) {
+                    this.showMessage('Please enter your email address and password.');
+                    return;
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    this.showMessage('Please enter a valid email address.');
+                    return;
+                }
+
+                this.submitButton.disabled = true;
+                try {
+                    // Send login details to Flask Boundary
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role, email, password })
+                    });
+
+                    const result = await response.json();
+
+                    // Authentication failed
+                    if (!response.ok || !result.success) {
+                        this.showMessage(result.message || 'Login failed.');
+                        return;
+                    }
+
+                    // Verify returned account information
+                    const user = result.user;
+                    if (!user || user.role !== role) {
+                        this.showMessage('Invalid account information.');
+                        return;
+                    }
+
+                    // Redirect User Admin to dashboard
+                    if (user.role === 'admin') {
+                        window.location.href = '/user-admin/dashboard';
+                    } else {
+                        this.showMessage('Dashboard for this user type is not available yet.', false);
+                    }
+
+                } catch (error) {
+                    this.showMessage('Unable to complete login. Please try again.');
+                } finally {
+                    this.submitButton.disabled = false;
+                }
+            }
+        }
+
+        // Initialise login page
+        new LoginPage();
+    </script>
+</body>
+</html>
