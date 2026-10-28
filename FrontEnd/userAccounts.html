@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Accounts</title>
+</head>
+<body>
+
+    <h1>User Accounts</h1>
+
+    <!-- Display a success message after creating an account -->
+    <p id="successMessage" hidden>
+        User account created successfully.
+    </p>
+
+    <p>Manage user accounts in Renovo.</p>
+
+    <!-- Navigate to the Create User Account page -->
+    <button onclick="window.location.href='/user-admin/accounts/create'">
+        Create User Account
+    </button>
+
+    <br><br>
+
+    <p>Account listing and other management features will be added later.</p>
+
+    <!-- Return to the User Admin Dashboard -->
+    <button onclick="window.location.href='/user-admin/dashboard'">
+        Back to Dashboard
+    </button>
+
+    <script>
+        // Check whether the user has just created an account
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("created") === "1") {
+            document.getElementById("successMessage").hidden = false;
+
+            // Remove the success indicator from the URL
+            window.history.replaceState(
+                {},
+                "",
+                window.location.pathname
+            );
+        }
+    </script>
+
+</body>
+</html>
