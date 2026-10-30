@@ -3,12 +3,13 @@
 What this code does?
 - Receive the selected user account ID from the URL.
 - Validate the account ID.
+- Retrieve the username from the URL.
 - Request the selected user account details from the Controller.
-- Display the View User Account HTML page.
+- Pass the username and account details to the HTML page.
 - Return an error if the user account cannot be found.
 '''
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from flask.views import MethodView
 
 
@@ -28,6 +29,12 @@ class ViewUserAccountPage(MethodView):
                 "message": "Invalid user account ID."
             }), 400
 
+        # Retrieve the username from the URL
+        username = request.args.get("username", "User Admin").strip()
+
+        if not username:
+            username = "User Admin"
+
         # Request the account details from the Controller
         result, status_code = self.view_account_controller.get_account_by_id(
             account_id
@@ -40,5 +47,6 @@ class ViewUserAccountPage(MethodView):
         # Display the selected account information
         return render_template(
             "viewUserAccount.html",
-            account=result["account"]
+            account=result["account"],
+            username=username
         ), status_code
