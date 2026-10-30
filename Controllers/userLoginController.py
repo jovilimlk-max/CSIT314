@@ -5,6 +5,7 @@ What this code does?
 - Check whether the selected role matches the registered role.
 - Check whether the individual account is active.
 - Check whether the assigned User Profile is active.
+- Retrieve the authenticated user's name.
 - Return the login result to the Boundary.
 '''
 
@@ -22,6 +23,7 @@ class UserLoginController:
 
     # Check whether the assigned User Profile allows login
     def validate_user_profile(self, profile_id):
+
         # Accounts without an assigned profile can log in
         if profile_id is None:
             return True
@@ -68,11 +70,21 @@ class UserLoginController:
                 "message": "Your assigned user profile is suspended or unavailable. Please contact the administrator."
             }, 403
 
+        # Retrieve the registered account name
+        account = self.user_account.get_user_by_email(user["email"])
+
+        if account is None:
+            return {
+                "success": False,
+                "message": "User account not found."
+            }, 404
+
         return {
             "success": True,
             "message": "Login successful.",
             "user": {
                 "id": user["id"],
+                "name": account["name"],
                 "email": user["email"],
                 "role": user["role"]
             }

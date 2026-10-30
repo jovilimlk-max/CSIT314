@@ -227,14 +227,14 @@
                     // Verify returned account information
                     const user = result.user;
 
-                    if (!user || user.role !== role) {
+                    if (!user || user.role !== role || !user.name) {
                         this.showMessage('Invalid account information.');
                         return;
                     }
 
-                    // Redirect User Admin with email-based username
+                    // Redirect User Admin using the registered account name
                     if (user.role === 'admin') {
-                        const username = user.email.split('@')[0];
+                        const username = user.name;
 
                         window.location.href =
                             '/user-admin/dashboard?username=' +
