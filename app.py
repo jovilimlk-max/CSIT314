@@ -18,6 +18,7 @@ from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
 from Boundary.updateUserProfilePage import UpdateUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
+from Boundary.updateUserAccountPage import UpdateUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -27,6 +28,7 @@ from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
 from Controllers.viewUserAccountController import ViewUserAccountController
+from Controllers.updateUserAccountController import UpdateUserAccountController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -62,6 +64,11 @@ class RenovoApp:
         )
 
         self.view_account_controller = ViewUserAccountController(
+            self.user_account,
+            self.user_profile
+        )
+
+        self.update_account_controller = UpdateUserAccountController(
             self.user_account,
             self.user_profile
         )
@@ -161,6 +168,28 @@ class RenovoApp:
             "/user-admin/accounts/<int:account_id>",
             view_func=view_account_view,
             methods=["GET"]
+        )
+
+        # Update User Account Boundary
+        update_account_view = UpdateUserAccountPage.as_view(
+            "update_user_account",
+            self.update_account_controller,
+            self.view_account_controller,
+            self.view_profile_controller
+        )
+
+        # Display the Update User Account page
+        self.app.add_url_rule(
+            "/user-admin/accounts/<int:account_id>/edit",
+            view_func=update_account_view,
+            methods=["GET"]
+        )
+
+        # Process the account update
+        self.app.add_url_rule(
+            "/user-admin/accounts/<int:account_id>/edit",
+            view_func=update_account_view,
+            methods=["POST"]
         )
 
         # User Profiles Management Boundary
