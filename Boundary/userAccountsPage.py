@@ -2,11 +2,12 @@
 '''
 What this code does?
 - Display the main User Accounts management page.
+- Retrieve the username from the URL.
 - Request all user accounts from the Controller.
-- Pass the account information to the HTML page.
+- Pass the username and account information to the HTML page.
 '''
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from flask.views import MethodView
 
 
@@ -16,8 +17,13 @@ class UserAccountsPage(MethodView):
     def __init__(self, view_account_controller):
         self.view_account_controller = view_account_controller
 
-    # Retrieve and display all user accounts
+    # Retrieve the username and display all user accounts
     def get(self):
+        username = request.args.get("username", "User Admin").strip()
+
+        if not username:
+            username = "User Admin"
+
         result, status_code = self.view_account_controller.get_all_accounts()
 
         # Return an error if the accounts cannot be retrieved
@@ -27,5 +33,6 @@ class UserAccountsPage(MethodView):
         # Display the User Accounts management page
         return render_template(
             "userAccounts.html",
-            accounts=result["accounts"]
+            accounts=result["accounts"],
+            username=username
         ), status_code

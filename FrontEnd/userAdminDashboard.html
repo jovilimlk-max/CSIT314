@@ -7,358 +7,81 @@
     <title>Renovo | User Admin Dashboard</title>
 
     <style>
-        :root {
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-                         "Segoe UI", sans-serif;
-            color: #26344a;
-            background: #f4f6fb;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-        }
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
 
         /* Top navigation bar */
-        .topbar {
-            height: 76px;
-            background: #14253e;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 36px;
-            border-bottom: 1px solid #ffffff20;
-        }
-
-        .brand {
-            font-size: 24px;
-            font-weight: 850;
-            letter-spacing: 0.07em;
-        }
-
-        .brand span {
-            color: #8dded4;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-avatar {
-            height: 38px;
-            width: 38px;
-            border-radius: 50%;
-            background: #2d5272;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #8dded4;
-            font-weight: 700;
-            font-size: 15px;
-        }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .user-details strong {
-            font-size: 13px;
-            font-weight: 650;
-        }
-
-        .user-details small {
-            font-size: 11px;
-            color: #d1deec;
-        }
-
-        .logout-button {
-            background: transparent;
-            border: 1px solid #ffffff55;
-            border-radius: 8px;
-            color: white;
-            font: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 10px 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .logout-button:hover {
-            background: #ffffff18;
-        }
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; transition: background .2s; }
+        .logout-button:hover { background: #ffffff18; }
 
         /* Main dashboard layout */
-        .dashboard-layout {
-            display: grid;
-            grid-template-columns: 245px minmax(0, 1fr);
-            min-height: calc(100vh - 76px);
-        }
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
 
         /* Sidebar */
-        .sidebar {
-            background: white;
-            border-right: 1px solid #e4e9f2;
-            padding: 32px 16px;
-        }
-
-        .sidebar-title {
-            color: #8290a3;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            margin: 0 14px 18px;
-        }
-
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            padding: 14px 16px;
-            border-radius: 9px;
-            text-decoration: none;
-            color: #52647a;
-            font-size: 14px;
-            font-weight: 550;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .nav-link svg {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-
-        .nav-link:hover {
-            background: #f0f5f7;
-            color: #1c5062;
-        }
-
-        .nav-link.active {
-            background: #e6f3f3;
-            color: #1c5062;
-            font-weight: 750;
-        }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; transition: background .2s, color .2s; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
 
         /* Main content */
-        .main-content {
-            padding: 46px 50px;
-            width: 100%;
-            max-width: 1450px;
-        }
-
-        .page-label {
-            color: #387c83;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-        }
-
-        .welcome-title {
-            color: #14253e;
-            font-size: 32px;
-            font-weight: 750;
-            margin: 0 0 12px;
-            letter-spacing: -0.03em;
-        }
-
-        .welcome-description {
-            color: #738096;
-            font-size: 14px;
-            line-height: 1.7;
-            margin: 0;
-        }
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 12px; }
+        .welcome-title { color: #14253e; font-size: 32px; font-weight: 750; margin: 0 0 12px; letter-spacing: -.03em; }
+        .welcome-description { color: #738096; font-size: 14px; line-height: 1.7; margin: 0; }
 
         /* Summary statistics */
-        .statistics {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 22px;
-            margin-top: 36px;
-        }
+        .statistics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 36px; }
+        .stat-card { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 26px; box-shadow: 0 8px 28px #1c34500a; }
+        .stat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+        .stat-label { color: #65748a; font-size: 14px; font-weight: 650; }
+        .stat-icon { width: 44px; height: 44px; border-radius: 11px; background: #e6f3f3; display: flex; align-items: center; justify-content: center; color: #2b7b85; }
+        .stat-icon svg { width: 23px; height: 23px; }
+        .stat-number { font-size: 40px; font-weight: 750; color: #14253e; line-height: 1.1; margin-bottom: 10px; }
+        .stat-description { font-size: 12px; color: #8290a3; margin: 0; }
 
-        .stat-card {
-            background: white;
-            border: 1px solid #e4e9f2;
-            border-radius: 14px;
-            padding: 26px;
-            box-shadow: 0 8px 28px #1c34500a;
-        }
-
-        .stat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .stat-label {
-            color: #65748a;
-            font-size: 14px;
-            font-weight: 650;
-        }
-
-        .stat-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 11px;
-            background: #e6f3f3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2b7b85;
-        }
-
-        .stat-icon svg {
-            width: 23px;
-            height: 23px;
-        }
-
-        .stat-number {
-            font-size: 40px;
-            font-weight: 750;
-            color: #14253e;
-            line-height: 1.1;
-            margin-bottom: 10px;
-        }
-
-        .stat-description {
-            font-size: 12px;
-            color: #8290a3;
-            margin: 0;
-        }
-
-        /* Shared interactions */
-        a:focus-visible,
-        button:focus-visible {
-            outline: 3px solid #8dded4;
-            outline-offset: 3px;
-        }
+        /* Keyboard focus */
+        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
         /* Tablet layout */
         @media (max-width: 1000px) {
-            .dashboard-layout {
-                grid-template-columns: 200px minmax(0, 1fr);
-            }
-
-            .main-content {
-                padding: 36px 28px;
-            }
-
-            .statistics {
-                gap: 14px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .statistics { gap: 14px; }
+            .stat-card { padding: 20px; }
         }
 
         /* Mobile layout */
         @media (max-width: 720px) {
-            .topbar {
-                height: auto;
-                min-height: 70px;
-                padding: 16px 20px;
-            }
-
-            .brand {
-                font-size: 21px;
-            }
-
-            .topbar-right {
-                gap: 12px;
-            }
-
-            .user-details {
-                display: none;
-            }
-
-            .logout-button {
-                padding: 9px 12px;
-            }
-
-            .dashboard-layout {
-                display: block;
-            }
-
-            .sidebar {
-                padding: 12px;
-                border-right: none;
-                border-bottom: 1px solid #e4e9f2;
-            }
-
-            .sidebar-title {
-                display: none;
-            }
-
-            .sidebar-nav {
-                flex-direction: row;
-                gap: 6px;
-                overflow-x: auto;
-            }
-
-            .nav-link {
-                padding: 11px 13px;
-                white-space: nowrap;
-                font-size: 12px;
-            }
-
-            .nav-link svg {
-                width: 17px;
-                height: 17px;
-            }
-
-            .main-content {
-                padding: 30px 20px;
-            }
-
-            .welcome-title {
-                font-size: 26px;
-            }
-
-            .statistics {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                margin-top: 28px;
-            }
-
-            .stat-header {
-                margin-bottom: 12px;
-            }
-
-            .stat-card {
-                padding: 22px;
-            }
-
-            .stat-number {
-                font-size: 34px;
-            }
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .welcome-title { font-size: 26px; }
+            .statistics { grid-template-columns: 1fr; gap: 15px; margin-top: 28px; }
+            .stat-header { margin-bottom: 12px; }
+            .stat-card { padding: 22px; }
+            .stat-number { font-size: 34px; }
         }
     </style>
 </head>
@@ -376,7 +99,6 @@
 
             <!-- Logged-in User Information -->
             <div class="user-info">
-
                 <div class="user-avatar">
                     UA
                 </div>
@@ -385,7 +107,6 @@
                     <strong>Hi, {{ username }}</strong>
                     <small>User Administrator</small>
                 </div>
-
             </div>
 
             <!-- Return to Login Page -->
@@ -397,7 +118,6 @@
             </button>
 
         </div>
-
     </header>
 
     <div class="dashboard-layout">
@@ -412,7 +132,7 @@
                 <!-- Dashboard -->
                 <a
                     class="nav-link active"
-                    href="/user-admin/dashboard"
+                    href="/user-admin/dashboard?username={{ username | urlencode }}"
                     aria-current="page">
 
                     <svg viewBox="0 0 24 24" fill="none"
@@ -430,7 +150,7 @@
                 <!-- User Accounts -->
                 <a
                     class="nav-link"
-                    href="/user-admin/accounts">
+                    href="/user-admin/accounts?username={{ username | urlencode }}">
 
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
@@ -447,7 +167,7 @@
                 <!-- User Profiles -->
                 <a
                     class="nav-link"
-                    href="/user-admin/profiles">
+                    href="/user-admin/profiles?username={{ username | urlencode }}">
 
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
@@ -461,7 +181,6 @@
                 </a>
 
             </nav>
-
         </aside>
 
         <!-- Main Dashboard Content -->
@@ -486,7 +205,6 @@
                 <div class="stat-card">
 
                     <div class="stat-header">
-
                         <span class="stat-label">
                             Accounts
                         </span>
@@ -501,7 +219,6 @@
                                 <path d="M22 21v-2a7 7 0 0 0-4-6.3"/>
                             </svg>
                         </div>
-
                     </div>
 
                     <div class="stat-number">
@@ -518,7 +235,6 @@
                 <div class="stat-card">
 
                     <div class="stat-header">
-
                         <span class="stat-label">
                             Profiles
                         </span>
@@ -532,7 +248,6 @@
                                 <path d="M8 18h8"/>
                             </svg>
                         </div>
-
                     </div>
 
                     <div class="stat-number">
@@ -549,7 +264,6 @@
                 <div class="stat-card">
 
                     <div class="stat-header">
-
                         <span class="stat-label">
                             Suspended
                         </span>
@@ -563,7 +277,6 @@
                                 <path d="M18 5l4 4m0-4l-4 4"/>
                             </svg>
                         </div>
-
                     </div>
 
                     <div class="stat-number">
@@ -579,7 +292,6 @@
             </section>
 
         </main>
-
     </div>
 
 </body>
