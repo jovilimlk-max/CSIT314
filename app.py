@@ -6,7 +6,12 @@ What this code does?
 - Connect the BCE classes and register the HTTP routes.
 '''
 
+import os
+import secrets
 from flask import Flask
+from Entities.interiorDesign import InteriorDesign
+from Controllers.interiorDesignController import InteriorDesignController
+from Boundary.interiorDesignPage import create_designer_blueprint
 
 # Boundaries
 from Boundary.userLoginPage import UserLoginPage
@@ -17,20 +22,13 @@ from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
 from Boundary.updateUserProfilePage import UpdateUserProfilePage
-from Boundary.viewUserAccountPage import ViewUserAccountPage
-from Boundary.updateUserAccountPage import UpdateUserAccountPage
-from Boundary.suspendUserAccountPage import SuspendUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
-from Controllers.userAdminDashboardController import UserAdminDashboardController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
-from Controllers.viewUserAccountController import ViewUserAccountController
-from Controllers.updateUserAccountController import UpdateUserAccountController
-from Controllers.suspendUserAccountController import SuspendUserAccountController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -42,6 +40,11 @@ class RenovoApp:
     # Initialise Flask, create the BCE objects and register routes
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
+        self.app.config.update(
+            SECRET_KEY=os.environ.get('RENOVO_SECRET_KEY') or secrets.token_hex(32),
+            SESSION_COOKIE_HTTPONLY=True,
+            SESSION_COOKIE_SAMESITE='Lax',
+        )
 
         # Initialise Entities
         self.user_account = UserAccount()
@@ -50,32 +53,18 @@ class RenovoApp:
         self.user_profile = UserProfile()
         self.user_profile.initialise_database()
 
+        self.interior_design = InteriorDesign(self.user_account.db_path)
+        self.interior_design.initialise_database()
+        self.app.register_blueprint(create_designer_blueprint(
+            InteriorDesignController(self.interior_design), self.user_account, self.user_profile))
+
         # Initialise Controllers
         self.login_controller = UserLoginController(
             self.user_account,
             self.user_profile
         )
 
-        self.dashboard_controller = UserAdminDashboardController(
-            self.user_account,
-            self.user_profile
-        )
-
         self.create_account_controller = CreateUserAccountController(
-            self.user_account
-        )
-
-        self.view_account_controller = ViewUserAccountController(
-            self.user_account,
-            self.user_profile
-        )
-
-        self.update_account_controller = UpdateUserAccountController(
-            self.user_account,
-            self.user_profile
-        )
-
-        self.suspend_account_controller = SuspendUserAccountController(
             self.user_account
         )
 
@@ -119,8 +108,7 @@ class RenovoApp:
 
         # User Admin Dashboard Boundary
         dashboard_view = UserAdminDashboardPage.as_view(
-            "user_admin_dashboard",
-            self.dashboard_controller
+            "user_admin_dashboard"
         )
 
         # Display User Admin dashboard
@@ -132,8 +120,7 @@ class RenovoApp:
 
         # User Accounts Management Boundary
         accounts_view = UserAccountsPage.as_view(
-            "user_accounts",
-            self.view_account_controller
+            "user_accounts"
         )
 
         # Display User Accounts management page
@@ -160,54 +147,6 @@ class RenovoApp:
         self.app.add_url_rule(
             "/user-admin/accounts",
             view_func=create_account_view,
-            methods=["POST"]
-        )
-
-        # View User Account Boundary
-        view_account_view = ViewUserAccountPage.as_view(
-            "view_user_account",
-            self.view_account_controller
-        )
-
-        # Display the selected user account
-        self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>",
-            view_func=view_account_view,
-            methods=["GET"]
-        )
-
-        # Update User Account Boundary
-        update_account_view = UpdateUserAccountPage.as_view(
-            "update_user_account",
-            self.update_account_controller,
-            self.view_account_controller,
-            self.view_profile_controller
-        )
-
-        # Display the Update User Account page
-        self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>/edit",
-            view_func=update_account_view,
-            methods=["GET"]
-        )
-
-        # Process the account update
-        self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>/edit",
-            view_func=update_account_view,
-            methods=["POST"]
-        )
-
-        # Suspend / Reactivate User Account Boundary
-        suspend_account_view = SuspendUserAccountPage.as_view(
-            "suspend_user_account",
-            self.suspend_account_controller
-        )
-
-        # Process account suspension or reactivation
-        self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>/status",
-            view_func=suspend_account_view,
             methods=["POST"]
         )
 

@@ -1,4 +1,3 @@
-
 '''
 What this code does?
 - Receive login details from the front end.
@@ -9,7 +8,7 @@ What this code does?
 '''
 
 import re
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, session
 from flask.views import MethodView
 
 
@@ -71,6 +70,9 @@ class UserLoginPage(MethodView):
             login_details
         )
 
+        session.clear()
+        if result.get('success'):
+            session['user'] = result['user']
         return jsonify(result), status_code
 
     # Display the login HTML page

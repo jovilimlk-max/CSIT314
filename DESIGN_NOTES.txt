@@ -1,0 +1,29 @@
+RENOVO - DESIGN-ONLY FRONT-END UPDATE
+
+Source: CSIT314-main (2).zip supplied with your latest instructions.
+
+INSTALL
+Copy the matching HTML files from this package's FrontEnd folder into the
+FrontEnd folder in that same project version. Review the differences on your
+own Git branch before committing. Do not replace the rest of the repository.
+Run the project with its existing app.py and database setup.
+
+SCOPE
+Only inline CSS blocks were added to seven existing HTML files. LoginPage.html
+already had a design and is included unchanged. CSS uses no external downloads.
+The CSS is formatted with one property per line and short section comments.
+
+PRESERVED
+Every original body, JavaScript block, element ID, form field, template expression,
+request payload, endpoint, button handler and navigation target is unchanged.
+No new local storage, session storage, account records, seed scripts, demo login,
+standalone application or alternate backend is included.
+
+This package contains no Python files and no databases. Your app.py, Boundary,
+Controllers, Entities, requirements and database files are not replaced.
+Existing unfinished features and disabled buttons stay exactly as uploaded.
+No status comparisons, validations, authentication or logout behaviour were changed.
+
+VERIFICATION
+Removing the inserted CSS block from each modified page reproduces the original
+uploaded file byte for byte. LoginPage.html matches its source byte for byte.

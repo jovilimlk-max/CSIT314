@@ -3,462 +3,344 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renovo | Create User Account</title>
-
+    <title>Create User Account</title>
+    <!-- Design only: existing HTML, scripts and BCE connections are unchanged. -->
     <style>
-        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
-        * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; }
-        button, input, select { font: inherit; }
-
-        /* Top navigation bar */
-        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
-        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
-        .brand span { color: #8dded4; }
-        .topbar-right { display: flex; align-items: center; gap: 24px; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
-        .user-details { display: flex; flex-direction: column; gap: 3px; }
-        .user-details strong { font-size: 13px; font-weight: 650; }
-        .user-details small { font-size: 11px; color: #d1deec; }
-        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
-        .logout-button:hover { background: #ffffff18; }
-
-        /* Main layout and sidebar */
-        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
-        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
-        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
-        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; transition: background .2s, color .2s; }
-        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
-        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
-        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
-
-        /* Main content */
-        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
-        .back-link { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; margin-bottom: 28px; color: #387c83; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .back-link:hover { color: #1c5062; text-decoration: underline; }
-        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
-        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 32px; }
-
-        /* Create account form */
-        .form-panel { width: 100%; max-width: 760px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 34px; box-shadow: 0 8px 28px #1c34500a; }
-        .field { margin-bottom: 24px; }
-        .field label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 700; color: #26344a; }
-        .required { color: #b9434e; margin-left: 3px; }
-        .control { width: 100%; height: 46px; padding: 0 14px; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; background: white; color: #26344a; font-size: 14px; }
-        .control::placeholder { color: #9aa6b5; }
-        .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
-        .password-box { position: relative; }
-        .password-box .control { padding-right: 52px; }
-        .eye-button { position: absolute; top: 5px; right: 6px; width: 38px; height: 36px; border: none; border-radius: 7px; background: transparent; color: #65748a; display: grid; place-items: center; cursor: pointer; }
-        .eye-button:hover { background: #eef3f7; }
-        .eye-button svg { width: 20px; height: 20px; }
-        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 22px; border-top: 1px solid #edf0f5; }
-        .cancel-button { min-width: 105px; height: 44px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .cancel-button:hover { background: #f0f4f8; }
-        .submit-button { min-width: 160px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .submit-button:hover { background: #256d7f; }
-        .submit-button:disabled { opacity: .6; cursor: not-allowed; }
-
-        /* Form messages */
-        .message { display: none; margin: 0 0 24px; padding: 13px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
-        .message.show { display: block; }
-        .message.error { background: #fff0f0; border: 1px solid #f2cbd1; color: #a22735; }
-        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
-
-        /* Tablet layout */
-        @media (max-width: 1000px) {
-            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
-            .main-content { padding: 36px 28px; }
-            .form-panel { padding: 28px; }
+        /* Page colours and layout */
+        :root {
+            font-family: Arial, sans-serif;
+            color: #26344a;
+            background: #f4f6fb;
         }
 
-        /* Mobile layout */
-        @media (max-width: 720px) {
-            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
-            .brand { font-size: 21px; }
-            .topbar-right { gap: 12px; }
-            .user-details { display: none; }
-            .logout-button { padding: 9px 12px; }
-            .dashboard-layout { display: block; }
-            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
-            .sidebar-title { display: none; }
-            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
-            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
-            .nav-link svg { width: 17px; height: 17px; }
-            .main-content { padding: 30px 20px; }
-            .page-title { font-size: 26px; }
-            .form-panel { padding: 22px; }
-            .form-actions { gap: 10px; }
-            .cancel-button, .submit-button { min-width: 0; flex: 1; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            width: calc(100% - 40px);
+            max-width: 1060px;
+            margin: 40px auto;
+            padding: 36px;
+            background: white;
+            border: 1px solid #e0e7ef;
+            border-radius: 12px;
+            box-shadow: 0 12px 36px #182e470c;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: "RENOVO";
+            display: block;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e7ef;
+            color: #1c5062;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 30px;
+            line-height: 1.3;
+        }
+
+        h2 {
+            margin: 24px 0 14px;
+            font-size: 20px;
+        }
+
+        p {
+            margin: 12px 0 20px;
+            color: #65748a;
+        }
+
+        strong {
+            color: #26344a;
+        }
+
+        /* Existing buttons and keyboard focus */
+        button {
+            display: inline-block;
+            width: auto;
+            height: auto;
+            margin: 4px 8px 4px 0;
+            padding: 11px 18px;
+            border: 1px solid #1c5062;
+            border-radius: 6px;
+            background: #1c5062;
+            color: white;
+            font: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            line-height: 1.4;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #256d7f;
+        }
+
+        button:disabled {
+            border-color: #d4dce5;
+            background: #edf1f5;
+            color: #7c8797;
+            cursor: not-allowed;
+        }
+
+        button:focus-visible, input:focus-visible,
+        select:focus-visible, textarea:focus-visible {
+            outline: 3px solid #8fc8ce;
+            outline-offset: 3px;
+        }
+
+        #backButton, #cancelButton, form button[type="button"] {
+            border-color: #cdd7e4;
+            background: white;
+            color: #40556d;
+        }
+
+        #backButton:hover, #cancelButton:hover,
+        form button[type="button"]:hover {
+            background: #f0f4f8;
+        }
+
+        /* Existing form fields */
+        form {
+            max-width: 680px;
+            margin-top: 26px;
+            padding: 26px;
+            border: 1px solid #e0e7ef;
+            border-radius: 8px;
+            background: #fafbfd;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        form input, form select, form textarea {
+            display: block;
+            width: 100%;
+            margin-bottom: 22px;
+            padding: 11px 13px;
+            border: 1px solid #cbd6e3;
+            border-radius: 6px;
+            background: white;
+            color: #26344a;
+            font: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        form textarea {
+            min-height: 135px;
+            resize: vertical;
+        }
+
+        form br {
+            display: none;
+        }
+
+        /* Existing profile table */
+        table {
+            display: table;
+            width: 100%;
+            margin: 12px 0 20px;
+            overflow-x: auto;
+            border: 1px solid #e0e7ef;
+            border-radius: 8px;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 16px 20px;
+            border: 0;
+            border-bottom: 1px solid #e0e7ef;
+        }
+
+        th {
+            background: #edf3f7;
+            color: #53667c;
+            font-size: 12px;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        td button {
+            padding: 7px 13px;
+        }
+
+        /* Messages still controlled by the original scripts */
+        #message:not(:empty), #successMessage {
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        #message:not(:empty) {
+            border: 1px solid #f0cbd0;
+            background: #fff1f2;
+            color: #9b2f3c;
+        }
+
+        #successMessage {
+            border: 1px solid #c7e4d7;
+            background: #eaf7f0;
+            color: #23684c;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        /* Compact layout on smaller screens */
+        @media (max-width: 600px) {
+            body {
+                width: calc(100% - 24px);
+                margin: 12px auto;
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+
+            form {
+                padding: 18px;
+            }
+
+            th, td {
+                padding: 12px;
+            }
+
+            table {
+                display: block;
+            }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- Top Navigation Bar -->
-    <header class="topbar">
-        <div class="brand">
-            RENO<span>VO</span>
-        </div>
+    <h1>Create User Account</h1>
 
-        <div class="topbar-right">
-            <div class="user-info">
-                <div class="user-avatar">UA</div>
+    <!-- Return to User Accounts, confirming unsaved changes -->
+    <button type="button" id="backButton">
+        Back to User Accounts
+    </button>
 
-                <div class="user-details">
-                    <strong>Hi, {{ username }}</strong>
-                    <small>User Administrator</small>
-                </div>
-            </div>
+    <br><br>
 
-            <button class="logout-button" id="logoutButton" type="button">
-                Log out
-            </button>
-        </div>
-    </header>
+    <form id="createAccountForm">
 
-    <div class="dashboard-layout">
+        <label for="name">Name:</label>
+        <input type="text" id="name">
+        <br><br>
 
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <p class="sidebar-title">Administration</p>
+        <label for="email">Email:</label>
+        <input type="text" id="email">
+        <br><br>
 
-            <nav class="sidebar-nav">
+        <label for="password">Password:</label>
+        <input type="password" id="password">
+        <br><br>
 
-                <!-- Dashboard -->
-                <a class="nav-link"
-                   href="/user-admin/dashboard?username={{ username | urlencode }}">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1"/>
-                    </svg>
-                    Dashboard
-                </a>
+        <label for="role">Role:</label>
+        <select id="role">
+            <option value="">Select Role</option>
+            <option value="customer">Customer</option>
+            <option value="designer">Interior Designer</option>
+            <option value="admin">User Admin</option>
+            <option value="manager">Platform Manager</option>
+        </select>
+        <br><br>
 
-                <!-- User Accounts -->
-                <a class="nav-link active"
-                   href="/user-admin/accounts?username={{ username | urlencode }}"
-                   aria-current="page">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="8" r="4"/>
-                        <path d="M2 21v-2a7 7 0 0 1 14 0v2"/>
-                        <path d="M17 4a4 4 0 0 1 0 8"/>
-                        <path d="M22 21v-2a7 7 0 0 0-4-6.3"/>
-                    </svg>
-                    User Accounts
-                </a>
+        <button type="submit">Create Account</button>
 
-                <!-- User Profiles -->
-                <a class="nav-link"
-                   href="/user-admin/profiles?username={{ username | urlencode }}">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="3" width="16" height="19" rx="2"/>
-                        <circle cx="12" cy="9" r="3"/>
-                        <path d="M8 18h8"/>
-                    </svg>
-                    User Profiles
-                </a>
+        <button type="button" onclick="window.location.href='/user-admin/accounts'">
+            Cancel
+        </button>
 
-            </nav>
-        </aside>
+    </form>
 
-        <!-- Main Content -->
-        <main class="main-content">
-
-            <!-- Back to User Accounts -->
-            <button class="back-link" id="backButton" type="button">
-                <span aria-hidden="true">←</span>
-                Back to User Accounts
-            </button>
-
-            <h1 class="page-title">
-                Create user account
-            </h1>
-
-            <p class="page-description">
-                Enter the details below to register a new Renovo user account.
-            </p>
-
-            <!-- Create User Account Form -->
-            <div class="form-panel">
-
-                <p id="message" class="message"
-                   role="status" aria-live="polite"></p>
-
-                <form id="createAccountForm" novalidate>
-
-                    <!-- Name -->
-                    <div class="field">
-                        <label for="name">
-                            Name <span class="required">*</span>
-                        </label>
-
-                        <input class="control" id="name"
-                               type="text"
-                               placeholder="Enter full name"
-                               autocomplete="off"
-                               required>
-                    </div>
-
-                    <!-- Email -->
-                    <div class="field">
-                        <label for="email">
-                            Email <span class="required">*</span>
-                        </label>
-
-                        <input class="control" id="email"
-                               type="email"
-                               placeholder="Enter email address"
-                               autocomplete="off"
-                               required>
-                    </div>
-
-                    <!-- Password -->
-                    <div class="field">
-                        <label for="password">
-                            Password <span class="required">*</span>
-                        </label>
-
-                        <div class="password-box">
-                            <input class="control" id="password"
-                                   type="password"
-                                   placeholder="Enter password"
-                                   autocomplete="new-password"
-                                   required>
-
-                            <button class="eye-button" id="togglePassword"
-                                    type="button" aria-label="Show password"
-                                    aria-pressed="false">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 12 C4.5 8 8 6 12 6 C16 6 19.5 8 22 12 C19.5 16 16 18 12 18 C8 18 4.5 16 2 12 Z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Role -->
-                    <div class="field">
-                        <label for="role">
-                            Role <span class="required">*</span>
-                        </label>
-
-                        <select class="control" id="role" required>
-                            <option value="">Select a role</option>
-                            <option value="customer">Customer</option>
-                            <option value="designer">Interior Designer</option>
-                            <option value="admin">User Admin</option>
-                            <option value="manager">Platform Manager</option>
-                        </select>
-                    </div>
-
-                    <!-- Form Buttons -->
-                    <div class="form-actions">
-
-                        <button class="cancel-button" id="cancelButton"
-                                type="button">
-                            Cancel
-                        </button>
-
-                        <button class="submit-button" id="submitButton"
-                                type="submit">
-                            Create account
-                        </button>
-
-                    </div>
-
-                </form>
-            </div>
-
-        </main>
-    </div>
+    <p id="message"></p>
 
     <script>
-        class CreateUserAccountPage {
-            constructor() {
-                this.form = document.getElementById("createAccountForm");
-                this.name = document.getElementById("name");
-                this.email = document.getElementById("email");
-                this.password = document.getElementById("password");
-                this.role = document.getElementById("role");
-                this.message = document.getElementById("message");
-                this.submitButton = document.getElementById("submitButton");
-                this.eyeButton = document.getElementById("togglePassword");
+        const form = document.getElementById("createAccountForm");
+        const message = document.getElementById("message");
 
-                this.username = {{ username | tojson }};
+        // Confirm before leaving if the form contains unsaved changes
+        document.getElementById("backButton").addEventListener("click", function() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const role = document.getElementById("role").value;
 
-                this.accountsUrl =
-                    "/user-admin/accounts?username=" +
-                    encodeURIComponent(this.username);
+            if (name.trim() || email.trim() || password || role) {
+                const discard = confirm("Discard unsaved changes?");
 
-                this.setupEvents();
-            }
-
-            // Set up form and navigation events
-            setupEvents() {
-                this.form.addEventListener(
-                    "submit", event => this.handleCreateAccount(event)
-                );
-
-                document.getElementById("backButton").addEventListener(
-                    "click", () => this.returnToAccounts()
-                );
-
-                document.getElementById("cancelButton").addEventListener(
-                    "click", () => this.returnToAccounts()
-                );
-
-                document.getElementById("logoutButton").addEventListener(
-                    "click", () => this.logout()
-                );
-
-                this.eyeButton.addEventListener(
-                    "click", () => this.togglePassword()
-                );
-
-                // Confirm before leaving through sidebar links
-                document.querySelectorAll(".sidebar-nav a").forEach(link => {
-                    link.addEventListener("click", event => {
-                        if (this.hasUnsavedChanges()) {
-                            if (!confirm("Discard unsaved changes?")) {
-                                event.preventDefault();
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Check whether the user entered any information
-            hasUnsavedChanges() {
-                return Boolean(
-                    this.name.value.trim() ||
-                    this.email.value.trim() ||
-                    this.password.value ||
-                    this.role.value
-                );
-            }
-
-            // Return to the account listing
-            returnToAccounts() {
-                if (this.hasUnsavedChanges()) {
-                    if (!confirm("Discard unsaved changes?")) {
-                        return;
-                    }
+                if (!discard) {
+                    return;
                 }
-
-                window.location.href = this.accountsUrl;
             }
 
-            // Return to the login page
-            logout() {
-                if (this.hasUnsavedChanges()) {
-                    if (!confirm("Discard unsaved changes?")) {
-                        return;
-                    }
-                }
+            window.location.href = "/user-admin/accounts";
+        });
 
-                window.location.href = "/";
-            }
+        // Handle the Create User Account form submission
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
 
-            // Show or hide the password
-            togglePassword() {
-                const reveal = this.password.type === "password";
-
-                this.password.type = reveal ? "text" : "password";
-
-                this.eyeButton.setAttribute(
-                    "aria-label",
-                    reveal ? "Hide password" : "Show password"
-                );
-
-                this.eyeButton.setAttribute(
-                    "aria-pressed",
-                    String(reveal)
-                );
-            }
-
-            // Display validation or server error messages
-            showMessage(text) {
-                this.message.textContent = text;
-                this.message.className = "message show error";
-            }
+            const accountDetails = {
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                role: document.getElementById("role").value
+            };
 
             // Send the account details to the Flask Boundary
-            async handleCreateAccount(event) {
-                event.preventDefault();
+            try {
+                const response = await fetch("/user-admin/accounts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(accountDetails)
+                });
 
-                const accountDetails = {
-                    name: this.name.value.trim(),
-                    email: this.email.value.trim(),
-                    password: this.password.value,
-                    role: this.role.value
-                };
+                const result = await response.json();
 
-                // Check required fields
-                if (!accountDetails.name ||
-                    !accountDetails.email ||
-                    !accountDetails.password ||
-                    !accountDetails.role) {
-                    this.showMessage("Please fill in all required fields.");
-                    return;
+                if (response.ok && result.success) {
+                    // Redirect to the account list with a success indicator
+                    window.location.href = "/user-admin/accounts?created=1";
+                } else {
+                    // Display the error and preserve the entered details
+                    message.textContent = result.message;
                 }
 
-                // Check email format
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountDetails.email)) {
-                    this.showMessage("Please enter a valid email address.");
-                    return;
-                }
-
-                this.submitButton.disabled = true;
-                this.message.className = "message";
-
-                try {
-                    const response = await fetch("/user-admin/accounts", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(accountDetails)
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok && result.success) {
-                        // Preserve username and show success on account list
-                        window.location.href =
-                            this.accountsUrl + "&created=1";
-                    } else {
-                        this.showMessage(
-                            result.message || "Unable to create user account."
-                        );
-                    }
-
-                } catch (error) {
-                    this.showMessage(
-                        "Unable to connect to the server."
-                    );
-                } finally {
-                    this.submitButton.disabled = false;
-                }
+            } catch (error) {
+                message.textContent = "Unable to connect to the server.";
             }
-        }
-
-        // Initialise the Create User Account page
-        new CreateUserAccountPage();
+        });
     </script>
 
 </body>
