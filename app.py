@@ -17,6 +17,7 @@ from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
 from Boundary.updateUserProfilePage import UpdateUserProfilePage
+from Boundary.suspendUserProfilePage import SuspendUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
@@ -28,6 +29,7 @@ from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
+from Controllers.suspendUserProfileController import SuspendUserProfileController
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
@@ -39,7 +41,7 @@ from Entities.userProfile import UserProfile
 
 class RenovoApp:
 
-    # Initialise Flask, create the BCE objects and register routes
+    # Initialise Flask, create BCE objects and register routes
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
 
@@ -91,10 +93,14 @@ class RenovoApp:
             self.user_profile
         )
 
+        self.suspend_profile_controller = SuspendUserProfileController(
+            self.user_profile
+        )
+
         # Register application routes
         self.register_routes()
 
-    # Connect the URLs to their respective Boundary classes
+    # Connect URLs to their respective Boundary classes
     def register_routes(self):
 
         # Login Boundary
@@ -103,80 +109,73 @@ class RenovoApp:
             self.login_controller
         )
 
-        # Display login page
         self.app.add_url_rule(
             "/",
             view_func=login_view,
             methods=["GET"]
         )
 
-        # Process login
         self.app.add_url_rule(
             "/login",
             view_func=login_view,
             methods=["POST"]
         )
 
-        # User Admin Dashboard Boundary
+        # User Admin Dashboard
         dashboard_view = UserAdminDashboardPage.as_view(
             "user_admin_dashboard",
             self.dashboard_controller
         )
 
-        # Display User Admin dashboard
         self.app.add_url_rule(
             "/user-admin/dashboard",
             view_func=dashboard_view,
             methods=["GET"]
         )
 
-        # User Accounts Management Boundary
+        # User Accounts management
         accounts_view = UserAccountsPage.as_view(
             "user_accounts",
             self.view_account_controller
         )
 
-        # Display User Accounts management page
         self.app.add_url_rule(
             "/user-admin/accounts",
             view_func=accounts_view,
             methods=["GET"]
         )
 
-        # Create User Account Boundary
+        # Create User Account
         create_account_view = CreateUserAccountPage.as_view(
             "create_user_account",
             self.create_account_controller
         )
 
-        # Display Create User Account page
         self.app.add_url_rule(
             "/user-admin/accounts/create",
             view_func=create_account_view,
             methods=["GET"]
         )
 
-        # Process account creation
         self.app.add_url_rule(
             "/user-admin/accounts",
             view_func=create_account_view,
             methods=["POST"]
         )
 
-        # View User Account Boundary
+        # View User Account
         view_account_view = ViewUserAccountPage.as_view(
             "view_user_account",
             self.view_account_controller
         )
 
-        # Display the selected user account
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>",
             view_func=view_account_view,
             methods=["GET"]
         )
 
-        # Update User Account Boundary
+        # Update User Account
         update_account_view = UpdateUserAccountPage.as_view(
             "update_user_account",
             self.update_account_controller,
@@ -184,101 +183,104 @@ class RenovoApp:
             self.view_profile_controller
         )
 
-        # Display the Update User Account page
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/edit",
             view_func=update_account_view,
             methods=["GET"]
         )
 
-        # Process the account update
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/edit",
             view_func=update_account_view,
             methods=["POST"]
         )
 
-        # Suspend / Reactivate User Account Boundary
+        # Suspend / Reactivate User Account
         suspend_account_view = SuspendUserAccountPage.as_view(
             "suspend_user_account",
             self.suspend_account_controller
         )
 
-        # Process account suspension or reactivation
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/status",
             view_func=suspend_account_view,
             methods=["POST"]
         )
 
-        # User Profiles Management Boundary
+        # User Profiles management
         profiles_view = UserProfilesPage.as_view(
             "user_profiles",
             self.view_profile_controller
         )
 
-        # Display User Profiles management page
         self.app.add_url_rule(
             "/user-admin/profiles",
             view_func=profiles_view,
             methods=["GET"]
         )
 
-        # Create User Profile Boundary
+        # Create User Profile
         create_profile_view = CreateUserProfilePage.as_view(
             "create_user_profile",
             self.create_profile_controller
         )
 
-        # Display Create User Profile page
         self.app.add_url_rule(
             "/user-admin/profiles/create",
             view_func=create_profile_view,
             methods=["GET"]
         )
 
-        # Process profile creation
         self.app.add_url_rule(
             "/user-admin/profiles",
             view_func=create_profile_view,
             methods=["POST"]
         )
 
-        # View User Profile Boundary
+        # View User Profile
         view_profile_view = ViewUserProfilePage.as_view(
             "view_user_profile",
             self.view_profile_controller
         )
 
-        # Display the selected user profile
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>",
             view_func=view_profile_view,
             methods=["GET"]
         )
 
-        # Update User Profile Boundary
+        # Update User Profile
         update_profile_view = UpdateUserProfilePage.as_view(
             "update_user_profile",
             self.update_profile_controller,
             self.view_profile_controller
         )
 
-        # Display the Update User Profile page
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>/edit",
             view_func=update_profile_view,
             methods=["GET"]
         )
 
-        # Process the profile update
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>/edit",
             view_func=update_profile_view,
             methods=["POST"]
         )
 
-    # Start the Flask development server
+        # Suspend / Reactivate User Profile
+        suspend_profile_view = SuspendUserProfilePage.as_view(
+            "suspend_user_profile",
+            self.suspend_profile_controller
+        )
+
+        self.app.add_url_rule(
+            "/user-admin/profiles/<int:profile_id>/status",
+            view_func=suspend_profile_view,
+            methods=["POST"]
+        )
+
+    # Start Flask
     def run(self):
         self.app.run(debug=True)
 

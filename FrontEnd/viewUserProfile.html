@@ -3,313 +3,601 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>View User Profile</title>
-    <!-- Design only: existing HTML, scripts and BCE connections are unchanged. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | View User Profile</title>
+
     <style>
-        /* Page colours and layout */
-        :root {
-            font-family: Arial, sans-serif;
-            color: #26344a;
-            background: #f4f6fb;
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button, input { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; transition: background .2s, color .2s; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: #387c83; font-size: 13px; font-weight: 700; text-decoration: none; margin-bottom: 28px; }
+        .back-link:hover { color: #1c5062; text-decoration: underline; }
+        .account-header { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 28px; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 8px; overflow-wrap: anywhere; }
+        .page-description { color: #738096; font-size: 13px; margin: 0; }
+        .status-badge { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: 20px; font-size: 12px; font-weight: 750; white-space: nowrap; }
+        .status-badge.active { background: #e6f6f0; color: #186b4d; }
+        .status-badge.suspended { background: #fff0f0; color: #a22735; }
+        .status-badge.other { background: #edf1f5; color: #52647a; }
+        .status-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+
+        /* Profile details panel */
+        .details-panel { background: white; max-width: 790px; border: 1px solid #e4e9f2; border-radius: 14px; padding: 32px; box-shadow: 0 8px 28px #1c34500a; }
+        .details-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 24px; }
+        .field { margin-bottom: 22px; }
+        .field label { display: block; color: #52647a; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+        .read-only-field { display: flex; align-items: center; min-height: 46px; width: 100%; padding: 12px 14px; background: #f5f7fa; border: 1px solid #e0e7ef; border-radius: 8px; color: #26344a; font-size: 14px; overflow-wrap: anywhere; }
+        .read-only-field.description { min-height: 90px; align-items: flex-start; white-space: pre-wrap; line-height: 1.6; }
+        .section-divider { height: 1px; background: #edf0f5; border: 0; margin: 30px 0 26px; }
+        .updated-text { color: #8290a3; font-size: 12px; margin: 12px 0 0; }
+
+        /* Profile action buttons */
+        .form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid #edf0f5; }
+        .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #d3a1a7; border-radius: 8px; background: white; color: #a22735; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .secondary-button:hover { background: #fff0f0; }
+        .secondary-button.reactivate { border-color: #99cbbb; color: #186b4d; }
+        .secondary-button.reactivate:hover { background: #e6f6f0; }
+        .primary-button { display: inline-flex; align-items: center; justify-content: center; min-width: 110px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .primary-button:hover { background: #256d7f; }
+
+        /* Success notification */
+        .success-message { max-width: 790px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
+
+        /* Confirmation pop-up */
+        .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: #14253e99; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { position: relative; width: min(440px, 100%); background: white; border-radius: 15px; padding: 30px; box-shadow: 0 25px 70px #14253e45; }
+        .modal-close { position: absolute; top: 15px; right: 16px; width: 34px; height: 34px; border: none; border-radius: 7px; background: transparent; color: #738096; font-size: 25px; cursor: pointer; }
+        .modal-close:hover { background: #f0f4f8; }
+        .modal-symbol { width: 48px; height: 48px; border-radius: 12px; background: #fff0f0; color: #a22735; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+        .modal-symbol.reactivate { background: #e6f6f0; color: #186b4d; }
+        .modal-title { color: #14253e; font-size: 21px; font-weight: 750; margin: 0 0 12px; }
+        .modal-description { color: #65748a; font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 11px; }
+        .modal-cancel { height: 42px; min-width: 95px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-cancel:hover { background: #f0f4f8; }
+        .modal-confirm { height: 42px; min-width: 115px; padding: 0 16px; border: none; border-radius: 8px; background: #a22735; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-confirm:hover { background: #861e2a; }
+        .modal-confirm.reactivate { background: #186b4d; }
+        .modal-confirm.reactivate:hover { background: #105339; }
+        .modal-confirm:disabled, .modal-cancel:disabled, .modal-close:disabled { opacity: .55; cursor: not-allowed; }
+        .modal-error { margin: 0 0 16px; padding: 11px 13px; border-radius: 7px; background: #fff0f0; color: #a22735; font-size: 13px; }
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .details-panel { padding: 28px; }
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            width: calc(100% - 40px);
-            max-width: 1060px;
-            margin: 40px auto;
-            padding: 36px;
-            background: white;
-            border: 1px solid #e0e7ef;
-            border-radius: 12px;
-            box-shadow: 0 12px 36px #182e470c;
-            line-height: 1.6;
-        }
-
-        body::before {
-            content: "RENOVO";
-            display: block;
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e0e7ef;
-            color: #1c5062;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        h1 {
-            margin: 0 0 12px;
-            font-size: 30px;
-            line-height: 1.3;
-        }
-
-        h2 {
-            margin: 24px 0 14px;
-            font-size: 20px;
-        }
-
-        p {
-            margin: 12px 0 20px;
-            color: #65748a;
-        }
-
-        strong {
-            color: #26344a;
-        }
-
-        /* Existing buttons and keyboard focus */
-        button {
-            display: inline-block;
-            width: auto;
-            height: auto;
-            margin: 4px 8px 4px 0;
-            padding: 11px 18px;
-            border: 1px solid #1c5062;
-            border-radius: 6px;
-            background: #1c5062;
-            color: white;
-            font: inherit;
-            font-size: 13px;
-            font-weight: bold;
-            line-height: 1.4;
-            text-align: center;
-            vertical-align: middle;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #256d7f;
-        }
-
-        button:disabled {
-            border-color: #d4dce5;
-            background: #edf1f5;
-            color: #7c8797;
-            cursor: not-allowed;
-        }
-
-        button:focus-visible, input:focus-visible,
-        select:focus-visible, textarea:focus-visible {
-            outline: 3px solid #8fc8ce;
-            outline-offset: 3px;
-        }
-
-        #backButton, #cancelButton, form button[type="button"] {
-            border-color: #cdd7e4;
-            background: white;
-            color: #40556d;
-        }
-
-        #backButton:hover, #cancelButton:hover,
-        form button[type="button"]:hover {
-            background: #f0f4f8;
-        }
-
-        /* Existing form fields */
-        form {
-            max-width: 680px;
-            margin-top: 26px;
-            padding: 26px;
-            border: 1px solid #e0e7ef;
-            border-radius: 8px;
-            background: #fafbfd;
-        }
-
-        form label {
-            display: block;
-            margin-bottom: 7px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        form input, form select, form textarea {
-            display: block;
-            width: 100%;
-            margin-bottom: 22px;
-            padding: 11px 13px;
-            border: 1px solid #cbd6e3;
-            border-radius: 6px;
-            background: white;
-            color: #26344a;
-            font: inherit;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        form textarea {
-            min-height: 135px;
-            resize: vertical;
-        }
-
-        form br {
-            display: none;
-        }
-
-        /* Existing profile table */
-        table {
-            display: table;
-            width: 100%;
-            margin: 12px 0 20px;
-            overflow-x: auto;
-            border: 1px solid #e0e7ef;
-            border-radius: 8px;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th, td {
-            padding: 16px 20px;
-            border: 0;
-            border-bottom: 1px solid #e0e7ef;
-        }
-
-        th {
-            background: #edf3f7;
-            color: #53667c;
-            font-size: 12px;
-        }
-
-        td {
-            vertical-align: top;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: 0;
-        }
-
-        tbody tr:hover {
-            background: #f8fafc;
-        }
-
-        td button {
-            padding: 7px 13px;
-        }
-
-        /* Messages still controlled by the original scripts */
-        #message:not(:empty), #successMessage {
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-
-        #message:not(:empty) {
-            border: 1px solid #f0cbd0;
-            background: #fff1f2;
-            color: #9b2f3c;
-        }
-
-        #successMessage {
-            border: 1px solid #c7e4d7;
-            background: #eaf7f0;
-            color: #23684c;
-        }
-
-        [hidden] {
-            display: none !important;
-        }
-
-        /* Compact layout on smaller screens */
-        @media (max-width: 600px) {
-            body {
-                width: calc(100% - 24px);
-                margin: 12px auto;
-                padding: 22px;
-            }
-
-            h1 {
-                font-size: 25px;
-            }
-
-            form {
-                padding: 18px;
-            }
-
-            th, td {
-                padding: 12px;
-            }
-
-            table {
-                display: block;
-            }
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .account-header { align-items: flex-start; }
+            .details-panel { padding: 22px; }
+            .form-actions { gap: 10px; }
+            .secondary-button, .primary-button { min-width: 0; flex: 1; }
+            .modal-box { padding: 24px; }
         }
     </style>
 </head>
+
 <body>
 
-    <h1>View User Profile</h1>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
 
-    <!-- Display a success message after updating a profile -->
-    <p id="successMessage" hidden>
-        User profile updated successfully.
-    </p>
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">UA</div>
 
-    <!-- Return to the User Profiles management page -->
-    <button onclick="window.location.href='/user-admin/profiles'">
-        Back to User Profiles
-    </button>
+                <div class="user-details">
+                    <strong>Hi, {{ username | default("User Admin", true) }}</strong>
+                    <small>User Administrator</small>
+                </div>
+            </div>
 
-    <br><br>
+            <button class="logout-button" type="button"
+                    onclick="window.location.href='/'">
+                Log out
+            </button>
+        </div>
+    </header>
 
-    <!-- Display the selected user profile details -->
-    <h2>{{ profile.profile_name }}</h2>
+    <div class="dashboard-layout">
 
-    <p>
-        <strong>Description:</strong>
-        {{ profile.description }}
-    </p>
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Administration</p>
 
-    <p>
-        <strong>Status:</strong>
-        {{ profile.status }}
-    </p>
+            <nav class="sidebar-nav">
 
-    <p>
-        <strong>Created At:</strong>
-        {{ profile.created_at }}
-    </p>
+                <!-- Dashboard -->
+                <a class="nav-link"
+                   href="/user-admin/dashboard?username={{ username | default('User Admin', true) | urlencode }}">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    Dashboard
+                </a>
 
-    <p>
-        <strong>Last Updated:</strong>
-        {{ profile.updated_at }}
-    </p>
+                <!-- User Accounts -->
+                <a class="nav-link"
+                   href="/user-admin/accounts?username={{ username | default('User Admin', true) | urlencode }}">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="8" r="4"/>
+                        <path d="M2 21v-2a7 7 0 0 1 14 0v2"/>
+                        <path d="M17 4a4 4 0 0 1 0 8"/>
+                        <path d="M22 21v-2a7 7 0 0 0-4-6.3"/>
+                    </svg>
+                    User Accounts
+                </a>
 
-    <br>
+                <!-- User Profiles -->
+                <a class="nav-link active"
+                   href="/user-admin/profiles?username={{ username | default('User Admin', true) | urlencode }}"
+                   aria-current="page">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="19" rx="2"/>
+                        <circle cx="12" cy="9" r="3"/>
+                        <path d="M8 18h8"/>
+                    </svg>
+                    User Profiles
+                </a>
 
-    <!-- Navigate to the Update User Profile page -->
-    <button onclick="window.location.href='/user-admin/profiles/{{ profile.id }}/edit'">
-        Edit
-    </button>
+            </nav>
+        </aside>
 
-    <!-- Suspend and Reactivate will be implemented in US6 -->
-    {% if profile.status == "Active" %}
-        <button type="button" disabled>
-            Suspend
-        </button>
-    {% else %}
-        <button type="button" disabled>
-            Reactivate
-        </button>
-    {% endif %}
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Back to User Profiles -->
+            <a class="back-link"
+               href="/user-admin/profiles?username={{ username | default('User Admin', true) | urlencode }}">
+                <span aria-hidden="true">←</span>
+                Back to User Profiles
+            </a>
+
+            <!-- Success Message -->
+            <p id="successMessage" class="success-message"
+               role="status" hidden>
+                User profile updated successfully.
+            </p>
+
+            <!-- Selected Profile Heading -->
+            <div class="account-header">
+                <div>
+                    <div class="page-label">User Profile Details</div>
+
+                    <h1 class="page-title">
+                        {{ profile.profile_name }}
+                    </h1>
+
+                    <p class="page-description">
+                        Profile ID: {{ profile.id }}
+                    </p>
+                </div>
+
+                <!-- Current Profile Status -->
+                {% if profile.status == "active" %}
+                    <span class="status-badge active">
+                        <span class="status-dot"></span>
+                        Active
+                    </span>
+                {% elif profile.status == "suspended" %}
+                    <span class="status-badge suspended">
+                        <span class="status-dot"></span>
+                        Suspended
+                    </span>
+                {% else %}
+                    <span class="status-badge other">
+                        {{ profile.status | capitalize }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Read-only User Profile Details -->
+            <div class="details-panel">
+
+                <h2 class="details-heading">Profile Information</h2>
+
+                <!-- Profile Name -->
+                <div class="field">
+                    <label>Profile Name</label>
+
+                    <div class="read-only-field">
+                        {{ profile.profile_name }}
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="field">
+                    <label>Description</label>
+
+                    <div class="read-only-field description">{{ profile.description }}</div>
+                </div>
+
+                <hr class="section-divider">
+
+                <!-- Created At -->
+                <p class="updated-text">
+                    Created at:
+                    {% if profile.created_at %}
+                        {{ profile.created_at }}
+                    {% else %}
+                        Not available
+                    {% endif %}
+                </p>
+
+                <!-- Last Updated -->
+                <p class="updated-text">
+                    Last updated:
+                    {% if profile.updated_at %}
+                        {{ profile.updated_at }}
+                    {% else %}
+                        Not available
+                    {% endif %}
+                </p>
+
+                <!-- Profile Actions -->
+                <div class="form-actions">
+
+                    {% if profile.status == "suspended" %}
+                        <button class="secondary-button reactivate"
+                                id="statusButton"
+                                type="button"
+                                data-action="reactivate">
+                            Reactivate
+                        </button>
+                    {% elif profile.status == "active" %}
+                        <button class="secondary-button"
+                                id="statusButton"
+                                type="button"
+                                data-action="suspend">
+                            Suspend
+                        </button>
+                    {% endif %}
+
+                    <a class="primary-button"
+                       href="/user-admin/profiles/{{ profile.id }}/edit?username={{ username | default('User Admin', true) | urlencode }}">
+                        Edit
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Suspend / Reactivate Confirmation Pop-up -->
+    <div class="modal-overlay" id="statusModal" hidden>
+        <div class="modal-box"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modalTitle"
+             aria-describedby="modalDescription">
+
+            <button class="modal-close"
+                    id="closeModal"
+                    type="button"
+                    aria-label="Close confirmation">
+                &times;
+            </button>
+
+            <div class="modal-symbol"
+                 id="modalSymbol"
+                 aria-hidden="true">!</div>
+
+            <h2 class="modal-title" id="modalTitle">
+                Confirm suspension
+            </h2>
+
+            <p class="modal-description"
+               id="modalDescription"></p>
+
+            <p class="modal-error"
+               id="modalError"
+               role="alert"
+               hidden></p>
+
+            <div class="modal-actions">
+
+                <button class="modal-cancel"
+                        id="cancelModal"
+                        type="button">
+                    Cancel
+                </button>
+
+                <button class="modal-confirm"
+                        id="confirmStatus"
+                        type="button">
+                    Suspend
+                </button>
+
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Check whether the user profile was just updated
-        const params = new URLSearchParams(window.location.search);
+        class ViewUserProfilePage {
+            constructor() {
+                this.profileId = {{ profile.id | tojson }};
+                this.profileName = {{ profile.profile_name | tojson }};
 
-        if (params.get("updated") === "1") {
-            document.getElementById("successMessage").hidden = false;
+                this.statusButton = document.getElementById("statusButton");
 
-            // Remove the success indicator from the URL
-            window.history.replaceState(
-                {},
-                "",
-                window.location.pathname
-            );
+                this.action = this.statusButton
+                    ? this.statusButton.dataset.action
+                    : null;
+
+                this.modal = document.getElementById("statusModal");
+                this.modalTitle = document.getElementById("modalTitle");
+                this.modalDescription = document.getElementById("modalDescription");
+                this.modalSymbol = document.getElementById("modalSymbol");
+                this.modalError = document.getElementById("modalError");
+                this.confirmButton = document.getElementById("confirmStatus");
+                this.cancelButton = document.getElementById("cancelModal");
+                this.closeButton = document.getElementById("closeModal");
+
+                this.submitting = false;
+
+                this.checkSuccessMessage();
+                this.setupEvents();
+            }
+
+            // Preserve the existing update-success notification
+            checkSuccessMessage() {
+                const params = new URLSearchParams(window.location.search);
+
+                if (params.get("updated") === "1") {
+                    document.getElementById("successMessage").hidden = false;
+
+                    params.delete("updated");
+
+                    const query = params.toString();
+
+                    window.history.replaceState(
+                        {},
+                        "",
+                        window.location.pathname +
+                        (query ? "?" + query : "")
+                    );
+                }
+            }
+
+            // Set up the confirmation pop-up events
+            setupEvents() {
+                if (!this.statusButton) {
+                    return;
+                }
+
+                this.statusButton.addEventListener("click", () => {
+                    this.openModal();
+                });
+
+                this.cancelButton.addEventListener("click", () => {
+                    this.closeModal();
+                });
+
+                this.closeButton.addEventListener("click", () => {
+                    this.closeModal();
+                });
+
+                this.confirmButton.addEventListener("click", () => {
+                    this.changeProfileStatus();
+                });
+
+                // Allow Escape to close the pop-up
+                document.addEventListener("keydown", event => {
+                    if (this.modal.hidden) {
+                        return;
+                    }
+
+                    if (event.key === "Escape") {
+                        this.closeModal();
+                    }
+
+                    // Keep keyboard focus inside the pop-up
+                    if (event.key === "Tab") {
+                        const buttons = [
+                            this.closeButton,
+                            this.cancelButton,
+                            this.confirmButton
+                        ].filter(button => !button.disabled);
+
+                        if (buttons.length === 0) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        const first = buttons[0];
+                        const last = buttons[buttons.length - 1];
+
+                        if (event.shiftKey &&
+                            document.activeElement === first) {
+                            event.preventDefault();
+                            last.focus();
+                        } else if (!event.shiftKey &&
+                                   document.activeElement === last) {
+                            event.preventDefault();
+                            first.focus();
+                        }
+                    }
+                });
+
+                // Clicking the overlay does not close the pop-up
+            }
+
+            // Display the appropriate confirmation message
+            openModal() {
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                if (this.action === "suspend") {
+                    this.modalTitle.textContent = "Suspend user profile?";
+
+                    this.modalDescription.textContent =
+                        'Are you sure you want to suspend "' +
+                        this.profileName +
+                        '"? Accounts assigned to this profile will not ' +
+                        "be able to log in until the profile is reactivated.";
+
+                    this.modalSymbol.textContent = "!";
+                    this.modalSymbol.classList.remove("reactivate");
+
+                    this.confirmButton.textContent = "Suspend";
+                    this.confirmButton.classList.remove("reactivate");
+                } else {
+                    this.modalTitle.textContent = "Reactivate user profile?";
+
+                    this.modalDescription.textContent =
+                        'Are you sure you want to reactivate "' +
+                        this.profileName +
+                        '"? Assigned accounts can log in again ' +
+                        "if their individual account status is active.";
+
+                    this.modalSymbol.textContent = "✓";
+                    this.modalSymbol.classList.add("reactivate");
+
+                    this.confirmButton.textContent = "Reactivate";
+                    this.confirmButton.classList.add("reactivate");
+                }
+
+                this.modal.hidden = false;
+                document.body.style.overflow = "hidden";
+                this.closeButton.focus();
+            }
+
+            // Close without changing profile status
+            closeModal() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modal.hidden = true;
+                document.body.style.overflow = "";
+                this.statusButton.focus();
+            }
+
+            // Display an error inside the confirmation pop-up
+            showError(message) {
+                this.modalError.textContent = message;
+                this.modalError.hidden = false;
+            }
+
+            // Submit the profile status change to Flask
+            async changeProfileStatus() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.submitting = true;
+
+                this.confirmButton.disabled = true;
+                this.cancelButton.disabled = true;
+                this.closeButton.disabled = true;
+                this.modalError.hidden = true;
+
+                const originalText = this.confirmButton.textContent;
+                this.confirmButton.textContent = "Processing...";
+
+                try {
+                    const response = await fetch(
+                        "/user-admin/profiles/" +
+                        this.profileId +
+                        "/status",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                action: this.action
+                            })
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Reload to display updated status and timestamp
+                        window.location.reload();
+                        return;
+                    }
+
+                    this.showError(
+                        result.message ||
+                        "Unable to update profile status."
+                    );
+
+                } catch (error) {
+                    this.showError(
+                        "Unable to connect to the server. Please try again."
+                    );
+
+                } finally {
+                    this.submitting = false;
+
+                    this.confirmButton.disabled = false;
+                    this.cancelButton.disabled = false;
+                    this.closeButton.disabled = false;
+
+                    this.confirmButton.textContent = originalText;
+                }
+            }
         }
+
+        // Initialise View User Profile
+        new ViewUserProfilePage();
     </script>
 
 </body>

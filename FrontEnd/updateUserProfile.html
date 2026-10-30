@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renovo | Update User Account</title>
+    <title>Renovo | Update User Profile</title>
 
     <style>
         :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; }
-        button, input, select { font: inherit; }
+        button, input, textarea { font: inherit; }
 
         /* Top navigation bar */
         .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
@@ -43,7 +43,7 @@
         .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
         .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 30px; }
 
-        /* Account form */
+        /* Profile form */
         .form-panel { width: 100%; max-width: 760px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 34px; box-shadow: 0 8px 28px #1c34500a; }
         .form-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 27px; }
         .field { margin-bottom: 24px; }
@@ -52,12 +52,8 @@
         .control { width: 100%; height: 46px; padding: 0 14px; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; background: white; color: #26344a; font-size: 14px; }
         .control::placeholder { color: #9aa6b5; }
         .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        textarea.control { height: auto; min-height: 145px; padding: 13px 14px; resize: vertical; line-height: 1.6; }
         .field-hint { font-size: 12px; color: #8290a3; line-height: 1.5; margin: 8px 0 0; }
-        .password-box { position: relative; }
-        .password-box .control { padding-right: 52px; }
-        .eye-button { position: absolute; top: 5px; right: 6px; width: 38px; height: 36px; border: none; border-radius: 7px; background: transparent; color: #65748a; display: grid; place-items: center; cursor: pointer; }
-        .eye-button:hover { background: #eef3f7; }
-        .eye-button svg { width: 20px; height: 20px; }
 
         /* Form buttons */
         .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 22px; border-top: 1px solid #edf0f5; }
@@ -104,6 +100,8 @@
 
 <body>
 
+    {% set display_username = username | default(request.args.get("username", "User Admin"), true) %}
+
     <!-- Top Navigation Bar -->
     <header class="topbar">
         <div class="brand">RENO<span>VO</span></div>
@@ -113,12 +111,14 @@
                 <div class="user-avatar">UA</div>
 
                 <div class="user-details">
-                    <strong>Hi, {{ username }}</strong>
+                    <strong>Hi, {{ display_username }}</strong>
                     <small>User Administrator</small>
                 </div>
             </div>
 
-            <button class="logout-button" id="logoutButton" type="button">
+            <button class="logout-button"
+                    id="logoutButton"
+                    type="button">
                 Log out
             </button>
         </div>
@@ -134,7 +134,7 @@
 
                 <!-- Dashboard -->
                 <a class="nav-link"
-                   href="/user-admin/dashboard?username={{ username | urlencode }}">
+                   href="/user-admin/dashboard?username={{ display_username | urlencode }}">
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
                          stroke-linecap="round" stroke-linejoin="round">
@@ -147,9 +147,8 @@
                 </a>
 
                 <!-- User Accounts -->
-                <a class="nav-link active"
-                   href="/user-admin/accounts?username={{ username | urlencode }}"
-                   aria-current="page">
+                <a class="nav-link"
+                   href="/user-admin/accounts?username={{ display_username | urlencode }}">
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
                          stroke-linecap="round" stroke-linejoin="round">
@@ -162,8 +161,9 @@
                 </a>
 
                 <!-- User Profiles -->
-                <a class="nav-link"
-                   href="/user-admin/profiles?username={{ username | urlencode }}">
+                <a class="nav-link active"
+                   href="/user-admin/profiles?username={{ display_username | urlencode }}"
+                   aria-current="page">
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
                          stroke-linecap="round" stroke-linejoin="round">
@@ -180,157 +180,79 @@
         <!-- Main Content -->
         <main class="main-content">
 
+            <!-- Back to View User Profile -->
             <button class="back-link" id="backButton" type="button">
                 <span aria-hidden="true">←</span>
-                Back to User Account
+                Back to User Profile
             </button>
 
-            <div class="page-label">User Account Management</div>
+            <div class="page-label">User Profile Management</div>
 
             <h1 class="page-title">
-                Update user account
+                Update user profile
             </h1>
 
             <p class="page-description">
-                Edit account details and manage the assigned user profile.
+                Edit the profile name and description below.
             </p>
 
-            <!-- Update User Account Form -->
+            <!-- Update User Profile Form -->
             <div class="form-panel">
 
                 <h2 class="form-heading">
-                    Account Information
+                    Profile Information
                 </h2>
 
-                <p id="message" class="message"
-                   role="status" aria-live="polite"></p>
+                <p id="message"
+                   class="message"
+                   role="status"
+                   aria-live="polite"></p>
 
-                <form id="updateAccountForm" novalidate>
+                <form id="updateProfileForm" novalidate>
 
-                    <!-- Name -->
+                    <!-- Profile Name -->
                     <div class="field">
-                        <label for="name">
-                            Name <span class="required">*</span>
+                        <label for="profile_name">
+                            Profile Name <span class="required">*</span>
                         </label>
 
-                        <input class="control" id="name"
+                        <input class="control"
+                               id="profile_name"
                                type="text"
-                               value="{{ account.name }}"
+                               value="{{ profile.profile_name }}"
                                required>
                     </div>
 
-                    <!-- Email -->
+                    <!-- Description -->
                     <div class="field">
-                        <label for="email">
-                            Email <span class="required">*</span>
+                        <label for="description">
+                            Description <span class="required">*</span>
                         </label>
 
-                        <input class="control" id="email"
-                               type="email"
-                               value="{{ account.email }}"
-                               required>
-                    </div>
-
-                    <!-- Password -->
-                    <div class="field">
-                        <label for="password">
-                            New Password
-                        </label>
-
-                        <div class="password-box">
-                            <input class="control" id="password"
-                                   type="password"
-                                   placeholder="Enter a new password"
-                                   autocomplete="new-password">
-
-                            <button class="eye-button" id="togglePassword"
-                                    type="button"
-                                    aria-label="Show password"
-                                    aria-pressed="false">
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor" stroke-width="1.8"
-                                     stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 12 C4.5 8 8 6 12 6 C16 6 19.5 8 22 12 C19.5 16 16 18 12 18 C8 18 4.5 16 2 12 Z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
-                            </button>
-                        </div>
+                        <textarea class="control"
+                                  id="description"
+                                  required>{{ profile.description }}</textarea>
 
                         <p class="field-hint">
-                            Leave blank to keep the current password.
-                        </p>
-                    </div>
-
-                    <!-- Role -->
-                    <div class="field">
-                        <label for="role">
-                            Role <span class="required">*</span>
-                        </label>
-
-                        <select class="control" id="role" required>
-                            <option value="">Select a role</option>
-
-                            <option value="customer"
-                                {% if account.role == "customer" %}selected{% endif %}>
-                                Customer
-                            </option>
-
-                            <option value="designer"
-                                {% if account.role == "designer" %}selected{% endif %}>
-                                Interior Designer
-                            </option>
-
-                            <option value="admin"
-                                {% if account.role == "admin" %}selected{% endif %}>
-                                User Admin
-                            </option>
-
-                            <option value="manager"
-                                {% if account.role == "manager" %}selected{% endif %}>
-                                Platform Manager
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- User Profile -->
-                    <div class="field">
-                        <label for="profile">
-                            User Profile
-                        </label>
-
-                        <select class="control" id="profile">
-                            <option value=""
-                                {% if account.profile_id is none %}selected{% endif %}>
-                                No user profile
-                            </option>
-
-                            {% for profile in profiles %}
-                                {% set profile_id = profile.id if profile.id is defined else profile.profile_id %}
-
-                                <option value="{{ profile_id }}"
-                                    {% if account.profile_id == profile_id %}selected{% endif %}>
-                                    {{ profile.profile_name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-
-                        <p class="field-hint">
-                            Optional. Select a profile to assign it to this account,
-                            or choose No user profile to remove the assignment.
+                            Describe the purpose of this user profile.
                         </p>
                     </div>
 
                     <!-- Form Buttons -->
                     <div class="form-actions">
-                        <button class="cancel-button" id="cancelButton"
+
+                        <button class="cancel-button"
+                                id="cancelButton"
                                 type="button">
                             Cancel
                         </button>
 
-                        <button class="submit-button" id="submitButton"
+                        <button class="submit-button"
+                                id="submitButton"
                                 type="submit">
                             Save changes
                         </button>
+
                     </div>
 
                 </form>
@@ -340,27 +262,23 @@
     </div>
 
     <script>
-        class UpdateUserAccountPage {
+        class UpdateUserProfilePage {
             constructor() {
-                this.form = document.getElementById("updateAccountForm");
-                this.name = document.getElementById("name");
-                this.email = document.getElementById("email");
-                this.password = document.getElementById("password");
-                this.role = document.getElementById("role");
-                this.profile = document.getElementById("profile");
+                this.form = document.getElementById("updateProfileForm");
+                this.profileName = document.getElementById("profile_name");
+                this.description = document.getElementById("description");
                 this.message = document.getElementById("message");
                 this.submitButton = document.getElementById("submitButton");
-                this.eyeButton = document.getElementById("togglePassword");
 
-                this.accountId = {{ account.id | tojson }};
-                this.username = {{ username | tojson }};
+                this.profileId = {{ profile.id | tojson }};
+                this.username = {{ display_username | tojson }};
 
                 this.viewUrl =
-                    "/user-admin/accounts/" + this.accountId +
+                    "/user-admin/profiles/" + this.profileId +
                     "?username=" + encodeURIComponent(this.username);
 
                 this.updateUrl =
-                    "/user-admin/accounts/" + this.accountId + "/edit";
+                    "/user-admin/profiles/" + this.profileId + "/edit";
 
                 this.originalDetails = this.getFormDetails();
 
@@ -370,23 +288,19 @@
             // Set up navigation and form events
             setupEvents() {
                 this.form.addEventListener(
-                    "submit", event => this.handleUpdateAccount(event)
+                    "submit", event => this.handleUpdateProfile(event)
                 );
 
                 document.getElementById("backButton").addEventListener(
-                    "click", () => this.returnToAccount()
+                    "click", () => this.returnToProfile()
                 );
 
                 document.getElementById("cancelButton").addEventListener(
-                    "click", () => this.returnToAccount()
+                    "click", () => this.returnToProfile()
                 );
 
                 document.getElementById("logoutButton").addEventListener(
                     "click", () => this.logout()
-                );
-
-                this.eyeButton.addEventListener(
-                    "click", () => this.togglePassword()
                 );
 
                 // Confirm before leaving through sidebar navigation
@@ -404,15 +318,12 @@
             // Retrieve the current form values
             getFormDetails() {
                 return {
-                    name: this.name.value.trim(),
-                    email: this.email.value.trim(),
-                    password: this.password.value,
-                    role: this.role.value,
-                    profile_id: this.profile.value
+                    profile_name: this.profileName.value.trim(),
+                    description: this.description.value.trim()
                 };
             }
 
-            // Check whether any account details have changed
+            // Check whether the profile details have changed
             hasUnsavedChanges() {
                 const current = this.getFormDetails();
 
@@ -421,8 +332,8 @@
                 );
             }
 
-            // Return to View User Account
-            returnToAccount() {
+            // Return to View User Profile
+            returnToProfile() {
                 if (this.hasUnsavedChanges()) {
                     if (!confirm("Discard unsaved changes?")) {
                         return;
@@ -432,7 +343,7 @@
                 window.location.href = this.viewUrl;
             }
 
-            // Return to the Login Page
+            // Return to Login Page
             logout() {
                 if (this.hasUnsavedChanges()) {
                     if (!confirm("Discard unsaved changes?")) {
@@ -443,51 +354,23 @@
                 window.location.href = "/";
             }
 
-            // Show or hide the new password
-            togglePassword() {
-                const reveal = this.password.type === "password";
-
-                this.password.type = reveal ? "text" : "password";
-
-                this.eyeButton.setAttribute(
-                    "aria-label",
-                    reveal ? "Hide password" : "Show password"
-                );
-
-                this.eyeButton.setAttribute(
-                    "aria-pressed",
-                    String(reveal)
-                );
-            }
-
             // Display validation or server errors
             showMessage(text) {
                 this.message.textContent = text;
                 this.message.className = "message show error";
             }
 
-            // Validate and submit the updated account information
-            async handleUpdateAccount(event) {
+            // Validate and submit updated profile information
+            async handleUpdateProfile(event) {
                 event.preventDefault();
 
                 const details = this.getFormDetails();
 
                 // Check required fields
-                if (!details.name || !details.email || !details.role) {
+                if (!details.profile_name || !details.description) {
                     this.showMessage("Please fill in all required fields.");
                     return;
                 }
-
-                // Check email format
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email)) {
-                    this.showMessage("Please enter a valid email address.");
-                    return;
-                }
-
-                // Convert selected profile ID into an integer or null
-                details.profile_id = details.profile_id
-                    ? Number(details.profile_id)
-                    : null;
 
                 this.submitButton.disabled = true;
                 this.message.className = "message";
@@ -505,11 +388,13 @@
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        // Return to the updated account details
-                        window.location.href = this.viewUrl;
+                        // Return to View Profile with success notification
+                        window.location.href =
+                            this.viewUrl + "&updated=1";
                     } else {
                         this.showMessage(
-                            result.message || "Unable to update user account."
+                            result.message ||
+                            "Unable to update user profile."
                         );
                     }
 
@@ -523,8 +408,8 @@
             }
         }
 
-        // Initialise the Update User Account page
-        new UpdateUserAccountPage();
+        // Initialise the Update User Profile page
+        new UpdateUserProfilePage();
     </script>
 
 </body>

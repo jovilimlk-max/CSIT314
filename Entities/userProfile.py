@@ -7,6 +7,7 @@ What this code does?
 - Retrieve all user profiles.
 - Retrieve a specific user profile using its ID.
 - Update an existing user profile.
+- Suspend or reactivate existing user profiles.
 - Count the total number of user profiles for the dashboard.
 - Set newly created profiles to active by default.
 - Initialise the database.
@@ -166,6 +167,40 @@ class UserProfile:
         except sqlite3.IntegrityError:
             connection.rollback()
             return False
+
+        finally:
+            connection.close()
+
+    # Suspend or reactivate an existing user profile
+    def update_profile_status(self, profile_id, status):
+
+        # Only allow recognised profile statuses
+        if status not in {"active", "suspended"}:
+            return False
+
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            # Update only if the profile has a different status
+            cursor.execute(
+                """
+                UPDATE user_profiles
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND status != ?
+                """,
+                (status, profile_id, status)
+            )
+
+            if cursor.rowcount == 0:
+                connection.rollback()
+                return False
+
+            connection.commit()
+            return True
 
         finally:
             connection.close()

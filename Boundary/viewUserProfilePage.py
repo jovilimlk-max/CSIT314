@@ -4,17 +4,18 @@ What this code does?
 - Receive the selected user profile ID from the URL.
 - Validate the profile ID.
 - Request the selected user profile details from the Controller.
+- Retrieve the administrator's display name from the URL.
 - Display the View User Profile HTML page.
 - Return an error if the user profile cannot be found.
 '''
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from flask.views import MethodView
 
 
 class ViewUserProfilePage(MethodView):
 
-    # Receives and stores a reference to the Controller object
+    # Receive and store a reference to the Controller
     def __init__(self, view_profile_controller):
         self.view_profile_controller = view_profile_controller
 
@@ -37,8 +38,17 @@ class ViewUserProfilePage(MethodView):
         if not result["success"]:
             return jsonify(result), status_code
 
+        # Retrieve the administrator's display name
+        username = request.args.get(
+            "username", "User Admin"
+        ).strip()
+
+        if not username:
+            username = "User Admin"
+
         # Display the selected profile information
         return render_template(
             "viewUserProfile.html",
-            profile=result["profile"]
+            profile=result["profile"],
+            username=username
         ), status_code

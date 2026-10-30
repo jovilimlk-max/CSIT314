@@ -3,6 +3,7 @@
 What this code does?
 - Display the Update User Profile HTML page.
 - Retrieve the existing user profile details.
+- Retrieve the administrator's display name from the URL.
 - Receive and clean the updated profile details.
 - Validate the required fields and profile ID.
 - Pass valid details to the Controller.
@@ -15,7 +16,7 @@ from flask.views import MethodView
 
 class UpdateUserProfilePage(MethodView):
 
-    # Receives and stores references to the Controller objects
+    # Receive and store references to the Controller objects
     def __init__(self, update_profile_controller, view_profile_controller):
         self.update_profile_controller = update_profile_controller
         self.view_profile_controller = view_profile_controller
@@ -69,9 +70,18 @@ class UpdateUserProfilePage(MethodView):
         if not result["success"]:
             return jsonify(result), status_code
 
+        # Retrieve the administrator's display name
+        username = request.args.get(
+            "username", "User Admin"
+        ).strip()
+
+        if not username:
+            username = "User Admin"
+
         return render_template(
             "updateUserProfile.html",
-            profile=result["profile"]
+            profile=result["profile"],
+            username=username
         ), status_code
 
     # Process the profile update request

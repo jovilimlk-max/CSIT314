@@ -2,6 +2,7 @@
 '''
 What this code does?
 - Display the Create User Profile HTML page.
+- Retrieve the administrator's display name from the URL.
 - Receive new user profile details.
 - Clean the submitted inputs.
 - Validate that all required fields are filled in.
@@ -15,7 +16,7 @@ from flask.views import MethodView
 
 class CreateUserProfilePage(MethodView):
 
-    # Receives and stores a reference to the Controller object
+    # Receive and store a reference to the Controller
     def __init__(self, create_profile_controller):
         self.create_profile_controller = create_profile_controller
 
@@ -52,7 +53,18 @@ class CreateUserProfilePage(MethodView):
 
     # Display the Create User Profile HTML page
     def get(self):
-        return render_template("createUserProfile.html")
+        # Retrieve the administrator's display name
+        username = request.args.get(
+            "username", "User Admin"
+        ).strip()
+
+        if not username:
+            username = "User Admin"
+
+        return render_template(
+            "createUserProfile.html",
+            username=username
+        )
 
     # Process the profile creation request
     def post(self):
