@@ -19,6 +19,7 @@ from Boundary.viewUserProfilePage import ViewUserProfilePage
 from Boundary.updateUserProfilePage import UpdateUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
+from Boundary.suspendUserAccountPage import SuspendUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -29,6 +30,7 @@ from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
+from Controllers.suspendUserAccountController import SuspendUserAccountController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -71,6 +73,10 @@ class RenovoApp:
         self.update_account_controller = UpdateUserAccountController(
             self.user_account,
             self.user_profile
+        )
+
+        self.suspend_account_controller = SuspendUserAccountController(
+            self.user_account
         )
 
         self.create_profile_controller = CreateUserProfileController(
@@ -189,6 +195,19 @@ class RenovoApp:
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/edit",
             view_func=update_account_view,
+            methods=["POST"]
+        )
+
+        # Suspend / Reactivate User Account Boundary
+        suspend_account_view = SuspendUserAccountPage.as_view(
+            "suspend_user_account",
+            self.suspend_account_controller
+        )
+
+        # Process account suspension or reactivation
+        self.app.add_url_rule(
+            "/user-admin/accounts/<int:account_id>/status",
+            view_func=suspend_account_view,
             methods=["POST"]
         )
 

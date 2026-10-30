@@ -64,13 +64,35 @@
         .profile-description { font-size: 12px; color: #738096; line-height: 1.6; margin: 0; }
         .updated-text { color: #8290a3; font-size: 12px; margin: 22px 0 0; }
 
-        /* Action buttons */
+        /* Account action buttons */
         .form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid #edf0f5; }
-        .secondary-button { min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .secondary-button:disabled { opacity: .5; cursor: not-allowed; }
+        .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #d3a1a7; border-radius: 8px; background: white; color: #a22735; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .secondary-button:hover { background: #fff0f0; }
+        .secondary-button.reactivate { border-color: #99cbbb; color: #186b4d; }
+        .secondary-button.reactivate:hover { background: #e6f6f0; }
         .primary-button { display: inline-flex; align-items: center; justify-content: center; min-width: 110px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
         .primary-button:hover { background: #256d7f; }
-        .pending-note { font-size: 12px; color: #8290a3; margin: 14px 0 0; text-align: right; }
+
+        /* Confirmation pop-up */
+        .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: #14253e99; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-box { position: relative; width: min(440px, 100%); background: white; border-radius: 15px; padding: 30px; box-shadow: 0 25px 70px #14253e45; }
+        .modal-close { position: absolute; top: 15px; right: 16px; width: 34px; height: 34px; border: none; border-radius: 7px; background: transparent; color: #738096; font-size: 25px; cursor: pointer; }
+        .modal-close:hover { background: #f0f4f8; }
+        .modal-symbol { width: 48px; height: 48px; border-radius: 12px; background: #fff0f0; color: #a22735; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+        .modal-symbol.reactivate { background: #e6f6f0; color: #186b4d; }
+        .modal-title { color: #14253e; font-size: 21px; font-weight: 750; margin: 0 0 12px; }
+        .modal-description { color: #65748a; font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+        .modal-description strong { color: #26344a; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 11px; }
+        .modal-cancel { height: 42px; min-width: 95px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-cancel:hover { background: #f0f4f8; }
+        .modal-confirm { height: 42px; min-width: 115px; padding: 0 16px; border: none; border-radius: 8px; background: #a22735; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-confirm:hover { background: #861e2a; }
+        .modal-confirm.reactivate { background: #186b4d; }
+        .modal-confirm.reactivate:hover { background: #105339; }
+        .modal-confirm:disabled, .modal-cancel:disabled, .modal-close:disabled { opacity: .55; cursor: not-allowed; }
+        .modal-error { margin: 0 0 16px; padding: 11px 13px; border-radius: 7px; background: #fff0f0; color: #a22735; font-size: 13px; }
+        [hidden] { display: none !important; }
         a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
         /* Tablet layout */
@@ -99,6 +121,7 @@
             .details-panel { padding: 22px; }
             .form-actions { gap: 10px; }
             .secondary-button, .primary-button { min-width: 0; flex: 1; }
+            .modal-box { padding: 24px; }
         }
     </style>
 </head>
@@ -182,7 +205,6 @@
         <!-- Main Content -->
         <main class="main-content">
 
-            <!-- Back to User Accounts -->
             <a class="back-link"
                href="/user-admin/accounts?username={{ username | urlencode }}">
                 <span aria-hidden="true">←</span>
@@ -192,13 +214,9 @@
             <!-- Selected Account Heading -->
             <div class="account-header">
                 <div>
-                    <div class="page-label">
-                        User Account Details
-                    </div>
+                    <div class="page-label">User Account Details</div>
 
-                    <h1 class="page-title">
-                        {{ account.name }}
-                    </h1>
+                    <h1 class="page-title">{{ account.name }}</h1>
 
                     <p class="page-description">
                         Account ID: {{ account.id }}
@@ -226,32 +244,24 @@
             <!-- Read-only User Account Details -->
             <div class="details-panel">
 
-                <h2 class="details-heading">
-                    Account Information
-                </h2>
+                <h2 class="details-heading">Account Information</h2>
 
                 <!-- Name -->
                 <div class="field">
                     <label>Name</label>
-                    <div class="read-only-field">
-                        {{ account.name }}
-                    </div>
+                    <div class="read-only-field">{{ account.name }}</div>
                 </div>
 
                 <!-- Email -->
                 <div class="field">
                     <label>Email</label>
-                    <div class="read-only-field">
-                        {{ account.email }}
-                    </div>
+                    <div class="read-only-field">{{ account.email }}</div>
                 </div>
 
                 <!-- Password -->
                 <div class="field">
                     <label>Password</label>
-                    <div class="read-only-field muted">
-                        ••••••••
-                    </div>
+                    <div class="read-only-field muted">••••••••</div>
                 </div>
 
                 <!-- Role -->
@@ -325,37 +335,248 @@
                 <!-- Account Actions -->
                 <div class="form-actions">
 
-                    <!-- US14: Suspend / Reactivate (not yet implemented) -->
                     {% if account.status == "suspended" %}
-                        <button class="secondary-button" type="button"
-                                disabled
-                                title="Account reactivation is not implemented yet">
+                        <button class="secondary-button reactivate"
+                                id="statusButton"
+                                type="button"
+                                data-action="reactivate">
                             Reactivate
                         </button>
                     {% else %}
-                        <button class="secondary-button" type="button"
-                                disabled
-                                title="Account suspension is not implemented yet">
+                        <button class="secondary-button"
+                                id="statusButton"
+                                type="button"
+                                data-action="suspend">
                             Suspend
                         </button>
                     {% endif %}
 
-                    <!-- US13: Update User Account -->
                     <a class="primary-button"
                        href="/user-admin/accounts/{{ account.id }}/edit?username={{ username | urlencode }}">
                         Edit
                     </a>
 
                 </div>
-
-                <p class="pending-note">
-                    Account suspension and reactivation are not available yet.
-                </p>
-
             </div>
-
         </main>
     </div>
+
+    <!-- Suspend / Reactivate Confirmation Pop-up -->
+    <div class="modal-overlay" id="statusModal" hidden>
+        <div class="modal-box" role="dialog" aria-modal="true"
+             aria-labelledby="modalTitle" aria-describedby="modalDescription">
+
+            <button class="modal-close" id="closeModal" type="button"
+                    aria-label="Close confirmation">
+                &times;
+            </button>
+
+            <div class="modal-symbol" id="modalSymbol"
+                 aria-hidden="true">!</div>
+
+            <h2 class="modal-title" id="modalTitle">
+                Confirm suspension
+            </h2>
+
+            <p class="modal-description" id="modalDescription"></p>
+
+            <p class="modal-error" id="modalError" role="alert" hidden></p>
+
+            <div class="modal-actions">
+                <button class="modal-cancel" id="cancelModal"
+                        type="button">
+                    Cancel
+                </button>
+
+                <button class="modal-confirm" id="confirmStatus"
+                        type="button">
+                    Suspend
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ViewUserAccountPage {
+            constructor() {
+                this.accountId = {{ account.id | tojson }};
+                this.accountName = {{ account.name | tojson }};
+                this.action = document.getElementById("statusButton").dataset.action;
+
+                this.statusButton = document.getElementById("statusButton");
+                this.modal = document.getElementById("statusModal");
+                this.modalTitle = document.getElementById("modalTitle");
+                this.modalDescription = document.getElementById("modalDescription");
+                this.modalSymbol = document.getElementById("modalSymbol");
+                this.modalError = document.getElementById("modalError");
+                this.confirmButton = document.getElementById("confirmStatus");
+                this.cancelButton = document.getElementById("cancelModal");
+                this.closeButton = document.getElementById("closeModal");
+                this.submitting = false;
+
+                this.setupEvents();
+            }
+
+            // Set up the confirmation pop-up events
+            setupEvents() {
+                this.statusButton.addEventListener("click", () => {
+                    this.openModal();
+                });
+
+                this.cancelButton.addEventListener("click", () => {
+                    this.closeModal();
+                });
+
+                this.closeButton.addEventListener("click", () => {
+                    this.closeModal();
+                });
+
+                this.confirmButton.addEventListener("click", () => {
+                    this.changeAccountStatus();
+                });
+
+                // Allow the Escape key to close the pop-up
+                document.addEventListener("keydown", event => {
+                    if (event.key === "Escape" && !this.modal.hidden) {
+                        this.closeModal();
+                    }
+
+                    // Keep keyboard focus inside the open pop-up
+                    if (event.key === "Tab" && !this.modal.hidden) {
+                        const buttons = [
+                            this.closeButton,
+                            this.cancelButton,
+                            this.confirmButton
+                        ].filter(button => !button.disabled);
+
+                        const first = buttons[0];
+                        const last = buttons[buttons.length - 1];
+
+                        if (event.shiftKey && document.activeElement === first) {
+                            event.preventDefault();
+                            last.focus();
+                        } else if (!event.shiftKey &&
+                                   document.activeElement === last) {
+                            event.preventDefault();
+                            first.focus();
+                        }
+                    }
+                });
+
+                // Clicking the grey background does not close the pop-up
+            }
+
+            // Display the appropriate confirmation message
+            openModal() {
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                if (this.action === "suspend") {
+                    this.modalTitle.textContent = "Suspend user account?";
+                    this.modalDescription.textContent =
+                        "Are you sure you want to suspend " +
+                        this.accountName +
+                        "? This user will not be able to log in until the account is reactivated.";
+
+                    this.modalSymbol.textContent = "!";
+                    this.modalSymbol.classList.remove("reactivate");
+
+                    this.confirmButton.textContent = "Suspend";
+                    this.confirmButton.classList.remove("reactivate");
+                } else {
+                    this.modalTitle.textContent = "Reactivate user account?";
+                    this.modalDescription.textContent =
+                        "Are you sure you want to reactivate " +
+                        this.accountName +
+                        "? This account will be active again, subject to its assigned user profile's status.";
+
+                    this.modalSymbol.textContent = "✓";
+                    this.modalSymbol.classList.add("reactivate");
+
+                    this.confirmButton.textContent = "Reactivate";
+                    this.confirmButton.classList.add("reactivate");
+                }
+
+                this.modal.hidden = false;
+                document.body.style.overflow = "hidden";
+                this.closeButton.focus();
+            }
+
+            // Close the pop-up without changing account status
+            closeModal() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modal.hidden = true;
+                document.body.style.overflow = "";
+                this.statusButton.focus();
+            }
+
+            // Display a server or connection error inside the pop-up
+            showError(message) {
+                this.modalError.textContent = message;
+                this.modalError.hidden = false;
+            }
+
+            // Send the confirmed action to the Flask Boundary
+            async changeAccountStatus() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.submitting = true;
+                this.confirmButton.disabled = true;
+                this.cancelButton.disabled = true;
+                this.closeButton.disabled = true;
+                this.modalError.hidden = true;
+
+                const originalText = this.confirmButton.textContent;
+                this.confirmButton.textContent = "Processing...";
+
+                try {
+                    const response = await fetch(
+                        "/user-admin/accounts/" + this.accountId + "/status",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                action: this.action
+                            })
+                        }
+                    );
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Reload existing View Account URL to show updated data
+                        window.location.reload();
+                        return;
+                    }
+
+                    this.showError(
+                        result.message || "Unable to update account status."
+                    );
+
+                } catch (error) {
+                    this.showError(
+                        "Unable to connect to the server. Please try again."
+                    );
+                } finally {
+                    this.submitting = false;
+                    this.confirmButton.disabled = false;
+                    this.cancelButton.disabled = false;
+                    this.closeButton.disabled = false;
+                    this.confirmButton.textContent = originalText;
+                }
+            }
+        }
+
+        // Initialise the View User Account page
+        new ViewUserAccountPage();
+    </script>
 
 </body>
 </html>

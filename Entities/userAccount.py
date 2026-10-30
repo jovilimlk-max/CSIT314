@@ -6,6 +6,7 @@ What this code does?
 - Verify passwords and authenticate users.
 - Create new user accounts without an assigned User Profile.
 - Update existing user account details and optional profile assignment.
+- Suspend or reactivate existing user accounts.
 - Retrieve total and suspended user account counts.
 - Store account status, optional profile assignment and last updated date.
 - Initialise the database.
@@ -183,6 +184,37 @@ class UserAccount:
         except sqlite3.IntegrityError:
             connection.rollback()
             return False
+
+        finally:
+            connection.close()
+
+    # Suspend or reactivate an existing user account
+    def update_account_status(self, account_id, status):
+
+        # Only allow the two recognised account statuses
+        if status not in {"active", "suspended"}:
+            return False
+
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            # Update only when the account has a different status
+            cursor.execute("""
+                UPDATE user_accounts
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND status != ?
+            """, (status, account_id, status))
+
+            if cursor.rowcount == 0:
+                connection.rollback()
+                return False
+
+            connection.commit()
+            return True
 
         finally:
             connection.close()
