@@ -21,6 +21,7 @@ from Boundary.suspendUserProfilePage import SuspendUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
+from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -33,10 +34,12 @@ from Controllers.suspendUserProfileController import SuspendUserProfileControlle
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
+from Controllers.createCompanyInformationController import CreateCompanyInformationController
 
 # Entities
 from Entities.userAccount import UserAccount
 from Entities.userProfile import UserProfile
+from Entities.companyInformation import CompanyInformation
 
 
 class RenovoApp:
@@ -51,6 +54,9 @@ class RenovoApp:
 
         self.user_profile = UserProfile()
         self.user_profile.initialise_database()
+
+        self.company_information = CompanyInformation()
+        self.company_information.initialise_database()
 
         # Initialise Controllers
         self.login_controller = UserLoginController(
@@ -95,6 +101,11 @@ class RenovoApp:
 
         self.suspend_profile_controller = SuspendUserProfileController(
             self.user_profile
+        )
+
+        self.create_company_controller = CreateCompanyInformationController(
+            self.company_information,
+            self.user_account
         )
 
         # Register application routes
@@ -277,6 +288,24 @@ class RenovoApp:
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>/status",
             view_func=suspend_profile_view,
+            methods=["POST"]
+        )
+
+        # Create Company Information
+        create_company_view = CreateCompanyInformationPage.as_view(
+            "create_company_information",
+            self.create_company_controller
+        )
+
+        self.app.add_url_rule(
+            "/company/create",
+            view_func=create_company_view,
+            methods=["GET"]
+        )
+
+        self.app.add_url_rule(
+            "/company/create",
+            view_func=create_company_view,
             methods=["POST"]
         )
 

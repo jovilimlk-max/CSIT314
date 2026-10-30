@@ -74,6 +74,7 @@
             </p>
 
             <form id="loginForm" novalidate>
+
                 <!-- User Type Dropdown -->
                 <div class="field">
                     <label for="role">Log in as</label>
@@ -132,9 +133,11 @@
                 this.email = document.getElementById('email');
                 this.password = document.getElementById('password');
                 this.message = document.getElementById('message');
+
                 this.submitButton = this.form.querySelector(
                     'button[type="submit"]'
                 );
+
                 this.eyeButton = document.getElementById('togglePassword');
                 this.eyeIcon = document.getElementById('eyeIcon');
 
@@ -232,13 +235,29 @@
                         return;
                     }
 
-                    // Redirect User Admin using the registered account name
+                    // Redirect User Admin to the dashboard
                     if (user.role === 'admin') {
                         const username = user.name;
 
                         window.location.href =
                             '/user-admin/dashboard?username=' +
                             encodeURIComponent(username);
+
+                    // Redirect Interior Designer to Company Information
+                    } else if (user.role === 'designer') {
+
+                        if (!user.id) {
+                            this.showMessage('Invalid account ID.');
+                            return;
+                        }
+
+                        window.location.href =
+                            '/company/create?account_id=' +
+                            encodeURIComponent(user.id) +
+                            '&username=' +
+                            encodeURIComponent(user.name);
+
+                    // Other roles retain their temporary message
                     } else {
                         this.showMessage(
                             'Dashboard for this user type is not available yet.',
