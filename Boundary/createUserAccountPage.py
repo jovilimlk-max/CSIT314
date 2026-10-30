@@ -1,6 +1,8 @@
+
 '''
 What this code does?
 - Display the Create User Account HTML page.
+- Retrieve the username from the URL.
 - Receive new user account details.
 - Clean the appropriate inputs.
 - Validate required fields, email format and selected role.
@@ -60,7 +62,15 @@ class CreateUserAccountPage(MethodView):
 
     # Display the Create User Account HTML page
     def get(self):
-        return render_template("createUserAccount.html")
+        username = request.args.get("username", "User Admin").strip()
+
+        if not username:
+            username = "User Admin"
+
+        return render_template(
+            "createUserAccount.html",
+            username=username
+        )
 
     # Process the account creation request
     def post(self):
