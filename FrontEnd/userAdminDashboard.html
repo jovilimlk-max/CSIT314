@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Renovo | User Admin Dashboard</title>
-    <!-- Design only: existing HTML, scripts and BCE connections are unchanged. -->
+
     <style>
-        /* Page colours and layout */
         :root {
-            font-family: Arial, sans-serif;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+                         "Segoe UI", sans-serif;
             color: #26344a;
             background: #f4f6fb;
         }
@@ -19,276 +19,568 @@
         }
 
         body {
-            width: calc(100% - 40px);
-            max-width: 1060px;
-            margin: 40px auto;
-            padding: 36px;
-            background: white;
-            border: 1px solid #e0e7ef;
-            border-radius: 12px;
-            box-shadow: 0 12px 36px #182e470c;
-            line-height: 1.6;
+            margin: 0;
+            min-height: 100vh;
         }
 
-        body::before {
-            content: "RENOVO";
-            display: block;
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e0e7ef;
-            color: #1c5062;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        h1 {
-            margin: 0 0 12px;
-            font-size: 30px;
-            line-height: 1.3;
-        }
-
-        h2 {
-            margin: 24px 0 14px;
-            font-size: 20px;
-        }
-
-        p {
-            margin: 12px 0 20px;
-            color: #65748a;
-        }
-
-        strong {
-            color: #26344a;
-        }
-
-        /* Existing buttons and keyboard focus */
-        button {
-            display: inline-block;
-            width: auto;
-            height: auto;
-            margin: 4px 8px 4px 0;
-            padding: 11px 18px;
-            border: 1px solid #1c5062;
-            border-radius: 6px;
-            background: #1c5062;
+        /* Top navigation bar */
+        .topbar {
+            height: 76px;
+            background: #14253e;
             color: white;
-            font: inherit;
-            font-size: 13px;
-            font-weight: bold;
-            line-height: 1.4;
-            text-align: center;
-            vertical-align: middle;
-            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 36px;
+            border-bottom: 1px solid #ffffff20;
         }
 
-        button:hover {
-            background: #256d7f;
+        .brand {
+            font-size: 24px;
+            font-weight: 850;
+            letter-spacing: 0.07em;
         }
 
-        button:disabled {
-            border-color: #d4dce5;
-            background: #edf1f5;
-            color: #7c8797;
-            cursor: not-allowed;
+        .brand span {
+            color: #8dded4;
         }
 
-        button:focus-visible, input:focus-visible,
-        select:focus-visible, textarea:focus-visible {
-            outline: 3px solid #8fc8ce;
-            outline-offset: 3px;
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
         }
 
-        #backButton, #cancelButton, form button[type="button"] {
-            border-color: #cdd7e4;
-            background: white;
-            color: #40556d;
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        #backButton:hover, #cancelButton:hover,
-        form button[type="button"]:hover {
-            background: #f0f4f8;
-        }
-
-        /* Existing form fields */
-        form {
-            max-width: 680px;
-            margin-top: 26px;
-            padding: 26px;
-            border: 1px solid #e0e7ef;
-            border-radius: 8px;
-            background: #fafbfd;
-        }
-
-        form label {
-            display: block;
-            margin-bottom: 7px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        form input, form select, form textarea {
-            display: block;
-            width: 100%;
-            margin-bottom: 22px;
-            padding: 11px 13px;
-            border: 1px solid #cbd6e3;
-            border-radius: 6px;
-            background: white;
-            color: #26344a;
-            font: inherit;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        form textarea {
-            min-height: 135px;
-            resize: vertical;
-        }
-
-        form br {
-            display: none;
-        }
-
-        /* Existing profile table */
-        table {
-            display: table;
-            width: 100%;
-            margin: 12px 0 20px;
-            overflow-x: auto;
-            border: 1px solid #e0e7ef;
-            border-radius: 8px;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th, td {
-            padding: 16px 20px;
-            border: 0;
-            border-bottom: 1px solid #e0e7ef;
-        }
-
-        th {
-            background: #edf3f7;
-            color: #53667c;
-            font-size: 12px;
-        }
-
-        td {
-            vertical-align: top;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: 0;
-        }
-
-        tbody tr:hover {
-            background: #f8fafc;
-        }
-
-        td button {
-            padding: 7px 13px;
-        }
-
-        /* Messages still controlled by the original scripts */
-        #message:not(:empty), #successMessage {
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-
-        #message:not(:empty) {
-            border: 1px solid #f0cbd0;
-            background: #fff1f2;
-            color: #9b2f3c;
-        }
-
-        #successMessage {
-            border: 1px solid #c7e4d7;
-            background: #eaf7f0;
-            color: #23684c;
-        }
-
-        [hidden] {
-            display: none !important;
-        }
-
-        /* Compact layout on smaller screens */
-        @media (max-width: 600px) {
-            body {
-                width: calc(100% - 24px);
-                margin: 12px auto;
-                padding: 22px;
-            }
-
-            h1 {
-                font-size: 25px;
-            }
-
-            form {
-                padding: 18px;
-            }
-
-            th, td {
-                padding: 12px;
-            }
-
-            table {
-                display: block;
-            }
-        }
-
-        /* Dashboard navigation keeps its original routes. */
-        body > button {
-            display: block;
-            width: 100%;
-            max-width: 680px;
-            margin-top: 12px;
-            padding: 22px 24px;
-            text-align: left;
+        .user-avatar {
+            height: 38px;
+            width: 38px;
+            border-radius: 50%;
+            background: #2d5272;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #8dded4;
+            font-weight: 700;
             font-size: 15px;
         }
 
-        body > button:last-of-type {
-            width: auto;
-            padding: 11px 18px;
-            border-color: #cdd7e4;
-            background: white;
-            color: #40556d;
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
         }
 
-        body > br {
-            display: none;
+        .user-details strong {
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .user-details small {
+            font-size: 11px;
+            color: #d1deec;
+        }
+
+        .logout-button {
+            background: transparent;
+            border: 1px solid #ffffff55;
+            border-radius: 8px;
+            color: white;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .logout-button:hover {
+            background: #ffffff18;
+        }
+
+        /* Main dashboard layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 245px minmax(0, 1fr);
+            min-height: calc(100vh - 76px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-right: 1px solid #e4e9f2;
+            padding: 32px 16px;
+        }
+
+        .sidebar-title {
+            color: #8290a3;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0 14px 18px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 14px 16px;
+            border-radius: 9px;
+            text-decoration: none;
+            color: #52647a;
+            font-size: 14px;
+            font-weight: 550;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .nav-link svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-link:hover {
+            background: #f0f5f7;
+            color: #1c5062;
+        }
+
+        .nav-link.active {
+            background: #e6f3f3;
+            color: #1c5062;
+            font-weight: 750;
+        }
+
+        /* Main content */
+        .main-content {
+            padding: 46px 50px;
+            width: 100%;
+            max-width: 1450px;
+        }
+
+        .page-label {
+            color: #387c83;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .welcome-title {
+            color: #14253e;
+            font-size: 32px;
+            font-weight: 750;
+            margin: 0 0 12px;
+            letter-spacing: -0.03em;
+        }
+
+        .welcome-description {
+            color: #738096;
+            font-size: 14px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* Summary statistics */
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 36px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e4e9f2;
+            border-radius: 14px;
+            padding: 26px;
+            box-shadow: 0 8px 28px #1c34500a;
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-label {
+            color: #65748a;
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 11px;
+            background: #e6f3f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2b7b85;
+        }
+
+        .stat-icon svg {
+            width: 23px;
+            height: 23px;
+        }
+
+        .stat-number {
+            font-size: 40px;
+            font-weight: 750;
+            color: #14253e;
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+
+        .stat-description {
+            font-size: 12px;
+            color: #8290a3;
+            margin: 0;
+        }
+
+        /* Shared interactions */
+        a:focus-visible,
+        button:focus-visible {
+            outline: 3px solid #8dded4;
+            outline-offset: 3px;
+        }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout {
+                grid-template-columns: 200px minmax(0, 1fr);
+            }
+
+            .main-content {
+                padding: 36px 28px;
+            }
+
+            .statistics {
+                gap: 14px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar {
+                height: auto;
+                min-height: 70px;
+                padding: 16px 20px;
+            }
+
+            .brand {
+                font-size: 21px;
+            }
+
+            .topbar-right {
+                gap: 12px;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .logout-button {
+                padding: 9px 12px;
+            }
+
+            .dashboard-layout {
+                display: block;
+            }
+
+            .sidebar {
+                padding: 12px;
+                border-right: none;
+                border-bottom: 1px solid #e4e9f2;
+            }
+
+            .sidebar-title {
+                display: none;
+            }
+
+            .sidebar-nav {
+                flex-direction: row;
+                gap: 6px;
+                overflow-x: auto;
+            }
+
+            .nav-link {
+                padding: 11px 13px;
+                white-space: nowrap;
+                font-size: 12px;
+            }
+
+            .nav-link svg {
+                width: 17px;
+                height: 17px;
+            }
+
+            .main-content {
+                padding: 30px 20px;
+            }
+
+            .welcome-title {
+                font-size: 26px;
+            }
+
+            .statistics {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-top: 28px;
+            }
+
+            .stat-header {
+                margin-bottom: 12px;
+            }
+
+            .stat-card {
+                padding: 22px;
+            }
+
+            .stat-number {
+                font-size: 34px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <h1>User Admin Dashboard</h1>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
 
-    <p>Login successful! Welcome to Renovo.</p>
+        <div class="brand">
+            RENO<span>VO</span>
+        </div>
 
-    <p>This dashboard is currently under development.</p>
+        <div class="topbar-right">
 
-    <!-- Navigate to the User Accounts management section -->
-    <button onclick="window.location.href='/user-admin/accounts'">
-        User Accounts
-    </button>
+            <!-- Logged-in User Information -->
+            <div class="user-info">
 
-    <br><br>
+                <div class="user-avatar">
+                    UA
+                </div>
 
-    <!-- Navigate to the User Profiles management section -->
-    <button onclick="window.location.href='/user-admin/profiles'">
-        User Profiles
-    </button>
+                <div class="user-details">
+                    <strong>Hi, {{ username }}</strong>
+                    <small>User Administrator</small>
+                </div>
 
-    <br><br>
+            </div>
 
-    <!-- Return to the login page -->
-    <button onclick="window.location.href='/'">
-        Log out
-    </button>
+            <!-- Return to Login Page -->
+            <button
+                class="logout-button"
+                type="button"
+                onclick="window.location.href='/'">
+                Log out
+            </button>
+
+        </div>
+
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+
+            <p class="sidebar-title">Administration</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Dashboard -->
+                <a
+                    class="nav-link active"
+                    href="/user-admin/dashboard"
+                    aria-current="page">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+
+                    Dashboard
+                </a>
+
+                <!-- User Accounts -->
+                <a
+                    class="nav-link"
+                    href="/user-admin/accounts">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="8" r="4"/>
+                        <path d="M2 21v-2a7 7 0 0 1 14 0v2"/>
+                        <path d="M17 4a4 4 0 0 1 0 8"/>
+                        <path d="M22 21v-2a7 7 0 0 0-4-6.3"/>
+                    </svg>
+
+                    User Accounts
+                </a>
+
+                <!-- User Profiles -->
+                <a
+                    class="nav-link"
+                    href="/user-admin/profiles">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="3" width="16" height="19" rx="2"/>
+                        <circle cx="12" cy="9" r="3"/>
+                        <path d="M8 18h8"/>
+                    </svg>
+
+                    User Profiles
+                </a>
+
+            </nav>
+
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+
+            <div class="page-label">
+                User Administration
+            </div>
+
+            <h1 class="welcome-title">
+                Welcome back, {{ username }}
+            </h1>
+
+            <p class="welcome-description">
+                Here is an overview of your Renovo user accounts and profiles.
+            </p>
+
+            <!-- Non-clickable Dashboard Statistics -->
+            <section class="statistics" aria-label="Dashboard statistics">
+
+                <!-- Total Accounts -->
+                <div class="stat-card">
+
+                    <div class="stat-header">
+
+                        <span class="stat-label">
+                            Accounts
+                        </span>
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="8" r="4"/>
+                                <path d="M2 21v-2a7 7 0 0 1 14 0v2"/>
+                                <path d="M17 4a4 4 0 0 1 0 8"/>
+                                <path d="M22 21v-2a7 7 0 0 0-4-6.3"/>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                    <div class="stat-number">
+                        {{ statistics.total_accounts }}
+                    </div>
+
+                    <p class="stat-description">
+                        Total registered user accounts
+                    </p>
+
+                </div>
+
+                <!-- Total Profiles -->
+                <div class="stat-card">
+
+                    <div class="stat-header">
+
+                        <span class="stat-label">
+                            Profiles
+                        </span>
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="4" y="3" width="16" height="19" rx="2"/>
+                                <circle cx="12" cy="9" r="3"/>
+                                <path d="M8 18h8"/>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                    <div class="stat-number">
+                        {{ statistics.total_profiles }}
+                    </div>
+
+                    <p class="stat-description">
+                        Total user profiles
+                    </p>
+
+                </div>
+
+                <!-- Suspended Accounts -->
+                <div class="stat-card">
+
+                    <div class="stat-header">
+
+                        <span class="stat-label">
+                            Suspended
+                        </span>
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="8" r="4"/>
+                                <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
+                                <path d="M18 5l4 4m0-4l-4 4"/>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                    <div class="stat-number">
+                        {{ statistics.suspended_accounts }}
+                    </div>
+
+                    <p class="stat-description">
+                        Suspended user accounts only
+                    </p>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
 
 </body>
 </html>

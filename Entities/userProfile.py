@@ -7,6 +7,7 @@ What this code does?
 - Retrieve all user profiles.
 - Retrieve a specific user profile using its ID.
 - Update an existing user profile.
+- Count the total number of user profiles for the dashboard.
 - Set newly created profiles to active by default.
 - Initialise the database.
 '''
@@ -165,6 +166,25 @@ class UserProfile:
         except sqlite3.IntegrityError:
             connection.rollback()
             return False
+
+        finally:
+            connection.close()
+
+    # Count all existing user profiles for the dashboard
+    def get_total_profiles(self):
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM user_profiles
+                """
+            )
+
+            return cursor.fetchone()[0]
 
         finally:
             connection.close()

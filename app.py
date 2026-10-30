@@ -21,6 +21,7 @@ from Boundary.viewUserAccountPage import ViewUserAccountPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
+from Controllers.userAdminDashboardController import UserAdminDashboardController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
@@ -47,6 +48,11 @@ class RenovoApp:
 
         # Initialise Controllers
         self.login_controller = UserLoginController(
+            self.user_account,
+            self.user_profile
+        )
+
+        self.dashboard_controller = UserAdminDashboardController(
             self.user_account,
             self.user_profile
         )
@@ -100,7 +106,8 @@ class RenovoApp:
 
         # User Admin Dashboard Boundary
         dashboard_view = UserAdminDashboardPage.as_view(
-            "user_admin_dashboard"
+            "user_admin_dashboard",
+            self.dashboard_controller
         )
 
         # Display User Admin dashboard
