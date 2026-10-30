@@ -592,22 +592,10 @@
                     if (response.ok && result.success) {
                         this.created = true;
 
-                        this.showMessage(
-                            result.message ||
-                            "Company information created successfully.",
-                            "success"
-                        );
-
-                        this.form.querySelectorAll(
-                            "input, textarea"
-                        ).forEach(field => {
-                            field.readOnly = true;
-                        });
-
-                        this.submitButton.textContent = "Created";
-
-                        // Company Info page will be implemented in US4.
-                        // Redirect there once that route is available.
+                        // Redirect to View Company Information so the
+                        // newly created record and success banner appear.
+                        window.location.href =
+                            this.companyInfoUrl + "&created=1";
 
                     } else {
                         this.showMessage(

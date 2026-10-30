@@ -4,8 +4,9 @@ What this code does?
 - Handle company information and interact with the database.
 - Create company information for an Interior Designer account.
 - Check whether an account already has company information.
+- Retrieve company information belonging to an account.
 - Allow one company information record per account.
-- Store the company status as active when created.
+- Store company status as active when created.
 - Initialise the company information database.
 '''
 
@@ -86,6 +87,37 @@ class CompanyInformation:
         except sqlite3.IntegrityError:
             connection.rollback()
             return False
+
+        finally:
+            connection.close()
+
+    # Retrieve company information belonging to an account
+    def get_company_by_account_id(self, account_id):
+        connection = sqlite3.connect(self.db_path)
+        connection.row_factory = sqlite3.Row
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute("""
+                SELECT
+                    company_id,
+                    account_id,
+                    company_name,
+                    company_address,
+                    working_hours,
+                    company_email,
+                    company_phone,
+                    established_date,
+                    company_description,
+                    status
+                FROM company_information
+                WHERE account_id = ?
+            """, (account_id,))
+
+            company = cursor.fetchone()
+
+            return dict(company) if company else None
 
         finally:
             connection.close()

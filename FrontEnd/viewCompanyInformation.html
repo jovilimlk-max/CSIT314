@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Company Information</title>
+
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; transition: background .2s, color .2s; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; overflow-wrap: anywhere; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0; }
+
+        /* Company heading */
+        .company-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: 20px; font-size: 12px; font-weight: 750; white-space: nowrap; }
+        .status-badge.active { background: #e6f6f0; color: #186b4d; }
+        .status-badge.suspended { background: #fff0f0; color: #a22735; }
+        .status-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+
+        /* Company details */
+        .details-panel { background: white; max-width: 790px; border: 1px solid #e4e9f2; border-radius: 14px; padding: 32px; box-shadow: 0 8px 28px #1c34500a; }
+        .details-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 25px; }
+        .field { margin-bottom: 22px; }
+        .field label { display: block; color: #52647a; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+        .read-only-field { display: flex; align-items: center; min-height: 46px; width: 100%; padding: 12px 14px; background: #f5f7fa; border: 1px solid #e0e7ef; border-radius: 8px; color: #26344a; font-size: 14px; overflow-wrap: anywhere; }
+        .read-only-field.description { min-height: 110px; align-items: flex-start; white-space: pre-wrap; line-height: 1.6; }
+        .section-divider { border: none; height: 1px; background: #edf0f5; margin: 28px 0; }
+        .company-id { color: #8290a3; font-size: 12px; margin: 0; }
+
+        /* Action buttons */
+        .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid #edf0f5; }
+        .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 20px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .primary-button:hover { background: #256d7f; }
+        .secondary-button { min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #d3a1a7; border-radius: 8px; background: white; color: #a22735; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .secondary-button.reactivate { border-color: #99cbbb; color: #186b4d; }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+
+        /* Empty company state */
+        .empty-panel { max-width: 790px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 60px 32px; text-align: center; box-shadow: 0 8px 28px #1c34500a; }
+        .empty-icon { width: 66px; height: 66px; margin: 0 auto 22px; display: grid; place-items: center; border-radius: 16px; background: #e6f3f3; color: #2b7b85; }
+        .empty-icon svg { width: 34px; height: 34px; }
+        .empty-title { color: #14253e; font-size: 21px; font-weight: 750; margin: 0 0 10px; }
+        .empty-description { color: #738096; font-size: 14px; line-height: 1.7; margin: 0 auto 25px; max-width: 450px; }
+
+        /* Success notification */
+        .success-message { max-width: 790px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .details-panel { padding: 28px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .company-header { flex-direction: column; }
+            .details-panel { padding: 22px; }
+            .empty-panel { padding: 45px 22px; }
+            .form-actions { gap: 10px; }
+            .secondary-button, .form-actions .primary-button { flex: 1; min-width: 0; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
+
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">ID</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ username }}</strong>
+                    <small>Interior Designer</small>
+                </div>
+            </div>
+
+            <button class="logout-button" type="button"
+                    onclick="window.location.href='/'">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Company Information -->
+                <a class="nav-link active"
+                   href="/interior-designer/company?account_id={{ account_id }}&username={{ username | urlencode }}"
+                   aria-current="page">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M8 21V9h8v12"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+
+                    Company Info
+                </a>
+
+                <!-- Projects -->
+                <a class="nav-link"
+                   href="#"
+                   id="projectsLink">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M7 5V3h6l2 2"/>
+                    </svg>
+
+                    Projects
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <div class="page-label">Company Management</div>
+
+            <div class="company-header">
+                <div>
+                    <h1 class="page-title">
+                        {% if company %}
+                            {{ company.company_name }}
+                        {% else %}
+                            Company Information
+                        {% endif %}
+                    </h1>
+
+                    <p class="page-description">
+                        {% if company %}
+                            View and manage your company's information.
+                        {% else %}
+                            Set up your company information to get started.
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Company Status -->
+                {% if company %}
+                    {% if company.status == "active" %}
+                        <span class="status-badge active">
+                            <span class="status-dot"></span>
+                            Active
+                        </span>
+                    {% elif company.status == "suspended" %}
+                        <span class="status-badge suspended">
+                            <span class="status-dot"></span>
+                            Suspended
+                        </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Success Message -->
+            {% if company %}
+                <p class="success-message"
+                   id="successMessage"
+                   role="status"
+                   hidden>
+                    Company information created successfully.
+                </p>
+            {% endif %}
+
+            {% if company %}
+
+                <!-- Existing Company Information -->
+                <div class="details-panel">
+
+                    <h2 class="details-heading">
+                        Company Information
+                    </h2>
+
+                    <!-- Company Name -->
+                    <div class="field">
+                        <label>Company Name</label>
+                        <div class="read-only-field">
+                            {{ company.company_name }}
+                        </div>
+                    </div>
+
+                    <!-- Company Address -->
+                    <div class="field">
+                        <label>Company Address</label>
+                        <div class="read-only-field">
+                            {{ company.company_address }}
+                        </div>
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div class="field">
+                        <label>Working Hours</label>
+                        <div class="read-only-field">
+                            {{ company.working_hours }}
+                        </div>
+                    </div>
+
+                    <!-- Company Email -->
+                    <div class="field">
+                        <label>Company Email</label>
+                        <div class="read-only-field">
+                            {{ company.company_email }}
+                        </div>
+                    </div>
+
+                    <!-- Company Phone Number -->
+                    <div class="field">
+                        <label>Company Phone Number</label>
+                        <div class="read-only-field">
+                            {{ company.company_phone }}
+                        </div>
+                    </div>
+
+                    <!-- Established Date -->
+                    <div class="field">
+                        <label>Established Date</label>
+                        <div class="read-only-field">
+                            {{ company.established_date }}
+                        </div>
+                    </div>
+
+                    <!-- Company Description -->
+                    <div class="field">
+                        <label>What the Company Does</label>
+                        <div class="read-only-field description">{{ company.company_description }}</div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <p class="company-id">
+                        Company ID: {{ company.company_id }}
+                    </p>
+
+                    <!-- Company Actions -->
+                    <div class="form-actions">
+
+                        {% if company.status == "suspended" %}
+                            <button class="secondary-button reactivate"
+                                    type="button"
+                                    disabled
+                                    title="Available in US6">
+                                Reactivate
+                            </button>
+                        {% else %}
+                            <button class="secondary-button"
+                                    type="button"
+                                    disabled
+                                    title="Available in US6">
+                                Suspend
+                            </button>
+                        {% endif %}
+
+                        <button class="primary-button"
+                                type="button"
+                                disabled
+                                title="Available in US5">
+                            Edit
+                        </button>
+                    </div>
+                </div>
+
+            {% else %}
+
+                <!-- No Company Information -->
+                <div class="empty-panel">
+
+                    <div class="empty-icon">
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M8 21V9h8v12"/>
+                            <path d="M3 9h18"/>
+                        </svg>
+                    </div>
+
+                    <h2 class="empty-title">
+                        No company information yet
+                    </h2>
+
+                    <p class="empty-description">
+                        You haven't created your company information yet.
+                        Add your company's details to get started on Renovo.
+                    </p>
+
+                    <a class="primary-button"
+                       href="/company/create?account_id={{ account_id }}&username={{ username | urlencode }}">
+                        <span aria-hidden="true">+</span>
+                        Create company info
+                    </a>
+                </div>
+
+            {% endif %}
+
+        </main>
+    </div>
+
+    <script>
+        class ViewCompanyInformationPage {
+            constructor() {
+                this.setupEvents();
+                this.checkSuccessMessage();
+            }
+
+            // Set up page events
+            setupEvents() {
+                const projectsLink = document.getElementById("projectsLink");
+
+                // Projects will be connected when its pages are implemented
+                projectsLink.addEventListener("click", event => {
+                    event.preventDefault();
+                });
+            }
+
+            // Display success message after company creation
+            checkSuccessMessage() {
+                const successMessage =
+                    document.getElementById("successMessage");
+
+                if (!successMessage) {
+                    return;
+                }
+
+                const params = new URLSearchParams(
+                    window.location.search
+                );
+
+                if (params.get("created") === "1") {
+                    successMessage.hidden = false;
+
+                    params.delete("created");
+
+                    const query = params.toString();
+
+                    window.history.replaceState(
+                        {},
+                        "",
+                        window.location.pathname +
+                        (query ? "?" + query : "")
+                    );
+                }
+            }
+        }
+
+        // Initialise the View Company Information page
+        new ViewCompanyInformationPage();
+    </script>
+</body>
+</html>

@@ -22,6 +22,7 @@ from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
 from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
+from Boundary.viewCompanyInformationPage import ViewCompanyInformationPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -35,6 +36,7 @@ from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
 from Controllers.createCompanyInformationController import CreateCompanyInformationController
+from Controllers.viewCompanyInformationController import ViewCompanyInformationController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -104,6 +106,11 @@ class RenovoApp:
         )
 
         self.create_company_controller = CreateCompanyInformationController(
+            self.company_information,
+            self.user_account
+        )
+
+        self.view_company_controller = ViewCompanyInformationController(
             self.company_information,
             self.user_account
         )
@@ -307,6 +314,18 @@ class RenovoApp:
             "/company/create",
             view_func=create_company_view,
             methods=["POST"]
+        )
+
+        # View Company Information
+        view_company_view = ViewCompanyInformationPage.as_view(
+            "view_company_information",
+            self.view_company_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/company",
+            view_func=view_company_view,
+            methods=["GET"]
         )
 
     # Start Flask

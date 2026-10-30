@@ -235,15 +235,13 @@
                         return;
                     }
 
-                    // Redirect User Admin to the dashboard
+                    // Redirect User Admin to dashboard
                     if (user.role === 'admin') {
-                        const username = user.name;
-
                         window.location.href =
                             '/user-admin/dashboard?username=' +
-                            encodeURIComponent(username);
+                            encodeURIComponent(user.name);
 
-                    // Redirect Interior Designer to Company Information
+                    // Redirect Interior Designer to View Company Information
                     } else if (user.role === 'designer') {
 
                         if (!user.id) {
@@ -252,7 +250,7 @@
                         }
 
                         window.location.href =
-                            '/company/create?account_id=' +
+                            '/interior-designer/company?account_id=' +
                             encodeURIComponent(user.id) +
                             '&username=' +
                             encodeURIComponent(user.name);
