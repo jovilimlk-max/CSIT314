@@ -31,6 +31,7 @@ from Boundary.suspendCompanyInformationPage import SuspendCompanyInformationPage
 # Project Boundaries
 from Boundary.createProjectPage import CreateProjectPage
 from Boundary.viewProjectsPage import ViewProjectsPage
+from Boundary.viewProjectPage import ViewProjectPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -53,6 +54,7 @@ from Controllers.suspendCompanyInformationController import SuspendCompanyInform
 # Project Controllers
 from Controllers.createProjectController import CreateProjectController
 from Controllers.viewProjectsController import ViewProjectsController
+from Controllers.viewProjectController import ViewProjectController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -154,6 +156,12 @@ class RenovoApp:
         )
 
         self.view_projects_controller = ViewProjectsController(
+            self.project,
+            self.company_information,
+            self.user_account
+        )
+
+        self.view_project_controller = ViewProjectController(
             self.project,
             self.company_information,
             self.user_account
@@ -403,7 +411,7 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # View Projects
+        # View Projects listing
         view_projects_view = ViewProjectsPage.as_view(
             "view_projects",
             self.view_projects_controller
@@ -426,6 +434,18 @@ class RenovoApp:
             "/interior-designer/projects/create",
             view_func=create_project_view,
             methods=["GET", "POST"]
+        )
+
+        # View an individual Project
+        view_project_view = ViewProjectPage.as_view(
+            "view_project",
+            self.view_project_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects/<int:project_id>",
+            view_func=view_project_view,
+            methods=["GET"]
         )
 
     # Start Flask
