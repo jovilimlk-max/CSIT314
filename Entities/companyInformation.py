@@ -6,6 +6,7 @@ What this code does?
 - Check whether an account already has company information.
 - Retrieve company information belonging to an account.
 - Update existing company information.
+- Suspend or reactivate company information.
 - Allow one company information record per account.
 - Store company status as active when created.
 - Initialise the company information database.
@@ -163,7 +164,31 @@ class CompanyInformation:
                 account_id
             ))
 
-            # Check whether the company record exists
+            updated = cursor.rowcount > 0
+
+            connection.commit()
+
+            return updated
+
+        finally:
+            connection.close()
+
+    # Suspend or reactivate company information
+    def update_company_status(self, account_id, status):
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute("""
+                UPDATE company_information
+                SET status = ?
+                WHERE account_id = ?
+            """, (
+                status,
+                account_id
+            ))
+
             updated = cursor.rowcount > 0
 
             connection.commit()

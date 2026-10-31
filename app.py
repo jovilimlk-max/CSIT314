@@ -24,6 +24,7 @@ from Boundary.suspendUserAccountPage import SuspendUserAccountPage
 from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
 from Boundary.viewCompanyInformationPage import ViewCompanyInformationPage
 from Boundary.updateCompanyInformationPage import UpdateCompanyInformationPage
+from Boundary.suspendCompanyInformationPage import SuspendCompanyInformationPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -39,6 +40,7 @@ from Controllers.suspendUserAccountController import SuspendUserAccountControlle
 from Controllers.createCompanyInformationController import CreateCompanyInformationController
 from Controllers.viewCompanyInformationController import ViewCompanyInformationController
 from Controllers.updateCompanyInformationController import UpdateCompanyInformationController
+from Controllers.suspendCompanyInformationController import SuspendCompanyInformationController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -118,6 +120,11 @@ class RenovoApp:
         )
 
         self.update_company_controller = UpdateCompanyInformationController(
+            self.company_information,
+            self.user_account
+        )
+
+        self.suspend_company_controller = SuspendCompanyInformationController(
             self.company_information,
             self.user_account
         )
@@ -351,6 +358,18 @@ class RenovoApp:
         self.app.add_url_rule(
             "/interior-designer/company/edit",
             view_func=update_company_view,
+            methods=["POST"]
+        )
+
+        # Suspend / Reactivate Company Information
+        suspend_company_view = SuspendCompanyInformationPage.as_view(
+            "suspend_company_information",
+            self.suspend_company_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/company/status",
+            view_func=suspend_company_view,
             methods=["POST"]
         )
 

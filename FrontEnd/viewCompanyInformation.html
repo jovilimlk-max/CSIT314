@@ -64,6 +64,8 @@
         .primary-button:hover { background: #256d7f; }
         .secondary-button { min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #d3a1a7; border-radius: 8px; background: white; color: #a22735; font-size: 13px; font-weight: 700; cursor: pointer; }
         .secondary-button.reactivate { border-color: #99cbbb; color: #186b4d; }
+        .secondary-button:hover { background: #fff5f6; }
+        .secondary-button.reactivate:hover { background: #edf8f2; }
         button:disabled { opacity: .5; cursor: not-allowed; }
 
         /* Empty company state */
@@ -75,6 +77,23 @@
 
         /* Success notification */
         .success-message { max-width: 790px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
+
+        /* Confirmation modal */
+        .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: #14253e88; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .modal-box { position: relative; width: 100%; max-width: 435px; background: white; border-radius: 16px; padding: 32px; box-shadow: 0 22px 70px #14253e40; }
+        .modal-close { position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; display: grid; place-items: center; border: none; border-radius: 7px; background: transparent; color: #738096; font-size: 25px; cursor: pointer; }
+        .modal-close:hover { background: #f0f4f8; }
+        .modal-symbol { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #fff0f0; color: #a22735; font-weight: 800; font-size: 25px; margin-bottom: 19px; }
+        .modal-symbol.reactivate { background: #e6f6f0; color: #186b4d; }
+        .modal-title { font-size: 21px; color: #14253e; margin: 0 0 10px; }
+        .modal-description { font-size: 14px; color: #52647a; line-height: 1.7; margin: 0 0 16px; }
+        .modal-error { padding: 11px 13px; background: #fff0f0; color: #a22735; font-size: 12px; border-radius: 7px; margin: 0 0 16px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-cancel { height: 42px; padding: 0 20px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-confirm { height: 42px; padding: 0 20px; background: #a22735; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-confirm.reactivate { background: #186b4d; }
+        .modal-confirm:disabled { opacity: .6; cursor: not-allowed; }
+
         [hidden] { display: none !important; }
         a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
@@ -105,6 +124,7 @@
             .empty-panel { padding: 45px 22px; }
             .form-actions { gap: 10px; }
             .secondary-button, .form-actions .primary-button { flex: 1; min-width: 0; }
+            .modal-box { padding: 26px 22px; }
         }
     </style>
 </head>
@@ -213,7 +233,7 @@
                 {% endif %}
             </div>
 
-            <!-- Success Message: Company Created or Updated -->
+            <!-- Success Message -->
             {% if company %}
                 <p class="success-message"
                    id="successMessage"
@@ -296,16 +316,16 @@
 
                         {% if company.status == "suspended" %}
                             <button class="secondary-button reactivate"
+                                    id="statusButton"
                                     type="button"
-                                    disabled
-                                    title="Available in US6">
+                                    data-action="reactivate">
                                 Reactivate
                             </button>
                         {% else %}
                             <button class="secondary-button"
+                                    id="statusButton"
                                     type="button"
-                                    disabled
-                                    title="Available in US6">
+                                    data-action="suspend">
                                 Suspend
                             </button>
                         {% endif %}
@@ -354,9 +374,80 @@
         </main>
     </div>
 
+    <!-- Suspend / Reactivate Confirmation Pop-up -->
+    {% if company %}
+        <div class="modal-overlay" id="statusModal" hidden>
+            <div class="modal-box"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="modalTitle"
+                 aria-describedby="modalDescription">
+
+                <button class="modal-close"
+                        id="closeModal"
+                        type="button"
+                        aria-label="Close confirmation">
+                    &times;
+                </button>
+
+                <div class="modal-symbol"
+                     id="modalSymbol"
+                     aria-hidden="true">!</div>
+
+                <h2 class="modal-title" id="modalTitle">
+                    Confirm suspension
+                </h2>
+
+                <p class="modal-description"
+                   id="modalDescription"></p>
+
+                <p class="modal-error"
+                   id="modalError"
+                   role="alert"
+                   hidden></p>
+
+                <div class="modal-actions">
+
+                    <button class="modal-cancel"
+                            id="cancelModal"
+                            type="button">
+                        Cancel
+                    </button>
+
+                    <button class="modal-confirm"
+                            id="confirmStatus"
+                            type="button">
+                        Suspend
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <script>
         class ViewCompanyInformationPage {
             constructor() {
+                this.accountId = {{ account_id | tojson }};
+                this.companyName = {{ (company.company_name if company else "") | tojson }};
+
+                this.statusButton = document.getElementById("statusButton");
+
+                this.action = this.statusButton
+                    ? this.statusButton.dataset.action
+                    : null;
+
+                this.modal = document.getElementById("statusModal");
+                this.modalTitle = document.getElementById("modalTitle");
+                this.modalDescription = document.getElementById("modalDescription");
+                this.modalSymbol = document.getElementById("modalSymbol");
+                this.modalError = document.getElementById("modalError");
+                this.confirmButton = document.getElementById("confirmStatus");
+                this.cancelButton = document.getElementById("cancelModal");
+                this.closeButton = document.getElementById("closeModal");
+
+                this.submitting = false;
+
                 this.setupEvents();
                 this.checkSuccessMessage();
             }
@@ -369,9 +460,48 @@
                 projectsLink.addEventListener("click", event => {
                     event.preventDefault();
                 });
+
+                // No company exists, so no status button is available
+                if (!this.statusButton) {
+                    return;
+                }
+
+                this.statusButton.addEventListener(
+                    "click", () => this.openModal()
+                );
+
+                this.cancelButton.addEventListener(
+                    "click", () => this.closeModalWindow()
+                );
+
+                this.closeButton.addEventListener(
+                    "click", () => this.closeModalWindow()
+                );
+
+                this.confirmButton.addEventListener(
+                    "click", () => this.confirmStatusChange()
+                );
+
+                // Close the pop-up when clicking outside the modal box
+                this.modal.addEventListener("click", event => {
+                    if (event.target === this.modal && !this.submitting) {
+                        this.closeModalWindow();
+                    }
+                });
+
+                // Close the pop-up using the Escape key
+                document.addEventListener("keydown", event => {
+                    if (
+                        event.key === "Escape" &&
+                        !this.modal.hidden &&
+                        !this.submitting
+                    ) {
+                        this.closeModalWindow();
+                    }
+                });
             }
 
-            // Display success message after company creation or update
+            // Display a success message after company changes
             checkSuccessMessage() {
                 const successMessage =
                     document.getElementById("successMessage");
@@ -390,6 +520,10 @@
                     message = "Company information created successfully.";
                 } else if (params.get("updated") === "1") {
                     message = "Company information updated successfully.";
+                } else if (params.get("suspended") === "1") {
+                    message = "Company information suspended successfully.";
+                } else if (params.get("reactivated") === "1") {
+                    message = "Company information reactivated successfully.";
                 }
 
                 if (!message) {
@@ -399,10 +533,11 @@
                 successMessage.textContent = message;
                 successMessage.hidden = false;
 
-                // Remove success parameters so the message
-                // does not reappear when refreshing the page
+                // Remove success parameters after displaying the message
                 params.delete("created");
                 params.delete("updated");
+                params.delete("suspended");
+                params.delete("reactivated");
 
                 const query = params.toString();
 
@@ -412,6 +547,125 @@
                     window.location.pathname +
                     (query ? "?" + query : "")
                 );
+            }
+
+            // Open the appropriate confirmation pop-up
+            openModal() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                const isSuspending = this.action === "suspend";
+
+                this.modalTitle.textContent = isSuspending
+                    ? "Confirm suspension"
+                    : "Confirm reactivation";
+
+                this.modalDescription.textContent = isSuspending
+                    ? 'Are you sure you want to suspend "' +
+                      this.companyName + '"? The company status will change to Suspended.'
+                    : 'Are you sure you want to reactivate "' +
+                      this.companyName + '"? The company status will change to Active.';
+
+                this.confirmButton.textContent = isSuspending
+                    ? "Suspend"
+                    : "Reactivate";
+
+                this.modalSymbol.textContent = isSuspending ? "!" : "✓";
+
+                this.modalSymbol.classList.toggle(
+                    "reactivate",
+                    !isSuspending
+                );
+
+                this.confirmButton.classList.toggle(
+                    "reactivate",
+                    !isSuspending
+                );
+
+                this.modal.hidden = false;
+                this.confirmButton.focus();
+            }
+
+            // Close the confirmation pop-up
+            closeModalWindow() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modal.hidden = true;
+                this.statusButton.focus();
+            }
+
+            // Send the status change request to Flask
+            async confirmStatusChange() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.submitting = true;
+                this.confirmButton.disabled = true;
+
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                const newStatus = this.action === "suspend"
+                    ? "suspended"
+                    : "active";
+
+                const statusUrl =
+                    "/interior-designer/company/status?account_id=" +
+                    encodeURIComponent(this.accountId);
+
+                try {
+                    const response = await fetch(statusUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            status: newStatus
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const params = new URLSearchParams(
+                            window.location.search
+                        );
+
+                        if (newStatus === "suspended") {
+                            params.set("suspended", "1");
+                        } else {
+                            params.set("reactivated", "1");
+                        }
+
+                        window.location.href =
+                            window.location.pathname +
+                            "?" + params.toString();
+
+                    } else {
+                        this.modalError.textContent =
+                            result.message ||
+                            "Unable to update company status.";
+
+                        this.modalError.hidden = false;
+                    }
+
+                } catch (error) {
+                    this.modalError.textContent =
+                        "Unable to connect to the server.";
+
+                    this.modalError.hidden = false;
+
+                } finally {
+                    this.submitting = false;
+                    this.confirmButton.disabled = false;
+                }
             }
         }
 
