@@ -1,0 +1,693 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Update Project</title>
+
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button, input, select, textarea { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; margin-bottom: 28px; color: #387c83; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .back-link:hover { color: #1c5062; text-decoration: underline; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 32px; }
+
+        /* Update Project form */
+        .form-panel { width: 100%; max-width: 790px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 34px; box-shadow: 0 8px 28px #1c34500a; }
+        .form-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 27px; }
+        .field { margin-bottom: 24px; }
+        .field label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 700; color: #26344a; }
+        .required { color: #b9434e; margin-left: 3px; }
+        .control { width: 100%; min-height: 46px; padding: 12px 14px; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; background: white; color: #26344a; font-size: 14px; }
+        .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        textarea.control { min-height: 145px; resize: vertical; line-height: 1.6; }
+        .control.invalid { border-color: #b9434e; }
+        .field-hint { font-size: 12px; color: #8290a3; line-height: 1.5; margin: 8px 0 0; }
+        .field-error { display: none; margin: 7px 0 0; color: #a22735; font-size: 12px; }
+        .field-error.show { display: block; }
+        .date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .date-fields .field { margin-bottom: 24px; }
+
+        /* Form buttons */
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 22px; border-top: 1px solid #edf0f5; }
+        .cancel-button { min-width: 105px; height: 44px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .cancel-button:hover { background: #f0f4f8; }
+        .submit-button { min-width: 175px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .submit-button:hover { background: #256d7f; }
+        .submit-button:disabled { opacity: .6; cursor: not-allowed; }
+
+        /* Messages */
+        .message { display: none; margin: 0 0 24px; padding: 13px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+        .message.show { display: block; }
+        .message.error { background: #fff0f0; border: 1px solid #f2cbd1; color: #a22735; }
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .form-panel { padding: 28px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .form-panel { padding: 22px; }
+            .date-fields { grid-template-columns: 1fr; gap: 0; }
+            .form-actions { gap: 10px; }
+            .cancel-button, .submit-button { min-width: 0; flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    {% set display_username = username | default("Interior Designer", true) %}
+
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
+
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">ID</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ display_username }}</strong>
+                    <small>Interior Designer</small>
+                </div>
+            </div>
+
+            <button class="logout-button" id="logoutButton" type="button">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Company Information -->
+                <a class="nav-link"
+                   href="#"
+                   id="companyInfoLink">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M8 21V9h8v12"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+
+                    Company Info
+                </a>
+
+                <!-- Projects -->
+                <a class="nav-link active"
+                   href="#"
+                   id="projectsLink">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M7 5V3h6l2 2"/>
+                    </svg>
+
+                    Projects
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <button class="back-link" id="backButton" type="button">
+                <span aria-hidden="true">&larr;</span>
+                Back to Project
+            </button>
+
+            <div class="page-label">Project Management</div>
+
+            <h1 class="page-title">Update Project</h1>
+
+            <p class="page-description">
+                Edit your project's details below and save your changes.
+            </p>
+
+            <!-- Update Project Form -->
+            <div class="form-panel">
+
+                <h2 class="form-heading">Project Details</h2>
+
+                <p class="message" id="message"
+                   role="alert" aria-live="polite"></p>
+
+                <form id="updateProjectForm" novalidate>
+
+                    <!-- Project Name -->
+                    <div class="field">
+                        <label for="project_name">
+                            Project Name <span class="required">*</span>
+                        </label>
+
+                        <input class="control"
+                               id="project_name"
+                               name="project_name"
+                               type="text"
+                               maxlength="255"
+                               value="{{ project.project_name }}"
+                               required>
+
+                        <p class="field-error" id="project_name_error"></p>
+                    </div>
+
+                    <!-- Project Description -->
+                    <div class="field">
+                        <label for="project_description">
+                            Project Description <span class="required">*</span>
+                        </label>
+
+                        <textarea class="control"
+                                  id="project_description"
+                                  name="project_description"
+                                  maxlength="5000"
+                                  required>{{ project.project_description }}</textarea>
+
+                        <p class="field-error"
+                           id="project_description_error"></p>
+                    </div>
+
+                    <!-- Project Progress -->
+                    <div class="field">
+                        <label for="progress">
+                            Project Progress <span class="required">*</span>
+                        </label>
+
+                        <select class="control"
+                                id="progress"
+                                name="progress"
+                                required>
+                            <option value="">Select project progress</option>
+                            <option value="Ongoing"
+                                    {% if project.progress == "Ongoing" %}selected{% endif %}>
+                                Ongoing
+                            </option>
+                            <option value="Completed"
+                                    {% if project.progress == "Completed" %}selected{% endif %}>
+                                Completed
+                            </option>
+                        </select>
+
+                        <p class="field-error" id="progress_error"></p>
+                    </div>
+
+                    <!-- Date Fields -->
+                    <div class="date-fields">
+
+                        <!-- Start Date -->
+                        <div class="field" id="startDateField">
+                            <label for="start_date">
+                                Start Date <span class="required">*</span>
+                            </label>
+
+                            <input class="control"
+                                   id="start_date"
+                                   name="start_date"
+                                   type="date"
+                                   value="{{ project.start_date }}"
+                                   required>
+
+                            <p class="field-error" id="start_date_error"></p>
+                        </div>
+
+                        <!-- End Date -->
+                        <div class="field" id="endDateField" hidden>
+                            <label for="end_date">
+                                End Date <span class="required">*</span>
+                            </label>
+
+                            <input class="control"
+                                   id="end_date"
+                                   name="end_date"
+                                   type="date"
+                                   value="{{ project.end_date or '' }}">
+
+                            <p class="field-error" id="end_date_error"></p>
+                        </div>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="form-actions">
+
+                        <button class="cancel-button"
+                                id="cancelButton"
+                                type="button">
+                            Cancel
+                        </button>
+
+                        <button class="submit-button"
+                                id="submitButton"
+                                type="submit">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class UpdateProjectPage {
+            constructor() {
+                this.accountId = {{ account_id | tojson }};
+                this.username = {{ display_username | tojson }};
+                this.projectId = {{ project.project_id | tojson }};
+
+                this.form = document.getElementById("updateProjectForm");
+                this.message = document.getElementById("message");
+                this.submitButton = document.getElementById("submitButton");
+
+                this.fields = [
+                    "project_name",
+                    "project_description",
+                    "progress",
+                    "start_date",
+                    "end_date"
+                ];
+
+                this.progressField = document.getElementById("progress");
+                this.startDateField = document.getElementById("start_date");
+                this.endDateField = document.getElementById("end_date");
+                this.endDateContainer = document.getElementById("endDateField");
+
+                this.projectUrl =
+                    "/interior-designer/projects/" +
+                    encodeURIComponent(this.projectId) +
+                    "?account_id=" + encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.projectsUrl =
+                    "/interior-designer/projects?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.companyInfoUrl =
+                    "/interior-designer/company?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.updateUrl =
+                    "/interior-designer/projects/" +
+                    encodeURIComponent(this.projectId) +
+                    "/edit?account_id=" +
+                    encodeURIComponent(this.accountId);
+
+                this.submitting = false;
+                this.saved = false;
+
+                this.setDateLimits();
+                this.updateDateFields(false);
+
+                this.originalDetails = this.getProjectDetails();
+
+                this.setupEvents();
+            }
+
+            // Set up navigation and form events
+            setupEvents() {
+                this.form.addEventListener(
+                    "submit", event => this.handleUpdateProject(event)
+                );
+
+                this.progressField.addEventListener(
+                    "change", () => this.updateDateFields(true)
+                );
+
+                this.startDateField.addEventListener(
+                    "change", () => this.updateEndDateLimit()
+                );
+
+                document.getElementById("backButton").addEventListener(
+                    "click", () => this.navigateTo(this.projectUrl)
+                );
+
+                document.getElementById("cancelButton").addEventListener(
+                    "click", () => this.navigateTo(this.projectUrl)
+                );
+
+                document.getElementById("companyInfoLink").addEventListener(
+                    "click", event => {
+                        event.preventDefault();
+                        this.navigateTo(this.companyInfoUrl);
+                    }
+                );
+
+                document.getElementById("projectsLink").addEventListener(
+                    "click", event => {
+                        event.preventDefault();
+                        this.navigateTo(this.projectsUrl);
+                    }
+                );
+
+                document.getElementById("logoutButton").addEventListener(
+                    "click", () => this.navigateTo("/")
+                );
+
+                // Clear validation errors as the user edits fields
+                this.fields.forEach(field => {
+                    document.getElementById(field).addEventListener(
+                        "input", () => this.clearFieldError(field)
+                    );
+                });
+            }
+
+            // Set the maximum allowed date to today
+            setDateLimits() {
+                const today = new Date();
+
+                const localDate = new Date(
+                    today.getTime() -
+                    today.getTimezoneOffset() * 60000
+                ).toISOString().split("T")[0];
+
+                this.startDateField.max = localDate;
+                this.endDateField.max = localDate;
+
+                this.updateEndDateLimit();
+            }
+
+            // Show or hide End Date based on project progress
+            updateDateFields(clearEndDate) {
+                const isCompleted =
+                    this.progressField.value === "Completed";
+
+                this.endDateContainer.hidden = !isCompleted;
+                this.endDateField.required = isCompleted;
+
+                if (!isCompleted && clearEndDate) {
+                    this.endDateField.value = "";
+                    this.clearFieldError("end_date");
+                }
+
+                this.clearFieldError("progress");
+            }
+
+            // Ensure End Date cannot be earlier than Start Date
+            updateEndDateLimit() {
+                this.endDateField.min = this.startDateField.value;
+
+                if (
+                    this.endDateField.value &&
+                    this.startDateField.value &&
+                    this.endDateField.value < this.startDateField.value
+                ) {
+                    this.endDateField.value = "";
+                }
+
+                this.clearFieldError("start_date");
+            }
+
+            // Retrieve the entered project details
+            getProjectDetails() {
+                const details = {};
+
+                this.fields.forEach(field => {
+                    details[field] =
+                        document.getElementById(field).value.trim();
+                });
+
+                if (details.progress === "Ongoing") {
+                    details.end_date = "";
+                }
+
+                return details;
+            }
+
+            // Check whether the project details have changed
+            hasUnsavedChanges() {
+                if (this.saved) {
+                    return false;
+                }
+
+                const currentDetails = this.getProjectDetails();
+
+                return this.fields.some(field =>
+                    currentDetails[field] !== this.originalDetails[field]
+                );
+            }
+
+            // Confirm before leaving if changes have not been saved
+            navigateTo(url) {
+                if (this.hasUnsavedChanges()) {
+                    if (!confirm("Discard unsaved changes?")) {
+                        return;
+                    }
+                }
+
+                window.location.href = url;
+            }
+
+            // Show a general error message
+            showMessage(text) {
+                this.message.textContent = text;
+                this.message.className = "message show error";
+            }
+
+            // Clear an individual field error
+            clearFieldError(field) {
+                const input = document.getElementById(field);
+                const error = document.getElementById(field + "_error");
+
+                input.classList.remove("invalid");
+                input.removeAttribute("aria-invalid");
+
+                error.textContent = "";
+                error.classList.remove("show");
+            }
+
+            // Display validation errors beneath the relevant fields
+            showFieldErrors(errors) {
+                this.fields.forEach(field => {
+                    if (errors[field]) {
+                        const input = document.getElementById(field);
+                        const error = document.getElementById(field + "_error");
+
+                        input.classList.add("invalid");
+                        input.setAttribute("aria-invalid", "true");
+                        error.textContent = errors[field];
+                        error.classList.add("show");
+                    }
+                });
+
+                const firstInvalidField = this.fields.find(
+                    field => errors[field]
+                );
+
+                if (firstInvalidField) {
+                    document.getElementById(firstInvalidField).focus();
+                }
+            }
+
+            // Clear all validation errors
+            clearErrors() {
+                this.message.textContent = "";
+                this.message.className = "message";
+
+                this.fields.forEach(field => {
+                    this.clearFieldError(field);
+                });
+            }
+
+            // Validate project details before saving
+            validateProjectDetails(details) {
+                const errors = {};
+
+                if (!details.project_name) {
+                    errors.project_name = "Project name is required.";
+                } else if (details.project_name.length > 255) {
+                    errors.project_name =
+                        "Project name cannot exceed 255 characters.";
+                }
+
+                if (!details.project_description) {
+                    errors.project_description =
+                        "Project description is required.";
+                } else if (details.project_description.length > 5000) {
+                    errors.project_description =
+                        "Project description cannot exceed 5000 characters.";
+                }
+
+                if (!["Ongoing", "Completed"].includes(details.progress)) {
+                    errors.progress = "Please select project progress.";
+                }
+
+                // Validate Start Date
+                if (!details.start_date) {
+                    errors.start_date = "Start date is required.";
+                } else if (details.start_date > this.startDateField.max) {
+                    errors.start_date =
+                        "Start date cannot be in the future.";
+                }
+
+                // Validate End Date for Completed projects
+                if (details.progress === "Completed") {
+                    if (!details.end_date) {
+                        errors.end_date =
+                            "End date is required for completed projects.";
+                    } else if (
+                        details.start_date &&
+                        details.end_date < details.start_date
+                    ) {
+                        errors.end_date =
+                            "End date cannot be earlier than start date.";
+                    } else if (
+                        details.end_date > this.endDateField.max
+                    ) {
+                        errors.end_date =
+                            "End date cannot be in the future.";
+                    }
+                }
+
+                return errors;
+            }
+
+            // Submit updated project information to the Flask Boundary
+            async handleUpdateProject(event) {
+                event.preventDefault();
+
+                if (this.submitting) {
+                    return;
+                }
+
+                this.clearErrors();
+
+                const details = this.getProjectDetails();
+                const errors = this.validateProjectDetails(details);
+
+                if (Object.keys(errors).length > 0) {
+                    this.showMessage(
+                        "Please correct the highlighted fields."
+                    );
+
+                    this.showFieldErrors(errors);
+                    return;
+                }
+
+                // Avoid updating the database if nothing has changed
+                if (!this.hasUnsavedChanges()) {
+                    this.showMessage(
+                        "No changes have been made to the project."
+                    );
+                    return;
+                }
+
+                this.submitting = true;
+                this.submitButton.disabled = true;
+
+                const projectData = {
+                    project_name: details.project_name,
+                    project_description: details.project_description,
+                    progress: details.progress,
+                    start_date: details.start_date,
+                    end_date: details.progress === "Completed"
+                        ? details.end_date
+                        : null
+                };
+
+                try {
+                    const response = await fetch(this.updateUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(projectData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        this.saved = true;
+
+                        // Return to View Project with a success message
+                        window.location.href =
+                            this.projectUrl + "&updated=1";
+
+                    } else {
+                        this.showMessage(
+                            result.message ||
+                            "Unable to update project information."
+                        );
+
+                        if (result.errors) {
+                            this.showFieldErrors(result.errors);
+                        }
+                    }
+
+                } catch (error) {
+                    this.showMessage(
+                        "Unable to connect to the server."
+                    );
+
+                } finally {
+                    this.submitting = false;
+                    this.submitButton.disabled = false;
+                }
+            }
+        }
+
+        // Initialise Update Project page
+        new UpdateProjectPage();
+    </script>
+</body>
+</html>

@@ -30,10 +30,10 @@
         .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
         .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
         .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
-        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
         .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
         .nav-link:hover { background: #f0f5f7; color: #1c5062; }
         .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
 
         /* Main content */
         .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
@@ -53,7 +53,6 @@
         .read-only-field.description { min-height: 125px; align-items: flex-start; white-space: pre-wrap; line-height: 1.6; }
         .date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
         .date-fields .field { margin-bottom: 23px; }
-        .muted { color: #8290a3; }
         .section-divider { height: 1px; border: none; background: #edf0f5; margin: 26px 0; }
         .project-id { color: #8290a3; font-size: 12px; margin: 0; }
 
@@ -65,12 +64,13 @@
         .badge.ongoing { background: #e8f0ff; color: #315b9a; }
         .header-badge { margin-top: 5px; }
 
-        /* Form buttons */
+        /* Action buttons */
         .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding-top: 22px; margin-top: 27px; border-top: 1px solid #edf0f5; }
         .primary-button { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 0 20px; background: #1c5062; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
-        .primary-button:hover:not(:disabled) { background: #256d7f; }
-        .primary-button:disabled { opacity: .5; cursor: not-allowed; }
+        .primary-button:hover { background: #256d7f; }
 
+        /* Success message */
+        .success-message { width: 100%; max-width: 790px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
         [hidden] { display: none !important; }
         a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
@@ -182,6 +182,7 @@
             <div class="project-header">
                 <div>
                     <h1 class="page-title">{{ project.project_name }}</h1>
+
                     <p class="page-description">
                         View your project's information and progress.
                     </p>
@@ -199,6 +200,12 @@
                     </span>
                 {% endif %}
             </div>
+
+            <!-- Success Message -->
+            <p class="success-message"
+               id="successMessage"
+               role="status"
+               hidden></p>
 
             <!-- Project Information -->
             <div class="details-panel">
@@ -287,13 +294,10 @@
                 <!-- Project Actions -->
                 <div class="form-actions">
 
-                    <!-- Connected during the Update Project user story -->
-                    <button class="primary-button"
-                            type="button"
-                            disabled
-                            title="Edit Project will be available when implemented">
+                    <a class="primary-button"
+                       href="/interior-designer/projects/{{ project.project_id }}/edit?account_id={{ account_id }}&username={{ display_username | urlencode }}">
                         Edit Project
-                    </button>
+                    </a>
 
                 </div>
             </div>
@@ -304,6 +308,7 @@
         class ViewProjectPage {
             constructor() {
                 this.setupEvents();
+                this.checkSuccessMessage();
             }
 
             // Set up navigation events
@@ -313,6 +318,36 @@
                         window.location.href = "/";
                     }
                 );
+            }
+
+            // Display success message after updating a project
+            checkSuccessMessage() {
+                const params = new URLSearchParams(
+                    window.location.search
+                );
+
+                const successMessage = document.getElementById(
+                    "successMessage"
+                );
+
+                if (params.get("updated") === "1") {
+                    successMessage.textContent =
+                        "Project updated successfully.";
+
+                    successMessage.hidden = false;
+
+                    // Remove the success parameter from the URL
+                    params.delete("updated");
+
+                    const query = params.toString();
+
+                    window.history.replaceState(
+                        {},
+                        "",
+                        window.location.pathname +
+                        (query ? "?" + query : "")
+                    );
+                }
             }
         }
 

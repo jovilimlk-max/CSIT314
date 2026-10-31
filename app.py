@@ -32,6 +32,7 @@ from Boundary.suspendCompanyInformationPage import SuspendCompanyInformationPage
 from Boundary.createProjectPage import CreateProjectPage
 from Boundary.viewProjectsPage import ViewProjectsPage
 from Boundary.viewProjectPage import ViewProjectPage
+from Boundary.updateProjectPage import UpdateProjectPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -55,6 +56,7 @@ from Controllers.suspendCompanyInformationController import SuspendCompanyInform
 from Controllers.createProjectController import CreateProjectController
 from Controllers.viewProjectsController import ViewProjectsController
 from Controllers.viewProjectController import ViewProjectController
+from Controllers.updateProjectController import UpdateProjectController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -82,7 +84,7 @@ class RenovoApp:
         self.project = Project()
         self.project.initialise_database()
 
-        # Initialise Controllers
+        # Initialise User Account and Profile Controllers
         self.login_controller = UserLoginController(
             self.user_account,
             self.user_profile
@@ -162,6 +164,12 @@ class RenovoApp:
         )
 
         self.view_project_controller = ViewProjectController(
+            self.project,
+            self.company_information,
+            self.user_account
+        )
+
+        self.update_project_controller = UpdateProjectController(
             self.project,
             self.company_information,
             self.user_account
@@ -359,13 +367,7 @@ class RenovoApp:
         self.app.add_url_rule(
             "/company/create",
             view_func=create_company_view,
-            methods=["GET"]
-        )
-
-        self.app.add_url_rule(
-            "/company/create",
-            view_func=create_company_view,
-            methods=["POST"]
+            methods=["GET", "POST"]
         )
 
         # View Company Information
@@ -390,13 +392,7 @@ class RenovoApp:
         self.app.add_url_rule(
             "/interior-designer/company/edit",
             view_func=update_company_view,
-            methods=["GET"]
-        )
-
-        self.app.add_url_rule(
-            "/interior-designer/company/edit",
-            view_func=update_company_view,
-            methods=["POST"]
+            methods=["GET", "POST"]
         )
 
         # Suspend / Reactivate Company Information
@@ -436,7 +432,7 @@ class RenovoApp:
             methods=["GET", "POST"]
         )
 
-        # View an individual Project
+        # View individual Project
         view_project_view = ViewProjectPage.as_view(
             "view_project",
             self.view_project_controller
@@ -446,6 +442,19 @@ class RenovoApp:
             "/interior-designer/projects/<int:project_id>",
             view_func=view_project_view,
             methods=["GET"]
+        )
+
+        # Update Project
+        update_project_view = UpdateProjectPage.as_view(
+            "update_project",
+            self.update_project_controller,
+            self.view_project_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects/<int:project_id>/edit",
+            view_func=update_project_view,
+            methods=["GET", "POST"]
         )
 
     # Start Flask
