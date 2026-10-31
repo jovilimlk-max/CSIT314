@@ -5,6 +5,7 @@ What this code does?
 - Create company information for an Interior Designer account.
 - Check whether an account already has company information.
 - Retrieve company information belonging to an account.
+- Update existing company information.
 - Allow one company information record per account.
 - Store company status as active when created.
 - Initialise the company information database.
@@ -29,6 +30,7 @@ class CompanyInformation:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT 1
                 FROM company_information
@@ -122,9 +124,61 @@ class CompanyInformation:
         finally:
             connection.close()
 
+    # Update the existing company information
+    def update_company_information(
+        self,
+        account_id,
+        company_name,
+        company_address,
+        working_hours,
+        company_email,
+        company_phone,
+        established_date,
+        company_description
+    ):
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute("""
+                UPDATE company_information
+                SET
+                    company_name = ?,
+                    company_address = ?,
+                    working_hours = ?,
+                    company_email = ?,
+                    company_phone = ?,
+                    established_date = ?,
+                    company_description = ?
+                WHERE account_id = ?
+            """, (
+                company_name,
+                company_address,
+                working_hours,
+                company_email,
+                company_phone,
+                established_date,
+                company_description,
+                account_id
+            ))
+
+            # Check whether the company record exists
+            updated = cursor.rowcount > 0
+
+            connection.commit()
+
+            return updated
+
+        finally:
+            connection.close()
+
     # Initialise the company information database
     def initialise_database(self):
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
         connection = sqlite3.connect(self.db_path)
 

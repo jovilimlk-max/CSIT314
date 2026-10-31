@@ -213,13 +213,12 @@
                 {% endif %}
             </div>
 
-            <!-- Success Message -->
+            <!-- Success Message: Company Created or Updated -->
             {% if company %}
                 <p class="success-message"
                    id="successMessage"
                    role="status"
                    hidden>
-                    Company information created successfully.
                 </p>
             {% endif %}
 
@@ -311,12 +310,11 @@
                             </button>
                         {% endif %}
 
-                        <button class="primary-button"
-                                type="button"
-                                disabled
-                                title="Available in US5">
+                        <!-- Edit Company Information -->
+                        <a class="primary-button"
+                           href="/interior-designer/company/edit?account_id={{ account_id }}&username={{ username | urlencode }}">
                             Edit
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -367,13 +365,13 @@
             setupEvents() {
                 const projectsLink = document.getElementById("projectsLink");
 
-                // Projects will be connected when its pages are implemented
+                // Projects will be connected when their pages are implemented
                 projectsLink.addEventListener("click", event => {
                     event.preventDefault();
                 });
             }
 
-            // Display success message after company creation
+            // Display success message after company creation or update
             checkSuccessMessage() {
                 const successMessage =
                     document.getElementById("successMessage");
@@ -386,20 +384,34 @@
                     window.location.search
                 );
 
+                let message = "";
+
                 if (params.get("created") === "1") {
-                    successMessage.hidden = false;
-
-                    params.delete("created");
-
-                    const query = params.toString();
-
-                    window.history.replaceState(
-                        {},
-                        "",
-                        window.location.pathname +
-                        (query ? "?" + query : "")
-                    );
+                    message = "Company information created successfully.";
+                } else if (params.get("updated") === "1") {
+                    message = "Company information updated successfully.";
                 }
+
+                if (!message) {
+                    return;
+                }
+
+                successMessage.textContent = message;
+                successMessage.hidden = false;
+
+                // Remove success parameters so the message
+                // does not reappear when refreshing the page
+                params.delete("created");
+                params.delete("updated");
+
+                const query = params.toString();
+
+                window.history.replaceState(
+                    {},
+                    "",
+                    window.location.pathname +
+                    (query ? "?" + query : "")
+                );
             }
         }
 

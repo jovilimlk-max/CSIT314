@@ -1,0 +1,620 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Update Company Information</title>
+
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button, input, textarea { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; transition: background .2s, color .2s; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; margin-bottom: 28px; color: #387c83; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .back-link:hover { color: #1c5062; text-decoration: underline; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 32px; }
+
+        /* Company information form */
+        .form-panel { width: 100%; max-width: 760px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 34px; box-shadow: 0 8px 28px #1c34500a; }
+        .form-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 27px; }
+        .field { margin-bottom: 24px; }
+        .field label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 700; color: #26344a; }
+        .required { color: #b9434e; margin-left: 3px; }
+        .control { width: 100%; height: 46px; padding: 0 14px; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; background: white; color: #26344a; font-size: 14px; }
+        .control::placeholder { color: #9aa6b5; }
+        .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        textarea.control { height: auto; min-height: 145px; padding: 13px 14px; resize: vertical; line-height: 1.6; }
+        .field-hint { font-size: 12px; color: #8290a3; line-height: 1.5; margin: 8px 0 0; }
+        .control.invalid { border-color: #b9434e; }
+        .field-error { display: none; margin: 7px 0 0; color: #a22735; font-size: 12px; }
+        .field-error.show { display: block; }
+
+        /* Form buttons */
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 22px; border-top: 1px solid #edf0f5; }
+        .cancel-button { min-width: 105px; height: 44px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .cancel-button:hover { background: #f0f4f8; }
+        .submit-button { min-width: 175px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .submit-button:hover { background: #256d7f; }
+        .submit-button:disabled { opacity: .6; cursor: not-allowed; }
+
+        /* Form messages */
+        .message { display: none; margin: 0 0 24px; padding: 13px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+        .message.show { display: block; }
+        .message.error { background: #fff0f0; border: 1px solid #f2cbd1; color: #a22735; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .form-panel { padding: 28px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .form-panel { padding: 22px; }
+            .form-actions { gap: 10px; }
+            .cancel-button, .submit-button { min-width: 0; flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    {% set display_username = username | default("Interior Designer", true) %}
+
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
+
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">ID</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ display_username }}</strong>
+                    <small>Interior Designer</small>
+                </div>
+            </div>
+
+            <button class="logout-button" id="logoutButton" type="button">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Company Information -->
+                <a class="nav-link active"
+                   href="#"
+                   id="companyInfoLink"
+                   aria-current="page">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M8 21V9h8v12"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+
+                    Company Info
+                </a>
+
+                <!-- Projects -->
+                <a class="nav-link"
+                   href="#"
+                   id="projectsLink">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M7 5V3h6l2 2"/>
+                    </svg>
+
+                    Projects
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <button class="back-link" id="backButton" type="button">
+                <span aria-hidden="true">←</span>
+                Back to Company Info
+            </button>
+
+            <div class="page-label">Company Management</div>
+
+            <h1 class="page-title">
+                Update company information
+            </h1>
+
+            <p class="page-description">
+                Edit your company's details below and save your changes.
+            </p>
+
+            <!-- Update Company Information Form -->
+            <div class="form-panel">
+
+                <h2 class="form-heading">Company Information</h2>
+
+                <p id="message" class="message"
+                   role="status" aria-live="polite"></p>
+
+                <form id="updateCompanyForm" novalidate>
+
+                    <!-- Company Name -->
+                    <div class="field">
+                        <label for="company_name">
+                            Company Name <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="company_name"
+                               type="text" name="company_name"
+                               value="{{ company.company_name }}"
+                               aria-describedby="company_name_error"
+                               required>
+
+                        <p class="field-error" id="company_name_error"></p>
+                    </div>
+
+                    <!-- Company Address -->
+                    <div class="field">
+                        <label for="company_address">
+                            Company Address <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="company_address"
+                               type="text" name="company_address"
+                               value="{{ company.company_address }}"
+                               aria-describedby="company_address_error"
+                               required>
+
+                        <p class="field-error" id="company_address_error"></p>
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div class="field">
+                        <label for="working_hours">
+                            Working Hours <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="working_hours"
+                               type="text" name="working_hours"
+                               value="{{ company.working_hours }}"
+                               aria-describedby="working_hours_error"
+                               required>
+
+                        <p class="field-error" id="working_hours_error"></p>
+                    </div>
+
+                    <!-- Company Email -->
+                    <div class="field">
+                        <label for="company_email">
+                            Company Email <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="company_email"
+                               type="email" name="company_email"
+                               value="{{ company.company_email }}"
+                               aria-describedby="company_email_error"
+                               required>
+
+                        <p class="field-error" id="company_email_error"></p>
+                    </div>
+
+                    <!-- Company Phone Number -->
+                    <div class="field">
+                        <label for="company_phone">
+                            Company Phone Number <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="company_phone"
+                               type="tel" name="company_phone"
+                               value="{{ company.company_phone }}"
+                               aria-describedby="company_phone_error"
+                               required>
+
+                        <p class="field-error" id="company_phone_error"></p>
+                    </div>
+
+                    <!-- Established Date -->
+                    <div class="field">
+                        <label for="established_date">
+                            Established Date <span class="required">*</span>
+                        </label>
+
+                        <input class="control" id="established_date"
+                               type="date" name="established_date"
+                               value="{{ company.established_date }}"
+                               aria-describedby="established_date_error"
+                               required>
+
+                        <p class="field-hint">
+                            Select the date your company was established.
+                        </p>
+
+                        <p class="field-error" id="established_date_error"></p>
+                    </div>
+
+                    <!-- Company Description -->
+                    <div class="field">
+                        <label for="company_description">
+                            What the Company Does
+                            <span class="required">*</span>
+                        </label>
+
+                        <textarea class="control"
+                                  id="company_description"
+                                  name="company_description"
+                                  aria-describedby="company_description_error"
+                                  required>{{ company.company_description }}</textarea>
+
+                        <p class="field-error" id="company_description_error"></p>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="form-actions">
+                        <button class="cancel-button"
+                                id="cancelButton" type="button">
+                            Cancel
+                        </button>
+
+                        <button class="submit-button"
+                                id="submitButton" type="submit">
+                            Save changes
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class UpdateCompanyInformationPage {
+            constructor() {
+                this.form = document.getElementById("updateCompanyForm");
+                this.message = document.getElementById("message");
+                this.submitButton = document.getElementById("submitButton");
+
+                this.accountId = {{ account_id | tojson }};
+                this.username = {{ display_username | tojson }};
+
+                this.fields = [
+                    "company_name",
+                    "company_address",
+                    "working_hours",
+                    "company_email",
+                    "company_phone",
+                    "established_date",
+                    "company_description"
+                ];
+
+                this.companyInfoUrl =
+                    "/interior-designer/company?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.updateUrl =
+                    "/interior-designer/company/edit?account_id=" +
+                    encodeURIComponent(this.accountId);
+
+                this.originalDetails = this.getCompanyDetails();
+                this.submitting = false;
+
+                this.setupEvents();
+            }
+
+            // Set up form and navigation events
+            setupEvents() {
+                this.form.addEventListener(
+                    "submit", event => this.handleUpdateCompany(event)
+                );
+
+                document.getElementById("backButton").addEventListener(
+                    "click", () => this.returnToCompany()
+                );
+
+                document.getElementById("cancelButton").addEventListener(
+                    "click", () => this.returnToCompany()
+                );
+
+                document.getElementById("logoutButton").addEventListener(
+                    "click", () => this.logout()
+                );
+
+                document.getElementById("companyInfoLink").addEventListener(
+                    "click", event => {
+                        event.preventDefault();
+                        this.returnToCompany();
+                    }
+                );
+
+                document.getElementById("projectsLink").addEventListener(
+                    "click", event => {
+                        event.preventDefault();
+                    }
+                );
+
+                // Clear field errors when users correct their input
+                this.fields.forEach(field => {
+                    document.getElementById(field).addEventListener(
+                        "input", () => this.clearFieldError(field)
+                    );
+                });
+            }
+
+            // Retrieve the entered company information
+            getCompanyDetails() {
+                const details = {};
+
+                this.fields.forEach(field => {
+                    details[field] =
+                        document.getElementById(field).value.trim();
+                });
+
+                return details;
+            }
+
+            // Check whether any company information has changed
+            hasUnsavedChanges() {
+                const currentDetails = this.getCompanyDetails();
+
+                return this.fields.some(field =>
+                    currentDetails[field] !== this.originalDetails[field]
+                );
+            }
+
+            // Confirm before leaving the form
+            navigateTo(url) {
+                if (this.hasUnsavedChanges()) {
+                    if (!confirm("Discard unsaved changes?")) {
+                        return;
+                    }
+                }
+
+                window.location.href = url;
+            }
+
+            // Return to View Company Information
+            returnToCompany() {
+                this.navigateTo(this.companyInfoUrl);
+            }
+
+            // Return to Login Page
+            logout() {
+                this.navigateTo("/");
+            }
+
+            // Display a general error message
+            showMessage(text) {
+                this.message.textContent = text;
+                this.message.className = "message show error";
+            }
+
+            // Clear the general message and field errors
+            clearErrors() {
+                this.message.className = "message";
+                this.message.textContent = "";
+
+                this.fields.forEach(field => {
+                    this.clearFieldError(field);
+                });
+            }
+
+            // Clear the error for a specific field
+            clearFieldError(field) {
+                const input = document.getElementById(field);
+                const error = document.getElementById(field + "_error");
+
+                input.classList.remove("invalid");
+                input.removeAttribute("aria-invalid");
+
+                error.textContent = "";
+                error.classList.remove("show");
+            }
+
+            // Display validation errors beneath fields
+            showFieldErrors(errors) {
+                this.fields.forEach(field => {
+                    if (errors[field]) {
+                        const input = document.getElementById(field);
+                        const error = document.getElementById(field + "_error");
+
+                        input.classList.add("invalid");
+                        input.setAttribute("aria-invalid", "true");
+
+                        error.textContent = errors[field];
+                        error.classList.add("show");
+                    }
+                });
+
+                const firstInvalidField = this.fields.find(
+                    field => errors[field]
+                );
+
+                if (firstInvalidField) {
+                    document.getElementById(firstInvalidField).focus();
+                }
+            }
+
+            // Validate the updated company details
+            validateCompanyDetails(details) {
+                const errors = {};
+
+                const labels = {
+                    company_name: "Company name",
+                    company_address: "Company address",
+                    working_hours: "Working hours",
+                    company_email: "Company email",
+                    company_phone: "Company phone number",
+                    established_date: "Established date",
+                    company_description: "What the company does"
+                };
+
+                // Check required fields
+                this.fields.forEach(field => {
+                    if (!details[field]) {
+                        errors[field] = labels[field] + " is required.";
+                    }
+                });
+
+                // Check email format
+                if (details.company_email &&
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.company_email)) {
+                    errors.company_email =
+                        "Please enter a valid company email address.";
+                }
+
+                // Check established date
+                if (details.established_date) {
+                    const selectedDate = new Date(
+                        details.established_date + "T00:00:00"
+                    );
+
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    if (Number.isNaN(selectedDate.getTime())) {
+                        errors.established_date =
+                            "Please enter a valid established date.";
+                    } else if (selectedDate > today) {
+                        errors.established_date =
+                            "Established date cannot be in the future.";
+                    }
+                }
+
+                return errors;
+            }
+
+            // Submit updated company information to the Flask Boundary
+            async handleUpdateCompany(event) {
+                event.preventDefault();
+
+                if (this.submitting) {
+                    return;
+                }
+
+                this.clearErrors();
+
+                const details = this.getCompanyDetails();
+                const errors = this.validateCompanyDetails(details);
+
+                if (Object.keys(errors).length > 0) {
+                    this.showMessage(
+                        "Please correct the highlighted fields."
+                    );
+
+                    this.showFieldErrors(errors);
+                    return;
+                }
+
+                // Prevent unnecessary database updates
+                if (!this.hasUnsavedChanges()) {
+                    this.showMessage(
+                        "No changes have been made to the company information."
+                    );
+                    return;
+                }
+
+                this.submitting = true;
+                this.submitButton.disabled = true;
+
+                try {
+                    const response = await fetch(this.updateUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(details)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+
+                        // Redirect to View Company Information
+                        window.location.href =
+                            this.companyInfoUrl + "&updated=1";
+
+                    } else {
+                        this.showMessage(
+                            result.message ||
+                            "Unable to update company information."
+                        );
+
+                        if (result.errors) {
+                            this.showFieldErrors(result.errors);
+                        }
+                    }
+
+                } catch (error) {
+                    this.showMessage(
+                        "Unable to connect to the server."
+                    );
+
+                } finally {
+                    this.submitting = false;
+                    this.submitButton.disabled = false;
+                }
+            }
+        }
+
+        // Initialise the Update Company Information page
+        new UpdateCompanyInformationPage();
+    </script>
+</body>
+</html>

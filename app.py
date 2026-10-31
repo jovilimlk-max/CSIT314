@@ -23,6 +23,7 @@ from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
 from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
 from Boundary.viewCompanyInformationPage import ViewCompanyInformationPage
+from Boundary.updateCompanyInformationPage import UpdateCompanyInformationPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -37,6 +38,7 @@ from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
 from Controllers.createCompanyInformationController import CreateCompanyInformationController
 from Controllers.viewCompanyInformationController import ViewCompanyInformationController
+from Controllers.updateCompanyInformationController import UpdateCompanyInformationController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -111,6 +113,11 @@ class RenovoApp:
         )
 
         self.view_company_controller = ViewCompanyInformationController(
+            self.company_information,
+            self.user_account
+        )
+
+        self.update_company_controller = UpdateCompanyInformationController(
             self.company_information,
             self.user_account
         )
@@ -326,6 +333,25 @@ class RenovoApp:
             "/interior-designer/company",
             view_func=view_company_view,
             methods=["GET"]
+        )
+
+        # Update Company Information
+        update_company_view = UpdateCompanyInformationPage.as_view(
+            "update_company_information",
+            self.update_company_controller,
+            self.view_company_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/company/edit",
+            view_func=update_company_view,
+            methods=["GET"]
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/company/edit",
+            view_func=update_company_view,
+            methods=["POST"]
         )
 
     # Start Flask
