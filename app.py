@@ -34,6 +34,7 @@ from Boundary.viewProjectsPage import ViewProjectsPage
 from Boundary.viewProjectPage import ViewProjectPage
 from Boundary.updateProjectPage import UpdateProjectPage
 from Boundary.suspendProjectPage import SuspendProjectPage
+from Boundary.searchProjectPage import SearchProjectPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -59,6 +60,7 @@ from Controllers.viewProjectsController import ViewProjectsController
 from Controllers.viewProjectController import ViewProjectController
 from Controllers.updateProjectController import UpdateProjectController
 from Controllers.suspendProjectController import SuspendProjectController
+from Controllers.searchProjectController import SearchProjectController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -178,6 +180,13 @@ class RenovoApp:
         )
 
         self.suspend_project_controller = SuspendProjectController(
+            self.project,
+            self.company_information,
+            self.user_account
+        )
+
+        # Initialise Search Project Controller
+        self.search_project_controller = SearchProjectController(
             self.project,
             self.company_information,
             self.user_account
@@ -438,6 +447,18 @@ class RenovoApp:
             "/interior-designer/projects/create",
             view_func=create_project_view,
             methods=["GET", "POST"]
+        )
+
+        # Search Projects
+        search_project_view = SearchProjectPage.as_view(
+            "search_project",
+            self.search_project_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects/search",
+            view_func=search_project_view,
+            methods=["GET"]
         )
 
         # View individual Project

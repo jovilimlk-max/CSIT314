@@ -10,7 +10,7 @@
         :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; }
-        button { font: inherit; }
+        button, input { font: inherit; }
 
         /* Top navigation bar */
         .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
@@ -40,51 +40,60 @@
         .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
         .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
         .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0; }
-        .page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
-
-        /* Buttons */
-        .primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; background: #1c5062; border: 1px solid #1c5062; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 32px; }
+        .primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; background: #1c5062; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
         .primary-button:hover { background: #256d7f; }
-        .secondary-button { display: inline-flex; justify-content: center; align-items: center; min-height: 36px; padding: 0 16px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #52647a; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
-        .secondary-button:hover { background: #f0f4f8; }
+
+        /* Project listing */
+        .projects-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 28px; box-shadow: 0 8px 28px #1c34500a; }
+        .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 24px; }
+        .panel-title { color: #14253e; font-size: 18px; font-weight: 750; margin: 0; }
+        .project-count { color: #8290a3; font-size: 12px; font-weight: 600; }
+
+        /* Search */
+        .search-form { display: flex; align-items: stretch; flex-wrap: wrap; gap: 12px; margin-bottom: 23px; }
+        .search-input-wrapper { position: relative; flex: 1; min-width: 220px; }
+        .search-icon { position: absolute; top: 50%; left: 14px; transform: translateY(-50%); width: 18px; height: 18px; color: #8290a3; pointer-events: none; }
+        .search-input { width: 100%; height: 44px; padding: 0 15px 0 42px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; color: #26344a; font-size: 13px; }
+        .search-input:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        .search-input::placeholder { color: #98a3b2; }
+        .search-button { height: 44px; min-width: 100px; padding: 0 18px; background: #1c5062; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .search-button:hover { background: #256d7f; }
+        .search-button:disabled { opacity: .6; cursor: not-allowed; }
+        .clear-button { height: 44px; min-width: 85px; padding: 0 16px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .clear-button:hover { background: #f0f4f8; }
+        .search-error { margin: 0 0 18px; padding: 12px 15px; background: #fff0f0; border: 1px solid #f2cbd1; border-radius: 8px; color: #a22735; font-size: 13px; }
 
         /* Projects table */
-        .projects-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 28px; box-shadow: 0 8px 28px #1c34500a; }
-        .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 22px; }
-        .panel-title { color: #14253e; font-size: 17px; font-weight: 750; margin: 0; }
-        .project-count { color: #8290a3; font-size: 12px; font-weight: 600; }
-        .table-scroll { width: 100%; overflow-x: auto; }
-        .projects-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        .projects-table th { padding: 15px 14px; background: #f5f7fa; color: #52647a; font-size: 12px; font-weight: 750; white-space: nowrap; border-bottom: 1px solid #e4e9f2; }
-        .projects-table td { padding: 17px 14px; color: #26344a; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
+        .table-container { width: 100%; overflow-x: auto; }
+        .projects-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .projects-table th { padding: 15px 16px; background: #f5f7fa; color: #718096; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+        .projects-table td { padding: 18px 16px; border-bottom: 1px solid #edf0f5; color: #52647a; font-size: 13px; vertical-align: middle; }
         .projects-table tbody tr:last-child td { border-bottom: none; }
-        .projects-table tbody tr:hover { background: #fafbfd; }
-        .project-name { color: #14253e; font-weight: 700; overflow-wrap: anywhere; }
-        .project-id { color: #738096; font-weight: 600; white-space: nowrap; }
-        .date-text { line-height: 1.7; white-space: nowrap; }
-        .muted { color: #8290a3; }
-        .action-cell { text-align: right; }
+        .projects-table tbody tr:hover { background: #fafcfe; }
+        .project-id { color: #8290a3; font-size: 12px; font-weight: 650; }
+        .project-name { color: #14253e; font-weight: 750; overflow-wrap: anywhere; }
+        .date-text { white-space: nowrap; }
+        .actions-column { text-align: right; }
+        .view-button { display: inline-flex; justify-content: center; align-items: center; min-width: 75px; min-height: 35px; padding: 0 13px; border: 1px solid #c6dce0; border-radius: 7px; background: #eff7f8; color: #1c5062; font-size: 12px; font-weight: 750; text-decoration: none; cursor: pointer; }
+        .view-button:hover { background: #dceef0; }
 
-        /* Progress and status badges */
-        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 20px; font-size: 11px; font-weight: 750; white-space: nowrap; }
-        .badge-dot { height: 7px; width: 7px; border-radius: 50%; background: currentColor; }
-        .badge.ongoing { background: #e8f0ff; color: #315b9a; }
-        .badge.completed { background: #e6f6f0; color: #186b4d; }
-        .badge.active { background: #e6f6f0; color: #186b4d; }
+        /* Project badges */
+        .badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 20px; font-size: 11px; font-weight: 750; white-space: nowrap; }
+        .badge-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+        .badge.active, .badge.completed { background: #e6f6f0; color: #186b4d; }
         .badge.suspended { background: #fff0f0; color: #a22735; }
+        .badge.ongoing { background: #e8f0ff; color: #315b9a; }
 
-        /* Empty state */
-        .empty-state { padding: 52px 25px; text-align: center; }
-        .empty-icon { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 20px; background: #e6f3f3; border-radius: 16px; color: #2b7b85; }
-        .empty-icon svg { height: 32px; width: 32px; }
-        .empty-title { margin: 0 0 10px; color: #14253e; font-size: 20px; font-weight: 750; }
-        .empty-description { max-width: 450px; margin: 0 auto 24px; color: #738096; font-size: 14px; line-height: 1.7; }
-
-        /* Notifications */
+        /* Empty states and messages */
+        .empty-state { text-align: center; padding: 58px 20px; }
+        .empty-icon { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 18px; background: #eaf3f6; color: #387c83; border-radius: 50%; font-size: 26px; }
+        .empty-title { margin: 0 0 10px; color: #14253e; font-size: 17px; font-weight: 750; }
+        .empty-description { margin: 0 auto 20px; max-width: 450px; color: #738096; font-size: 13px; line-height: 1.7; }
         .success-message { padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
 
         [hidden] { display: none !important; }
-        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+        a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
         /* Tablet layout */
         @media (max-width: 1000px) {
@@ -108,15 +117,18 @@
             .nav-link svg { width: 17px; height: 17px; }
             .main-content { padding: 30px 20px; }
             .page-title { font-size: 26px; }
-            .page-heading { flex-direction: column; }
+            .page-header { flex-direction: column; align-items: flex-start; }
             .projects-panel { padding: 18px; }
-            .projects-table { min-width: 690px; }
-            .empty-state { padding: 42px 12px; }
+            .search-form { flex-wrap: wrap; }
+            .search-input-wrapper { flex-basis: 100%; }
+            .search-button, .clear-button { flex: 1; }
         }
     </style>
 </head>
 
 <body>
+    {% set display_username = username | default("Interior Designer", true) %}
+
     <!-- Top Navigation Bar -->
     <header class="topbar">
         <div class="brand">RENO<span>VO</span></div>
@@ -126,7 +138,7 @@
                 <div class="user-avatar">ID</div>
 
                 <div class="user-details">
-                    <strong>Hi, {{ username }}</strong>
+                    <strong>Hi, {{ display_username }}</strong>
                     <small>Interior Designer</small>
                 </div>
             </div>
@@ -147,8 +159,7 @@
 
                 <!-- Company Information -->
                 <a class="nav-link"
-                   href="#"
-                   id="companyInfoLink">
+                   href="/interior-designer/company?account_id={{ account_id }}&username={{ display_username | urlencode }}">
 
                     <svg viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="1.8"
@@ -163,8 +174,7 @@
 
                 <!-- Projects -->
                 <a class="nav-link active"
-                   href="#"
-                   id="projectsLink"
+                   href="/interior-designer/projects?account_id={{ account_id }}&username={{ display_username | urlencode }}"
                    aria-current="page">
 
                     <svg viewBox="0 0 24 24" fill="none"
@@ -183,167 +193,127 @@
         <!-- Main Content -->
         <main class="main-content">
 
+            <div class="page-label">Project Management</div>
+
             <!-- Page Heading -->
-            <div class="page-heading">
+            <div class="page-header">
                 <div>
-                    <div class="page-label">Project Management</div>
                     <h1 class="page-title">Projects</h1>
 
                     <p class="page-description">
-                        Manage your ongoing and completed projects.
+                        View and manage your company's ongoing and completed projects.
                     </p>
                 </div>
 
                 {% if company %}
                     <a class="primary-button"
-                       href="#"
-                       id="createProjectButton">
-                        <span aria-hidden="true">+</span>
-                        Create Project
+                       href="/interior-designer/projects/create?account_id={{ account_id }}&username={{ display_username | urlencode }}">
+                        + Create Project
                     </a>
                 {% endif %}
             </div>
 
-            <!-- Success Message -->
-            <div class="success-message"
-                 id="successMessage"
-                 role="status"
-                 hidden></div>
+            <!-- Success Message After Creating Project -->
+            <p class="success-message"
+               id="successMessage"
+               role="status"
+               hidden></p>
 
-            {% if not company %}
+            <!-- Projects Panel -->
+            <section class="projects-panel">
 
-                <!-- No Company Information -->
-                <div class="projects-panel">
-                    <div class="empty-state">
+                <div class="panel-heading">
+                    <h2 class="panel-title">All Projects</h2>
 
-                        <div class="empty-icon">
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.8"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                <path d="M8 21V9h8v12"/>
-                                <path d="M3 9h18"/>
-                            </svg>
-                        </div>
-
-                        <h2 class="empty-title">
-                            Create your company information first
-                        </h2>
-
-                        <p class="empty-description">
-                            You need to create company information before
-                            adding projects to your company's portfolio.
-                        </p>
-
-                        <a class="primary-button"
-                           href="#"
-                           id="createCompanyButton">
-                            Create Company Info
-                        </a>
-                    </div>
+                    <span class="project-count" id="projectCount">
+                        {{ projects | length if projects else 0 }} projects
+                    </span>
                 </div>
 
-            {% elif not projects %}
+                {% if company %}
 
-                <!-- No Projects Yet -->
-                <div class="projects-panel">
-                    <div class="empty-state">
+                    <!-- Search Project Form -->
+                    <form class="search-form" id="searchForm">
 
-                        <div class="empty-icon">
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.8"
-                                 stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="5" width="18" height="16" rx="2"/>
-                                <path d="M3 9h18"/>
-                                <path d="M7 5V3h6l2 2"/>
+                        <div class="search-input-wrapper">
+                            <svg class="search-icon"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                                 aria-hidden="true">
+                                <circle cx="11" cy="11" r="7"/>
+                                <path d="m20 20-4-4"/>
                             </svg>
+
+                            <input class="search-input"
+                                   id="searchInput"
+                                   name="query"
+                                   type="text"
+                                   maxlength="255"
+                                   placeholder="Search projects by name"
+                                   aria-label="Search projects by name">
                         </div>
 
-                        <h2 class="empty-title">
-                            No projects yet
-                        </h2>
+                        <button class="search-button"
+                                id="searchButton"
+                                type="submit">
+                            Search
+                        </button>
 
-                        <p class="empty-description">
-                            You haven't created any projects yet.
-                            Add your first ongoing or completed project
-                            to start building your portfolio.
-                        </p>
+                        <button class="clear-button"
+                                id="clearButton"
+                                type="button">
+                            Clear
+                        </button>
+                    </form>
 
-                        <a class="primary-button"
-                           href="#"
-                           id="emptyCreateButton">
-                            <span aria-hidden="true">+</span>
-                            Create Project
-                        </a>
-                    </div>
-                </div>
+                    <!-- Search Error -->
+                    <p class="search-error"
+                       id="searchError"
+                       role="alert"
+                       hidden></p>
 
-            {% else %}
-
-                <!-- Projects Listing -->
-                <div class="projects-panel">
-
-                    <div class="panel-heading">
-                        <h2 class="panel-title">All Projects</h2>
-
-                        <span class="project-count">
-                            {{ projects | length }}
-                            project{{ "s" if projects | length != 1 else "" }}
-                        </span>
-                    </div>
-
-                    <div class="table-scroll">
+                    <!-- Projects Table -->
+                    <div class="table-container" id="tableContainer" {% if not projects %}hidden{% endif %}>
                         <table class="projects-table">
-
                             <thead>
                                 <tr>
                                     <th>Project ID</th>
                                     <th>Project Name</th>
-                                    <th>Dates</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
                                     <th>Progress</th>
                                     <th>Status</th>
-                                    <th>Action</th>
+                                    <th class="actions-column">Action</th>
                                 </tr>
                             </thead>
 
-                            <tbody>
+                            <tbody id="projectsTableBody">
                                 {% for project in projects %}
                                     <tr>
-
-                                        <!-- Project ID -->
                                         <td>
                                             <span class="project-id">
-                                                #{{ "%04d" | format(project.project_id) }}
+                                                {{ project.project_id }}
                                             </span>
                                         </td>
 
-                                        <!-- Project Name -->
                                         <td>
                                             <span class="project-name">
                                                 {{ project.project_name }}
                                             </span>
                                         </td>
 
-                                        <!-- Project Dates -->
-                                        <td>
-                                            <div class="date-text">
-                                                <div>
-                                                    {{ project.start_date }}
-                                                </div>
-
-                                                {% if project.progress == "Completed" %}
-                                                    <div class="muted">
-                                                        {{ project.end_date or "No end date" }}
-                                                    </div>
-                                                {% else %}
-                                                    <div class="muted">
-                                                        No end date
-                                                    </div>
-                                                {% endif %}
-                                            </div>
+                                        <td class="date-text">
+                                            {{ project.start_date }}
                                         </td>
 
-                                        <!-- Project Progress -->
+                                        <td class="date-text">
+                                            {{ project.end_date or "-" }}
+                                        </td>
+
                                         <td>
                                             {% if project.progress == "Ongoing" %}
                                                 <span class="badge ongoing">
@@ -358,7 +328,6 @@
                                             {% endif %}
                                         </td>
 
-                                        <!-- Project Status -->
                                         <td>
                                             {% if project.status == "active" %}
                                                 <span class="badge active">
@@ -373,24 +342,53 @@
                                             {% endif %}
                                         </td>
 
-                                        <!-- View Project -->
-                                        <td class="action-cell">
-                                            <a class="secondary-button"
-                                               href="/interior-designer/projects/{{ project.project_id }}?account_id={{ account_id }}&username={{ username | urlencode }}">
+                                        <td class="actions-column">
+                                            <a class="view-button"
+                                               href="/interior-designer/projects/{{ project.project_id }}?account_id={{ account_id }}&username={{ display_username | urlencode }}">
                                                 View
                                             </a>
                                         </td>
-
                                     </tr>
                                 {% endfor %}
                             </tbody>
-
                         </table>
                     </div>
-                </div>
 
-            {% endif %}
+                    <!-- No Projects or No Search Results -->
+                    <div class="empty-state" id="emptyState" {% if projects %}hidden{% endif %}>
+                        <div class="empty-icon" aria-hidden="true">⌕</div>
 
+                        <h3 class="empty-title" id="emptyTitle">
+                            No projects yet
+                        </h3>
+
+                        <p class="empty-description" id="emptyDescription">
+                            You haven't created any projects yet. Create your first project to get started.
+                        </p>
+                    </div>
+
+                {% else %}
+
+                    <!-- No Company Information -->
+                    <div class="empty-state">
+                        <div class="empty-icon" aria-hidden="true">⌂</div>
+
+                        <h3 class="empty-title">
+                            Company information required
+                        </h3>
+
+                        <p class="empty-description">
+                            You need to create your company information before you can manage projects.
+                        </p>
+
+                        <a class="primary-button"
+                           href="/company/create?account_id={{ account_id }}&username={{ display_username | urlencode }}">
+                            Create Company Information
+                        </a>
+                    </div>
+
+                {% endif %}
+            </section>
         </main>
     </div>
 
@@ -398,105 +396,314 @@
         class ViewProjectsPage {
             constructor() {
                 this.accountId = {{ account_id | tojson }};
-                this.username = {{ username | tojson }};
+                this.username = {{ display_username | tojson }};
+                this.hasCompany = {{ (company is not none) | tojson }};
 
-                this.companyInfoUrl =
-                    "/interior-designer/company?account_id=" +
-                    encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                this.searchForm = document.getElementById("searchForm");
+                this.searchInput = document.getElementById("searchInput");
+                this.searchButton = document.getElementById("searchButton");
+                this.clearButton = document.getElementById("clearButton");
+                this.searchError = document.getElementById("searchError");
 
-                this.projectsUrl =
-                    "/interior-designer/projects?account_id=" +
-                    encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                this.tableContainer = document.getElementById("tableContainer");
+                this.tableBody = document.getElementById("projectsTableBody");
+                this.projectCount = document.getElementById("projectCount");
 
-                this.createProjectUrl =
-                    "/interior-designer/projects/create?account_id=" +
-                    encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                this.emptyState = document.getElementById("emptyState");
+                this.emptyTitle = document.getElementById("emptyTitle");
+                this.emptyDescription = document.getElementById("emptyDescription");
 
-                this.createCompanyUrl =
-                    "/company/create?account_id=" +
-                    encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                this.searching = false;
 
                 this.setupEvents();
                 this.checkSuccessMessage();
             }
 
-            // Connect navigation buttons and links
+            // Set up page events
             setupEvents() {
-                document.getElementById("companyInfoLink").href =
-                    this.companyInfoUrl;
-
-                document.getElementById("projectsLink").href =
-                    this.projectsUrl;
-
                 document.getElementById("logoutButton").addEventListener(
-                    "click",
-                    () => window.location.href = "/"
+                    "click", () => {
+                        window.location.href = "/";
+                    }
                 );
 
-                // Create Project button in page heading
-                const createButton = document.getElementById(
-                    "createProjectButton"
-                );
-
-                if (createButton) {
-                    createButton.href = this.createProjectUrl;
+                if (!this.hasCompany) {
+                    return;
                 }
 
-                // Create Project button in empty state
-                const emptyCreateButton = document.getElementById(
-                    "emptyCreateButton"
+                this.searchForm.addEventListener(
+                    "submit", event => this.handleSearch(event)
                 );
 
-                if (emptyCreateButton) {
-                    emptyCreateButton.href = this.createProjectUrl;
+                this.clearButton.addEventListener(
+                    "click", () => this.clearSearch()
+                );
+
+                this.searchInput.addEventListener("input", () => {
+                    this.hideSearchError();
+                });
+            }
+
+            // Display notification after creating a project
+            checkSuccessMessage() {
+                const params = new URLSearchParams(window.location.search);
+                const successMessage = document.getElementById("successMessage");
+
+                if (params.get("created") !== "1") {
+                    return;
                 }
 
-                // Create Company Information button
-                const createCompanyButton = document.getElementById(
-                    "createCompanyButton"
-                );
+                successMessage.textContent = "Project created successfully.";
+                successMessage.hidden = false;
 
-                if (createCompanyButton) {
-                    createCompanyButton.href = this.createCompanyUrl;
+                params.delete("created");
+
+                const query = params.toString();
+
+                window.history.replaceState(
+                    {},
+                    "",
+                    window.location.pathname + (query ? "?" + query : "")
+                );
+            }
+
+            // Display search errors
+            showSearchError(message) {
+                this.searchError.textContent = message;
+                this.searchError.hidden = false;
+            }
+
+            // Hide search errors
+            hideSearchError() {
+                if (!this.searchError) {
+                    return;
+                }
+
+                this.searchError.textContent = "";
+                this.searchError.hidden = true;
+            }
+
+            // Search for projects using the Flask Boundary
+            async handleSearch(event) {
+                event.preventDefault();
+
+                if (this.searching) {
+                    return;
+                }
+
+                const query = this.searchInput.value.trim();
+
+                if (query.length > 255) {
+                    this.showSearchError(
+                        "Search query cannot exceed 255 characters."
+                    );
+                    return;
+                }
+
+                this.hideSearchError();
+
+                this.searching = true;
+                this.searchButton.disabled = true;
+                this.searchButton.textContent = "Searching...";
+
+                const searchUrl =
+                    "/interior-designer/projects/search?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&query=" +
+                    encodeURIComponent(query);
+
+                try {
+                    const response = await fetch(searchUrl, {
+                        method: "GET"
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        this.displayProjects(result.projects, query);
+                    } else {
+                        this.showSearchError(
+                            result.message ||
+                            "Unable to search projects."
+                        );
+                    }
+
+                } catch (error) {
+                    this.showSearchError(
+                        "Unable to connect to the server."
+                    );
+
+                } finally {
+                    this.searching = false;
+                    this.searchButton.disabled = false;
+                    this.searchButton.textContent = "Search";
                 }
             }
 
-            // Display a success message after project creation
-            checkSuccessMessage() {
-                const params = new URLSearchParams(
-                    window.location.search
-                );
-
-                const successMessage = document.getElementById(
-                    "successMessage"
-                );
-
-                if (params.get("created") === "1") {
-                    successMessage.textContent =
-                        "Project created successfully.";
-
-                    successMessage.hidden = false;
-
-                    // Remove the success parameter from the URL
-                    params.delete("created");
-
-                    const query = params.toString();
-
-                    window.history.replaceState(
-                        {},
-                        "",
-                        window.location.pathname +
-                        (query ? "?" + query : "")
-                    );
+            // Clear the search and retrieve every project
+            clearSearch() {
+                if (this.searching) {
+                    return;
                 }
+
+                this.searchInput.value = "";
+                this.hideSearchError();
+
+                this.searchForm.requestSubmit();
+            }
+
+            // Safely create plain-text table cells
+            createTextCell(text, className = "") {
+                const cell = document.createElement("td");
+
+                if (className) {
+                    cell.className = className;
+                }
+
+                cell.textContent = text == null ? "" : String(text);
+
+                return cell;
+            }
+
+            // Create a badge for project progress or status
+            createBadge(value, type) {
+                const cell = document.createElement("td");
+                const badge = document.createElement("span");
+                const dot = document.createElement("span");
+
+                badge.className = "badge";
+                dot.className = "badge-dot";
+
+                if (type === "progress") {
+                    badge.classList.add(
+                        value === "Completed" ? "completed" : "ongoing"
+                    );
+
+                    badge.textContent =
+                        value === "Completed" ? "Completed" : "Ongoing";
+
+                } else {
+                    badge.classList.add(
+                        value === "active" ? "active" : "suspended"
+                    );
+
+                    badge.textContent =
+                        value === "active" ? "Active" : "Suspended";
+                }
+
+                badge.prepend(dot);
+                cell.appendChild(badge);
+
+                return cell;
+            }
+
+            // Create a project row using the backend search results
+            createProjectRow(project) {
+                const row = document.createElement("tr");
+
+                const idCell = this.createTextCell(
+                    project.project_id,
+                    "project-id"
+                );
+
+                const nameCell = this.createTextCell(
+                    project.project_name,
+                    "project-name"
+                );
+
+                const startDateCell = this.createTextCell(
+                    project.start_date || "-",
+                    "date-text"
+                );
+
+                const endDateCell = this.createTextCell(
+                    project.end_date || "-",
+                    "date-text"
+                );
+
+                const progressCell = this.createBadge(
+                    project.progress,
+                    "progress"
+                );
+
+                const statusCell = this.createBadge(
+                    project.status,
+                    "status"
+                );
+
+                const actionCell = document.createElement("td");
+                actionCell.className = "actions-column";
+
+                const viewButton = document.createElement("a");
+                viewButton.className = "view-button";
+                viewButton.textContent = "View";
+
+                viewButton.href =
+                    "/interior-designer/projects/" +
+                    encodeURIComponent(project.project_id) +
+                    "?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" +
+                    encodeURIComponent(this.username);
+
+                actionCell.appendChild(viewButton);
+
+                row.appendChild(idCell);
+                row.appendChild(nameCell);
+                row.appendChild(startDateCell);
+                row.appendChild(endDateCell);
+                row.appendChild(progressCell);
+                row.appendChild(statusCell);
+                row.appendChild(actionCell);
+
+                return row;
+            }
+
+            // Display the projects returned by the Controller
+            displayProjects(projects, query) {
+                this.tableBody.replaceChildren();
+
+                const projectList = Array.isArray(projects) ? projects : [];
+
+                this.projectCount.textContent =
+                    projectList.length +
+                    (projectList.length === 1 ? " project" : " projects");
+
+                if (projectList.length === 0) {
+                    this.tableContainer.hidden = true;
+                    this.emptyState.hidden = false;
+
+                    if (query) {
+                        this.emptyTitle.textContent =
+                            "No matching projects found";
+
+                        this.emptyDescription.textContent =
+                            'No projects match "' + query +
+                            '". Try searching with a different project name.';
+
+                    } else {
+                        this.emptyTitle.textContent = "No projects yet";
+
+                        this.emptyDescription.textContent =
+                            "You haven't created any projects yet. " +
+                            "Create your first project to get started.";
+                    }
+
+                    return;
+                }
+
+                this.emptyState.hidden = true;
+                this.tableContainer.hidden = false;
+
+                projectList.forEach(project => {
+                    this.tableBody.appendChild(
+                        this.createProjectRow(project)
+                    );
+                });
             }
         }
 
-        // Initialise Projects page
+        // Initialise View Projects page
         new ViewProjectsPage();
     </script>
 </body>
