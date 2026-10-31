@@ -10,7 +10,7 @@
         :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; }
-        button { font: inherit; }
+        button, input { font: inherit; }
 
         /* Top navigation bar */
         .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
@@ -58,6 +58,20 @@
         .section-divider { border: none; height: 1px; background: #edf0f5; margin: 28px 0; }
         .company-id { color: #8290a3; font-size: 12px; margin: 0; }
 
+        /* Search company information */
+        .search-section { margin-bottom: 27px; }
+        .search-label { display: block; margin-bottom: 10px; color: #52647a; font-size: 13px; font-weight: 700; }
+        .search-form { display: flex; align-items: center; gap: 10px; }
+        .search-input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #26344a; font-size: 14px; outline: none; }
+        .search-input::placeholder { color: #9aa6b5; }
+        .search-input:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        .search-button { min-width: 90px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .search-button:hover { background: #256d7f; }
+        .clear-button { min-width: 80px; height: 44px; padding: 0 15px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .clear-button:hover { background: #f0f4f8; }
+        .search-result { font-size: 12px; color: #738096; margin: 11px 0 0; }
+        .no-results { padding: 24px 18px; background: #f5f7fa; border: 1px solid #e0e7ef; border-radius: 8px; text-align: center; color: #738096; font-size: 13px; }
+
         /* Action buttons */
         .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid #edf0f5; }
         .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 20px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
@@ -95,7 +109,7 @@
         .modal-confirm:disabled { opacity: .6; cursor: not-allowed; }
 
         [hidden] { display: none !important; }
-        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+        a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
         /* Tablet layout */
         @media (max-width: 1000px) {
@@ -125,6 +139,9 @@
             .form-actions { gap: 10px; }
             .secondary-button, .form-actions .primary-button { flex: 1; min-width: 0; }
             .modal-box { padding: 26px 22px; }
+            .search-form { flex-wrap: wrap; }
+            .search-input { flex-basis: 100%; }
+            .search-button, .clear-button { flex: 1; }
         }
     </style>
 </head>
@@ -251,58 +268,111 @@
                         Company Information
                     </h2>
 
-                    <!-- Company Name -->
-                    <div class="field">
-                        <label>Company Name</label>
-                        <div class="read-only-field">
-                            {{ company.company_name }}
-                        </div>
+                    <!-- Search Company Information -->
+                    <div class="search-section">
+                        <label for="searchInput" class="search-label">
+                            Search Company Information
+                        </label>
+
+                        <form class="search-form" id="searchForm"
+                              role="search">
+
+                            <input class="search-input"
+                                   id="searchInput"
+                                   type="search"
+                                   placeholder="Search field name or company details"
+                                   autocomplete="off">
+
+                            <button class="search-button"
+                                    type="submit">
+                                Search
+                            </button>
+
+                            <button class="clear-button"
+                                    id="clearSearch"
+                                    type="button">
+                                Clear
+                            </button>
+                        </form>
+
+                        <p class="search-result"
+                           id="searchResult"
+                           role="status"
+                           aria-live="polite"></p>
                     </div>
 
-                    <!-- Company Address -->
-                    <div class="field">
-                        <label>Company Address</label>
-                        <div class="read-only-field">
-                            {{ company.company_address }}
+                    <!-- Company Information Fields -->
+                    <div id="companyFields">
+
+                        <!-- Company Name -->
+                        <div class="field searchable-field"
+                             data-label="Company Name">
+                            <label>Company Name</label>
+                            <div class="read-only-field">
+                                {{ company.company_name }}
+                            </div>
                         </div>
+
+                        <!-- Company Address -->
+                        <div class="field searchable-field"
+                             data-label="Company Address">
+                            <label>Company Address</label>
+                            <div class="read-only-field">
+                                {{ company.company_address }}
+                            </div>
+                        </div>
+
+                        <!-- Working Hours -->
+                        <div class="field searchable-field"
+                             data-label="Working Hours">
+                            <label>Working Hours</label>
+                            <div class="read-only-field">
+                                {{ company.working_hours }}
+                            </div>
+                        </div>
+
+                        <!-- Company Email -->
+                        <div class="field searchable-field"
+                             data-label="Company Email">
+                            <label>Company Email</label>
+                            <div class="read-only-field">
+                                {{ company.company_email }}
+                            </div>
+                        </div>
+
+                        <!-- Company Phone Number -->
+                        <div class="field searchable-field"
+                             data-label="Company Phone Number">
+                            <label>Company Phone Number</label>
+                            <div class="read-only-field">
+                                {{ company.company_phone }}
+                            </div>
+                        </div>
+
+                        <!-- Established Date -->
+                        <div class="field searchable-field"
+                             data-label="Established Date">
+                            <label>Established Date</label>
+                            <div class="read-only-field">
+                                {{ company.established_date }}
+                            </div>
+                        </div>
+
+                        <!-- Company Description -->
+                        <div class="field searchable-field"
+                             data-label="What the Company Does">
+                            <label>What the Company Does</label>
+                            <div class="read-only-field description">{{ company.company_description }}</div>
+                        </div>
+
                     </div>
 
-                    <!-- Working Hours -->
-                    <div class="field">
-                        <label>Working Hours</label>
-                        <div class="read-only-field">
-                            {{ company.working_hours }}
-                        </div>
-                    </div>
-
-                    <!-- Company Email -->
-                    <div class="field">
-                        <label>Company Email</label>
-                        <div class="read-only-field">
-                            {{ company.company_email }}
-                        </div>
-                    </div>
-
-                    <!-- Company Phone Number -->
-                    <div class="field">
-                        <label>Company Phone Number</label>
-                        <div class="read-only-field">
-                            {{ company.company_phone }}
-                        </div>
-                    </div>
-
-                    <!-- Established Date -->
-                    <div class="field">
-                        <label>Established Date</label>
-                        <div class="read-only-field">
-                            {{ company.established_date }}
-                        </div>
-                    </div>
-
-                    <!-- Company Description -->
-                    <div class="field">
-                        <label>What the Company Does</label>
-                        <div class="read-only-field description">{{ company.company_description }}</div>
+                    <!-- No Matching Results -->
+                    <div class="no-results"
+                         id="noResults"
+                         role="status"
+                         hidden>
+                        No matching company information found.
                     </div>
 
                     <hr class="section-divider">
@@ -446,6 +516,16 @@
                 this.cancelButton = document.getElementById("cancelModal");
                 this.closeButton = document.getElementById("closeModal");
 
+                // Search elements
+                this.searchForm = document.getElementById("searchForm");
+                this.searchInput = document.getElementById("searchInput");
+                this.clearSearchButton = document.getElementById("clearSearch");
+                this.searchResult = document.getElementById("searchResult");
+                this.noResults = document.getElementById("noResults");
+                this.searchableFields = Array.from(
+                    document.querySelectorAll(".searchable-field")
+                );
+
                 this.submitting = false;
 
                 this.setupEvents();
@@ -460,6 +540,21 @@
                 projectsLink.addEventListener("click", event => {
                     event.preventDefault();
                 });
+
+                // Set up search functionality when company info exists
+                if (this.searchForm) {
+                    this.searchForm.addEventListener(
+                        "submit", event => this.handleSearch(event)
+                    );
+
+                    this.searchInput.addEventListener(
+                        "input", () => this.handleSearchInput()
+                    );
+
+                    this.clearSearchButton.addEventListener(
+                        "click", () => this.clearSearch()
+                    );
+                }
 
                 // No company exists, so no status button is available
                 if (!this.statusButton) {
@@ -501,6 +596,63 @@
                 });
             }
 
+            // Filter company information fields using the search keyword
+            filterCompanyFields(keyword) {
+                const searchTerm = keyword.trim().toLowerCase();
+                let matchCount = 0;
+
+                this.searchableFields.forEach(field => {
+                    const label = field.dataset.label.toLowerCase();
+
+                    const value = field.querySelector(
+                        ".read-only-field"
+                    ).textContent.trim().toLowerCase();
+
+                    const matches =
+                        !searchTerm ||
+                        label.includes(searchTerm) ||
+                        value.includes(searchTerm);
+
+                    field.hidden = !matches;
+
+                    if (matches) {
+                        matchCount++;
+                    }
+                });
+
+                // Show a message when no matching fields are found
+                this.noResults.hidden = matchCount !== 0;
+
+                // Display the number of matching fields
+                if (!searchTerm) {
+                    this.searchResult.textContent =
+                        "Showing all company information.";
+                } else {
+                    this.searchResult.textContent =
+                        matchCount + " matching field" +
+                        (matchCount === 1 ? "" : "s") + " found.";
+                }
+            }
+
+            // Handle the Search button
+            handleSearch(event) {
+                event.preventDefault();
+
+                this.filterCompanyFields(this.searchInput.value);
+            }
+
+            // Update results while the user types
+            handleSearchInput() {
+                this.filterCompanyFields(this.searchInput.value);
+            }
+
+            // Clear search and show all company information
+            clearSearch() {
+                this.searchInput.value = "";
+                this.filterCompanyFields("");
+                this.searchInput.focus();
+            }
+
             // Display a success message after company changes
             checkSuccessMessage() {
                 const successMessage =
@@ -533,7 +685,6 @@
                 successMessage.textContent = message;
                 successMessage.hidden = false;
 
-                // Remove success parameters after displaying the message
                 params.delete("created");
                 params.delete("updated");
                 params.delete("suspended");

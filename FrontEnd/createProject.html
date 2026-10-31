@@ -1,0 +1,652 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Create Project</title>
+
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button, input, select, textarea { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 27px; color: #387c83; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .back-link:hover { text-decoration: underline; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 30px; }
+
+        /* Create Project form */
+        .form-panel { background: white; max-width: 790px; border: 1px solid #e4e9f2; border-radius: 14px; padding: 32px; box-shadow: 0 8px 28px #1c34500a; }
+        .form-heading { font-size: 17px; font-weight: 750; color: #14253e; margin: 0 0 28px; }
+        .field { margin-bottom: 23px; }
+        .field label { display: block; color: #52647a; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+        .required { color: #a22735; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px 14px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #26344a; font-size: 14px; outline: none; }
+        .form-input, .form-select { min-height: 46px; }
+        .form-textarea { min-height: 130px; resize: vertical; line-height: 1.6; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        .form-input::placeholder, .form-textarea::placeholder { color: #9aa6b5; }
+        .field-hint { margin: 7px 0 0; color: #8290a3; font-size: 12px; line-height: 1.5; }
+        .field-error { margin: 7px 0 0; color: #a22735; font-size: 12px; font-weight: 550; }
+        .input-error { border-color: #c94956; background: #fffafa; }
+
+        /* Date fields */
+        .date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .date-fields .field { margin-bottom: 23px; }
+
+        /* Form messages */
+        .error-banner { padding: 14px 16px; background: #fff0f0; border: 1px solid #ecc7cc; border-radius: 8px; color: #a22735; font-size: 13px; line-height: 1.6; margin-bottom: 25px; }
+
+        /* Form buttons */
+        .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 12px; padding-top: 24px; border-top: 1px solid #edf0f5; }
+        .primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .primary-button { background: #1c5062; border: 1px solid #1c5062; color: white; }
+        .primary-button:hover { background: #256d7f; }
+        .secondary-button { background: white; border: 1px solid #cdd7e4; color: #52647a; }
+        .secondary-button:hover { background: #f0f4f8; }
+        .primary-button:disabled { opacity: .6; cursor: not-allowed; }
+
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .form-panel { padding: 28px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .form-panel { padding: 22px; }
+            .date-fields { grid-template-columns: 1fr; gap: 0; }
+            .form-actions .primary-button, .form-actions .secondary-button { flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
+
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">ID</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ username }}</strong>
+                    <small>Interior Designer</small>
+                </div>
+            </div>
+
+            <button class="logout-button" type="button"
+                    onclick="window.location.href='/'">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Company Information -->
+                <a class="nav-link"
+                   href="/interior-designer/company?account_id={{ account_id }}&username={{ username | urlencode }}">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M8 21V9h8v12"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+
+                    Company Info
+                </a>
+
+                <!-- Projects -->
+                <a class="nav-link active"
+                   href="#"
+                   id="projectsLink"
+                   aria-current="page">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M7 5V3h6l2 2"/>
+                    </svg>
+
+                    Projects
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <a class="back-link" href="#" id="backToProjects">
+                <span aria-hidden="true">&larr;</span>
+                Back to Projects
+            </a>
+
+            <div class="page-label">Project Management</div>
+            <h1 class="page-title">Create Project</h1>
+
+            <p class="page-description">
+                Add a new project to your company's portfolio.
+                Select whether the project is ongoing or completed.
+            </p>
+
+            <!-- Create Project Form -->
+            <div class="form-panel">
+
+                <h2 class="form-heading">Project Details</h2>
+
+                <div class="error-banner" id="formError"
+                     role="alert" hidden></div>
+
+                <form id="createProjectForm" novalidate>
+
+                    <!-- Project Name -->
+                    <div class="field">
+                        <label for="projectName">
+                            Project Name <span class="required">*</span>
+                        </label>
+
+                        <input class="form-input"
+                               type="text"
+                               id="projectName"
+                               name="project_name"
+                               maxlength="255"
+                               placeholder="Enter project name"
+                               required>
+
+                        <p class="field-error"
+                           id="projectNameError" hidden></p>
+                    </div>
+
+                    <!-- Project Description -->
+                    <div class="field">
+                        <label for="projectDescription">
+                            Project Description <span class="required">*</span>
+                        </label>
+
+                        <textarea class="form-textarea"
+                                  id="projectDescription"
+                                  name="project_description"
+                                  maxlength="5000"
+                                  placeholder="Describe the project"
+                                  required></textarea>
+
+                        <p class="field-error"
+                           id="projectDescriptionError" hidden></p>
+                    </div>
+
+                    <!-- Project Progress -->
+                    <div class="field">
+                        <label for="projectProgress">
+                            Project Progress <span class="required">*</span>
+                        </label>
+
+                        <select class="form-select"
+                                id="projectProgress"
+                                name="progress"
+                                required>
+
+                            <option value="">Select project progress</option>
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+
+                        <p class="field-error"
+                           id="projectProgressError" hidden></p>
+                    </div>
+
+                    <!-- Date Fields -->
+                    <div class="date-fields" id="dateFields" hidden>
+
+                        <!-- Start Date -->
+                        <div class="field" id="startDateField" hidden>
+                            <label for="startDate">
+                                Start Date <span class="required">*</span>
+                            </label>
+
+                            <input class="form-input"
+                                   type="date"
+                                   id="startDate"
+                                   name="start_date">
+
+                            <p class="field-error"
+                               id="startDateError" hidden></p>
+                        </div>
+
+                        <!-- End Date -->
+                        <div class="field" id="endDateField" hidden>
+                            <label for="endDate">
+                                End Date <span class="required">*</span>
+                            </label>
+
+                            <input class="form-input"
+                                   type="date"
+                                   id="endDate"
+                                   name="end_date">
+
+                            <p class="field-error"
+                               id="endDateError" hidden></p>
+                        </div>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="form-actions">
+                        <a class="secondary-button"
+                           href="#"
+                           id="cancelButton">
+                            Cancel
+                        </a>
+
+                        <button class="primary-button"
+                                type="submit"
+                                id="submitButton">
+                            Create Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class CreateProjectPage {
+            constructor() {
+                this.accountId = {{ account_id | tojson }};
+                this.username = {{ username | tojson }};
+
+                this.form = document.getElementById("createProjectForm");
+                this.projectName = document.getElementById("projectName");
+                this.projectDescription = document.getElementById("projectDescription");
+                this.projectProgress = document.getElementById("projectProgress");
+
+                this.dateFields = document.getElementById("dateFields");
+                this.startDateField = document.getElementById("startDateField");
+                this.endDateField = document.getElementById("endDateField");
+
+                this.startDate = document.getElementById("startDate");
+                this.endDate = document.getElementById("endDate");
+
+                this.formError = document.getElementById("formError");
+                this.submitButton = document.getElementById("submitButton");
+
+                this.submitting = false;
+
+                this.projectsUrl =
+                    "/interior-designer/projects?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.setupEvents();
+                this.updateDateFields();
+                this.setDateLimits();
+            }
+
+            // Set up form and navigation events
+            setupEvents() {
+                this.projectProgress.addEventListener(
+                    "change", () => this.updateDateFields()
+                );
+
+                this.startDate.addEventListener(
+                    "change", () => this.updateEndDateLimit()
+                );
+
+                this.form.addEventListener(
+                    "submit", event => this.handleSubmit(event)
+                );
+
+                document.getElementById("projectsLink").href =
+                    this.projectsUrl;
+
+                document.getElementById("backToProjects").href =
+                    this.projectsUrl;
+
+                document.getElementById("cancelButton").href =
+                    this.projectsUrl;
+            }
+
+            // Show date fields based on Project Progress
+            updateDateFields() {
+                const progress = this.projectProgress.value;
+
+                if (!progress) {
+                    this.dateFields.hidden = true;
+                    this.startDateField.hidden = true;
+                    this.endDateField.hidden = true;
+
+                    this.startDate.required = false;
+                    this.endDate.required = false;
+
+                    this.startDate.value = "";
+                    this.endDate.value = "";
+
+                    this.clearFieldError("startDate");
+                    this.clearFieldError("endDate");
+                    return;
+                }
+
+                // Both project types require a Start Date
+                this.dateFields.hidden = false;
+                this.startDateField.hidden = false;
+                this.startDate.required = true;
+
+                if (progress === "Completed") {
+                    // Completed projects require an End Date
+                    this.endDateField.hidden = false;
+                    this.endDate.required = true;
+
+                } else {
+                    // Ongoing projects only require a Start Date
+                    this.endDateField.hidden = true;
+                    this.endDate.required = false;
+                    this.endDate.value = "";
+
+                    this.clearFieldError("endDate");
+                }
+
+                this.clearFieldError("projectProgress");
+            }
+
+            // Prevent future dates
+            setDateLimits() {
+                const today = new Date();
+
+                const localDate = new Date(
+                    today.getTime() -
+                    today.getTimezoneOffset() * 60000
+                ).toISOString().split("T")[0];
+
+                this.startDate.max = localDate;
+                this.endDate.max = localDate;
+            }
+
+            // Ensure the End Date is not earlier than the Start Date
+            updateEndDateLimit() {
+                this.endDate.min = this.startDate.value;
+
+                if (
+                    this.endDate.value &&
+                    this.startDate.value &&
+                    this.endDate.value < this.startDate.value
+                ) {
+                    this.endDate.value = "";
+                }
+
+                this.clearFieldError("startDate");
+            }
+
+            // Display an error beneath a field
+            showFieldError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const error = document.getElementById(
+                    fieldName + "Error"
+                );
+
+                field.classList.add("input-error");
+                error.textContent = message;
+                error.hidden = false;
+            }
+
+            // Clear an individual field error
+            clearFieldError(fieldName) {
+                const field = document.getElementById(fieldName);
+                const error = document.getElementById(
+                    fieldName + "Error"
+                );
+
+                field.classList.remove("input-error");
+                error.textContent = "";
+                error.hidden = true;
+            }
+
+            // Clear all validation messages
+            clearErrors() {
+                this.formError.textContent = "";
+                this.formError.hidden = true;
+
+                [
+                    "projectName",
+                    "projectDescription",
+                    "projectProgress",
+                    "startDate",
+                    "endDate"
+                ].forEach(fieldName => {
+                    this.clearFieldError(fieldName);
+                });
+            }
+
+            // Validate project details before submission
+            validateForm() {
+                this.clearErrors();
+
+                let valid = true;
+
+                const name = this.projectName.value.trim();
+                const description = this.projectDescription.value.trim();
+                const progress = this.projectProgress.value;
+                const startDate = this.startDate.value;
+                const endDate = this.endDate.value;
+                const today = this.startDate.max;
+
+                // Validate Project Name
+                if (!name) {
+                    this.showFieldError(
+                        "projectName",
+                        "Project name is required."
+                    );
+                    valid = false;
+
+                } else if (name.length > 255) {
+                    this.showFieldError(
+                        "projectName",
+                        "Project name cannot exceed 255 characters."
+                    );
+                    valid = false;
+                }
+
+                // Validate Project Description
+                if (!description) {
+                    this.showFieldError(
+                        "projectDescription",
+                        "Project description is required."
+                    );
+                    valid = false;
+
+                } else if (description.length > 5000) {
+                    this.showFieldError(
+                        "projectDescription",
+                        "Project description cannot exceed 5000 characters."
+                    );
+                    valid = false;
+                }
+
+                // Validate Project Progress
+                if (!["Ongoing", "Completed"].includes(progress)) {
+                    this.showFieldError(
+                        "projectProgress",
+                        "Please select project progress."
+                    );
+                    valid = false;
+                }
+
+                // Validate Start Date
+                if (progress && !startDate) {
+                    this.showFieldError(
+                        "startDate",
+                        "Start date is required."
+                    );
+                    valid = false;
+
+                } else if (startDate && startDate > today) {
+                    this.showFieldError(
+                        "startDate",
+                        "Start date cannot be in the future."
+                    );
+                    valid = false;
+                }
+
+                // Validate End Date for Completed projects
+                if (progress === "Completed") {
+                    if (!endDate) {
+                        this.showFieldError(
+                            "endDate",
+                            "End date is required for completed projects."
+                        );
+                        valid = false;
+
+                    } else if (startDate && endDate < startDate) {
+                        this.showFieldError(
+                            "endDate",
+                            "End date cannot be earlier than start date."
+                        );
+                        valid = false;
+
+                    } else if (endDate > today) {
+                        this.showFieldError(
+                            "endDate",
+                            "End date cannot be in the future."
+                        );
+                        valid = false;
+                    }
+                }
+
+                return valid;
+            }
+
+            // Submit project details to Flask
+            async handleSubmit(event) {
+                event.preventDefault();
+
+                if (this.submitting) {
+                    return;
+                }
+
+                if (!this.validateForm()) {
+                    return;
+                }
+
+                this.submitting = true;
+                this.submitButton.disabled = true;
+                this.submitButton.textContent = "Creating...";
+
+                const progress = this.projectProgress.value;
+
+                const projectData = {
+                    project_name: this.projectName.value.trim(),
+                    project_description:
+                        this.projectDescription.value.trim(),
+                    progress: progress,
+                    start_date: this.startDate.value,
+                    end_date: progress === "Completed"
+                        ? this.endDate.value
+                        : null
+                };
+
+                const createUrl =
+                    "/interior-designer/projects/create?account_id=" +
+                    encodeURIComponent(this.accountId);
+
+                try {
+                    const response = await fetch(createUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(projectData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Return to the Projects page
+                        window.location.href =
+                            this.projectsUrl + "&created=1";
+
+                    } else {
+                        this.formError.textContent =
+                            result.message ||
+                            "Unable to create project.";
+
+                        this.formError.hidden = false;
+
+                        window.scrollTo({
+                            top: 0,
+                            behavior: "smooth"
+                        });
+                    }
+
+                } catch (error) {
+                    this.formError.textContent =
+                        "Unable to connect to the server.";
+
+                    this.formError.hidden = false;
+
+                } finally {
+                    this.submitting = false;
+                    this.submitButton.disabled = false;
+                    this.submitButton.textContent = "Create Project";
+                }
+            }
+        }
+
+        // Initialise Create Project page
+        new CreateProjectPage();
+    </script>
+</body>
+</html>
