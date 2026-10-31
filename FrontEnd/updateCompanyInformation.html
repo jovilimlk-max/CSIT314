@@ -348,6 +348,12 @@
                     encodeURIComponent(this.accountId) +
                     "&username=" + encodeURIComponent(this.username);
 
+                // Projects navigation
+                this.projectsUrl =
+                    "/interior-designer/projects?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
                 this.updateUrl =
                     "/interior-designer/company/edit?account_id=" +
                     encodeURIComponent(this.accountId);
@@ -383,9 +389,11 @@
                     }
                 );
 
+                // Connect Projects sidebar to the Projects listing page
                 document.getElementById("projectsLink").addEventListener(
                     "click", event => {
                         event.preventDefault();
+                        this.navigateTo(this.projectsUrl);
                     }
                 );
 

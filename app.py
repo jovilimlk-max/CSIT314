@@ -21,10 +21,16 @@ from Boundary.suspendUserProfilePage import SuspendUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
+
+# Company Information Boundaries
 from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
 from Boundary.viewCompanyInformationPage import ViewCompanyInformationPage
 from Boundary.updateCompanyInformationPage import UpdateCompanyInformationPage
 from Boundary.suspendCompanyInformationPage import SuspendCompanyInformationPage
+
+# Project Boundaries
+from Boundary.createProjectPage import CreateProjectPage
+from Boundary.viewProjectsPage import ViewProjectsPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -37,15 +43,22 @@ from Controllers.suspendUserProfileController import SuspendUserProfileControlle
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
+
+# Company Information Controllers
 from Controllers.createCompanyInformationController import CreateCompanyInformationController
 from Controllers.viewCompanyInformationController import ViewCompanyInformationController
 from Controllers.updateCompanyInformationController import UpdateCompanyInformationController
 from Controllers.suspendCompanyInformationController import SuspendCompanyInformationController
 
+# Project Controllers
+from Controllers.createProjectController import CreateProjectController
+from Controllers.viewProjectsController import ViewProjectsController
+
 # Entities
 from Entities.userAccount import UserAccount
 from Entities.userProfile import UserProfile
 from Entities.companyInformation import CompanyInformation
+from Entities.project import Project
 
 
 class RenovoApp:
@@ -63,6 +76,9 @@ class RenovoApp:
 
         self.company_information = CompanyInformation()
         self.company_information.initialise_database()
+
+        self.project = Project()
+        self.project.initialise_database()
 
         # Initialise Controllers
         self.login_controller = UserLoginController(
@@ -109,6 +125,7 @@ class RenovoApp:
             self.user_profile
         )
 
+        # Initialise Company Information Controllers
         self.create_company_controller = CreateCompanyInformationController(
             self.company_information,
             self.user_account
@@ -125,6 +142,19 @@ class RenovoApp:
         )
 
         self.suspend_company_controller = SuspendCompanyInformationController(
+            self.company_information,
+            self.user_account
+        )
+
+        # Initialise Project Controllers
+        self.create_project_controller = CreateProjectController(
+            self.project,
+            self.company_information,
+            self.user_account
+        )
+
+        self.view_projects_controller = ViewProjectsController(
+            self.project,
             self.company_information,
             self.user_account
         )
@@ -371,6 +401,31 @@ class RenovoApp:
             "/interior-designer/company/status",
             view_func=suspend_company_view,
             methods=["POST"]
+        )
+
+        # View Projects
+        view_projects_view = ViewProjectsPage.as_view(
+            "view_projects",
+            self.view_projects_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects",
+            view_func=view_projects_view,
+            methods=["GET"]
+        )
+
+        # Create Project
+        create_project_view = CreateProjectPage.as_view(
+            "create_project",
+            self.create_project_controller,
+            self.view_company_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects/create",
+            view_func=create_project_view,
+            methods=["GET", "POST"]
         )
 
     # Start Flask

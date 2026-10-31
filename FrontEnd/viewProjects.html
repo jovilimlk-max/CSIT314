@@ -1,0 +1,506 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Projects</title>
+
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button { font: inherit; }
+
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
+
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0; }
+        .page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+
+        /* Buttons */
+        .primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; background: #1c5062; border: 1px solid #1c5062; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; }
+        .primary-button:hover { background: #256d7f; }
+        .secondary-button { display: inline-flex; justify-content: center; align-items: center; min-height: 36px; padding: 0 16px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #52647a; font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .secondary-button:hover { background: #f0f4f8; }
+        .secondary-button:disabled { opacity: .5; cursor: not-allowed; }
+
+        /* Projects table */
+        .projects-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 28px; box-shadow: 0 8px 28px #1c34500a; }
+        .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 22px; }
+        .panel-title { color: #14253e; font-size: 17px; font-weight: 750; margin: 0; }
+        .project-count { color: #8290a3; font-size: 12px; font-weight: 600; }
+        .table-scroll { width: 100%; overflow-x: auto; }
+        .projects-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .projects-table th { padding: 15px 14px; background: #f5f7fa; color: #52647a; font-size: 12px; font-weight: 750; white-space: nowrap; border-bottom: 1px solid #e4e9f2; }
+        .projects-table td { padding: 17px 14px; color: #26344a; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
+        .projects-table tbody tr:last-child td { border-bottom: none; }
+        .projects-table tbody tr:hover { background: #fafbfd; }
+        .project-name { color: #14253e; font-weight: 700; overflow-wrap: anywhere; }
+        .project-id { color: #738096; font-weight: 600; white-space: nowrap; }
+        .date-text { line-height: 1.7; white-space: nowrap; }
+        .muted { color: #8290a3; }
+        .action-cell { text-align: right; }
+
+        /* Progress and status badges */
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 20px; font-size: 11px; font-weight: 750; white-space: nowrap; }
+        .badge-dot { height: 7px; width: 7px; border-radius: 50%; background: currentColor; }
+        .badge.ongoing { background: #e8f0ff; color: #315b9a; }
+        .badge.completed { background: #e6f6f0; color: #186b4d; }
+        .badge.active { background: #e6f6f0; color: #186b4d; }
+        .badge.suspended { background: #fff0f0; color: #a22735; }
+
+        /* Empty state */
+        .empty-state { padding: 52px 25px; text-align: center; }
+        .empty-icon { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 20px; background: #e6f3f3; border-radius: 16px; color: #2b7b85; }
+        .empty-icon svg { height: 32px; width: 32px; }
+        .empty-title { margin: 0 0 10px; color: #14253e; font-size: 20px; font-weight: 750; }
+        .empty-description { max-width: 450px; margin: 0 auto 24px; color: #738096; font-size: 14px; line-height: 1.7; }
+
+        /* Notifications */
+        .success-message { padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
+
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .projects-panel { padding: 22px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .nav-link { padding: 11px 13px; white-space: nowrap; font-size: 12px; }
+            .nav-link svg { width: 17px; height: 17px; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .page-heading { flex-direction: column; }
+            .projects-panel { padding: 18px; }
+            .projects-table { min-width: 690px; }
+            .empty-state { padding: 42px 12px; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
+
+        <div class="topbar-right">
+            <div class="user-info">
+                <div class="user-avatar">ID</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ username }}</strong>
+                    <small>Interior Designer</small>
+                </div>
+            </div>
+
+            <button class="logout-button" id="logoutButton" type="button">
+                Log out
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
+
+            <nav class="sidebar-nav">
+
+                <!-- Company Information -->
+                <a class="nav-link"
+                   href="#"
+                   id="companyInfoLink">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M8 21V9h8v12"/>
+                        <path d="M3 9h18"/>
+                    </svg>
+
+                    Company Info
+                </a>
+
+                <!-- Projects -->
+                <a class="nav-link active"
+                   href="#"
+                   id="projectsLink"
+                   aria-current="page">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/>
+                        <path d="M3 9h18"/>
+                        <path d="M7 5V3h6l2 2"/>
+                    </svg>
+
+                    Projects
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Page Heading -->
+            <div class="page-heading">
+                <div>
+                    <div class="page-label">Project Management</div>
+                    <h1 class="page-title">Projects</h1>
+
+                    <p class="page-description">
+                        Manage your ongoing and completed projects.
+                    </p>
+                </div>
+
+                {% if company %}
+                    <a class="primary-button"
+                       href="#"
+                       id="createProjectButton">
+                        <span aria-hidden="true">+</span>
+                        Create Project
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Success Message -->
+            <div class="success-message"
+                 id="successMessage"
+                 role="status"
+                 hidden></div>
+
+            {% if not company %}
+
+                <!-- No Company Information -->
+                <div class="projects-panel">
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M8 21V9h8v12"/>
+                                <path d="M3 9h18"/>
+                            </svg>
+                        </div>
+
+                        <h2 class="empty-title">
+                            Create your company information first
+                        </h2>
+
+                        <p class="empty-description">
+                            You need to create company information before
+                            adding projects to your company's portfolio.
+                        </p>
+
+                        <a class="primary-button"
+                           href="#"
+                           id="createCompanyButton">
+                            Create Company Info
+                        </a>
+                    </div>
+                </div>
+
+            {% elif not projects %}
+
+                <!-- No Projects Yet -->
+                <div class="projects-panel">
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="5" width="18" height="16" rx="2"/>
+                                <path d="M3 9h18"/>
+                                <path d="M7 5V3h6l2 2"/>
+                            </svg>
+                        </div>
+
+                        <h2 class="empty-title">
+                            No projects yet
+                        </h2>
+
+                        <p class="empty-description">
+                            You haven't created any projects yet.
+                            Add your first ongoing or completed project
+                            to start building your portfolio.
+                        </p>
+
+                        <a class="primary-button"
+                           href="#"
+                           id="emptyCreateButton">
+                            <span aria-hidden="true">+</span>
+                            Create Project
+                        </a>
+                    </div>
+                </div>
+
+            {% else %}
+
+                <!-- Projects Listing -->
+                <div class="projects-panel">
+
+                    <div class="panel-heading">
+                        <h2 class="panel-title">All Projects</h2>
+
+                        <span class="project-count">
+                            {{ projects | length }}
+                            project{{ "s" if projects | length != 1 else "" }}
+                        </span>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table class="projects-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Project ID</th>
+                                    <th>Project Name</th>
+                                    <th>Dates</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for project in projects %}
+                                    <tr>
+
+                                        <!-- Project ID -->
+                                        <td>
+                                            <span class="project-id">
+                                                #{{ "%04d" | format(project.project_id) }}
+                                            </span>
+                                        </td>
+
+                                        <!-- Project Name -->
+                                        <td>
+                                            <span class="project-name">
+                                                {{ project.project_name }}
+                                            </span>
+                                        </td>
+
+                                        <!-- Project Dates -->
+                                        <td>
+                                            <div class="date-text">
+                                                <div>
+                                                    {{ project.start_date }}
+                                                </div>
+
+                                                {% if project.progress == "Completed" %}
+                                                    <div class="muted">
+                                                        {{ project.end_date or "No end date" }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="muted">
+                                                        No end date
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+
+                                        <!-- Project Progress -->
+                                        <td>
+                                            {% if project.progress == "Ongoing" %}
+                                                <span class="badge ongoing">
+                                                    <span class="badge-dot"></span>
+                                                    Ongoing
+                                                </span>
+                                            {% else %}
+                                                <span class="badge completed">
+                                                    <span class="badge-dot"></span>
+                                                    Completed
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <!-- Project Status -->
+                                        <td>
+                                            {% if project.status == "active" %}
+                                                <span class="badge active">
+                                                    <span class="badge-dot"></span>
+                                                    Active
+                                                </span>
+                                            {% else %}
+                                                <span class="badge suspended">
+                                                    <span class="badge-dot"></span>
+                                                    Suspended
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <!-- View Project -->
+                                        <td class="action-cell">
+                                            <button class="secondary-button"
+                                                    type="button"
+                                                    disabled
+                                                    title="View Project will be available when implemented">
+                                                View
+                                            </button>
+                                        </td>
+
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+
+            {% endif %}
+
+        </main>
+    </div>
+
+    <script>
+        class ViewProjectsPage {
+            constructor() {
+                this.accountId = {{ account_id | tojson }};
+                this.username = {{ username | tojson }};
+
+                this.companyInfoUrl =
+                    "/interior-designer/company?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.projectsUrl =
+                    "/interior-designer/projects?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.createProjectUrl =
+                    "/interior-designer/projects/create?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.createCompanyUrl =
+                    "/company/create?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" + encodeURIComponent(this.username);
+
+                this.setupEvents();
+                this.checkSuccessMessage();
+            }
+
+            // Connect navigation buttons and links
+            setupEvents() {
+                document.getElementById("companyInfoLink").href =
+                    this.companyInfoUrl;
+
+                document.getElementById("projectsLink").href =
+                    this.projectsUrl;
+
+                document.getElementById("logoutButton").addEventListener(
+                    "click",
+                    () => window.location.href = "/"
+                );
+
+                // Create Project button in page heading
+                const createButton = document.getElementById(
+                    "createProjectButton"
+                );
+
+                if (createButton) {
+                    createButton.href = this.createProjectUrl;
+                }
+
+                // Create Project button in empty state
+                const emptyCreateButton = document.getElementById(
+                    "emptyCreateButton"
+                );
+
+                if (emptyCreateButton) {
+                    emptyCreateButton.href = this.createProjectUrl;
+                }
+
+                // Create Company Information button
+                const createCompanyButton = document.getElementById(
+                    "createCompanyButton"
+                );
+
+                if (createCompanyButton) {
+                    createCompanyButton.href = this.createCompanyUrl;
+                }
+            }
+
+            // Display a success message after project creation
+            checkSuccessMessage() {
+                const params = new URLSearchParams(
+                    window.location.search
+                );
+
+                const successMessage = document.getElementById(
+                    "successMessage"
+                );
+
+                if (params.get("created") === "1") {
+                    successMessage.textContent =
+                        "Project created successfully.";
+
+                    successMessage.hidden = false;
+
+                    // Remove the success parameter from the URL
+                    params.delete("created");
+
+                    const query = params.toString();
+
+                    window.history.replaceState(
+                        {},
+                        "",
+                        window.location.pathname +
+                        (query ? "?" + query : "")
+                    );
+                }
+            }
+        }
+
+        // Initialise Projects page
+        new ViewProjectsPage();
+    </script>
+</body>
+</html>
