@@ -33,6 +33,7 @@ from Boundary.createProjectPage import CreateProjectPage
 from Boundary.viewProjectsPage import ViewProjectsPage
 from Boundary.viewProjectPage import ViewProjectPage
 from Boundary.updateProjectPage import UpdateProjectPage
+from Boundary.suspendProjectPage import SuspendProjectPage
 
 # Controllers
 from Controllers.userLoginController import UserLoginController
@@ -57,6 +58,7 @@ from Controllers.createProjectController import CreateProjectController
 from Controllers.viewProjectsController import ViewProjectsController
 from Controllers.viewProjectController import ViewProjectController
 from Controllers.updateProjectController import UpdateProjectController
+from Controllers.suspendProjectController import SuspendProjectController
 
 # Entities
 from Entities.userAccount import UserAccount
@@ -170,6 +172,12 @@ class RenovoApp:
         )
 
         self.update_project_controller = UpdateProjectController(
+            self.project,
+            self.company_information,
+            self.user_account
+        )
+
+        self.suspend_project_controller = SuspendProjectController(
             self.project,
             self.company_information,
             self.user_account
@@ -455,6 +463,18 @@ class RenovoApp:
             "/interior-designer/projects/<int:project_id>/edit",
             view_func=update_project_view,
             methods=["GET", "POST"]
+        )
+
+        # Suspend / Reactivate Project
+        suspend_project_view = SuspendProjectPage.as_view(
+            "suspend_project",
+            self.suspend_project_controller
+        )
+
+        self.app.add_url_rule(
+            "/interior-designer/projects/<int:project_id>/status",
+            view_func=suspend_project_view,
+            methods=["POST"]
         )
 
     # Start Flask

@@ -30,10 +30,10 @@
         .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
         .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
         .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
         .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
         .nav-link:hover { background: #f0f5f7; color: #1c5062; }
         .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
-        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
 
         /* Main content */
         .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
@@ -68,9 +68,31 @@
         .form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding-top: 22px; margin-top: 27px; border-top: 1px solid #edf0f5; }
         .primary-button { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 0 20px; background: #1c5062; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
         .primary-button:hover { background: #256d7f; }
+        .secondary-button { min-width: 110px; height: 44px; padding: 0 18px; border: 1px solid #d3a1a7; border-radius: 8px; background: white; color: #a22735; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .secondary-button:hover { background: #fff5f6; }
+        .secondary-button.reactivate { border-color: #99cbbb; color: #186b4d; }
+        .secondary-button.reactivate:hover { background: #edf8f2; }
 
-        /* Success message */
+        /* Success notification */
         .success-message { width: 100%; max-width: 790px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
+
+        /* Confirmation pop-up */
+        .modal-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px; background: #14253e88; }
+        .modal-box { position: relative; width: 100%; max-width: 435px; padding: 32px; background: white; border-radius: 16px; box-shadow: 0 22px 70px #14253e40; }
+        .modal-close { position: absolute; top: 14px; right: 16px; width: 32px; height: 32px; display: grid; place-items: center; border: none; border-radius: 7px; background: transparent; color: #738096; font-size: 25px; cursor: pointer; }
+        .modal-close:hover { background: #f0f4f8; }
+        .modal-symbol { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #fff0f0; color: #a22735; font-size: 25px; font-weight: 800; margin-bottom: 19px; }
+        .modal-symbol.reactivate { background: #e6f6f0; color: #186b4d; }
+        .modal-title { color: #14253e; font-size: 21px; margin: 0 0 10px; }
+        .modal-description { color: #52647a; font-size: 14px; line-height: 1.7; margin: 0 0 16px; }
+        .modal-error { padding: 11px 13px; background: #fff0f0; color: #a22735; border-radius: 7px; font-size: 12px; margin: 0 0 16px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-cancel { height: 42px; padding: 0 20px; background: white; border: 1px solid #cdd7e4; border-radius: 8px; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-cancel:hover { background: #f0f4f8; }
+        .modal-confirm { height: 42px; padding: 0 20px; background: #a22735; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-confirm.reactivate { background: #186b4d; }
+        .modal-confirm:disabled { opacity: .6; cursor: not-allowed; }
+
         [hidden] { display: none !important; }
         a:focus-visible, button:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
@@ -99,6 +121,9 @@
             .project-header { flex-direction: column; }
             .details-panel { padding: 22px; }
             .date-fields { grid-template-columns: 1fr; gap: 0; }
+            .form-actions { gap: 10px; }
+            .secondary-button, .form-actions .primary-button { flex: 1; min-width: 0; }
+            .modal-box { padding: 26px 22px; }
         }
     </style>
 </head>
@@ -230,19 +255,17 @@
                 <div class="field">
                     <label>Project Progress</label>
 
-                    <div>
-                        {% if project.progress == "Ongoing" %}
-                            <span class="badge ongoing">
-                                <span class="badge-dot"></span>
-                                Ongoing
-                            </span>
-                        {% else %}
-                            <span class="badge completed">
-                                <span class="badge-dot"></span>
-                                Completed
-                            </span>
-                        {% endif %}
-                    </div>
+                    {% if project.progress == "Ongoing" %}
+                        <span class="badge ongoing">
+                            <span class="badge-dot"></span>
+                            Ongoing
+                        </span>
+                    {% else %}
+                        <span class="badge completed">
+                            <span class="badge-dot"></span>
+                            Completed
+                        </span>
+                    {% endif %}
                 </div>
 
                 <!-- Project Dates -->
@@ -256,7 +279,7 @@
                         </div>
                     </div>
 
-                    <!-- End Date (Completed Projects Only) -->
+                    <!-- End Date for Completed Projects -->
                     {% if project.progress == "Completed" %}
                         <div class="field">
                             <label>End Date</label>
@@ -294,33 +317,146 @@
                 <!-- Project Actions -->
                 <div class="form-actions">
 
+                    {% if project.status == "suspended" %}
+                        <button class="secondary-button reactivate"
+                                id="statusButton"
+                                type="button"
+                                data-action="reactivate">
+                            Reactivate
+                        </button>
+                    {% else %}
+                        <button class="secondary-button"
+                                id="statusButton"
+                                type="button"
+                                data-action="suspend">
+                            Suspend
+                        </button>
+                    {% endif %}
+
                     <a class="primary-button"
                        href="/interior-designer/projects/{{ project.project_id }}/edit?account_id={{ account_id }}&username={{ display_username | urlencode }}">
                         Edit Project
                     </a>
-
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Suspend / Reactivate Confirmation Pop-up -->
+    <div class="modal-overlay" id="statusModal" hidden>
+        <div class="modal-box"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modalTitle"
+             aria-describedby="modalDescription">
+
+            <button class="modal-close"
+                    id="closeModal"
+                    type="button"
+                    aria-label="Close confirmation">
+                &times;
+            </button>
+
+            <div class="modal-symbol"
+                 id="modalSymbol"
+                 aria-hidden="true">!</div>
+
+            <h2 class="modal-title" id="modalTitle">
+                Confirm suspension
+            </h2>
+
+            <p class="modal-description"
+               id="modalDescription"></p>
+
+            <p class="modal-error"
+               id="modalError"
+               role="alert"
+               hidden></p>
+
+            <div class="modal-actions">
+
+                <button class="modal-cancel"
+                        id="cancelModal"
+                        type="button">
+                    Cancel
+                </button>
+
+                <button class="modal-confirm"
+                        id="confirmStatus"
+                        type="button">
+                    Suspend
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         class ViewProjectPage {
             constructor() {
+                this.accountId = {{ account_id | tojson }};
+                this.projectId = {{ project.project_id | tojson }};
+                this.projectName = {{ project.project_name | tojson }};
+
+                this.statusButton = document.getElementById("statusButton");
+                this.action = this.statusButton.dataset.action;
+
+                this.modal = document.getElementById("statusModal");
+                this.modalTitle = document.getElementById("modalTitle");
+                this.modalDescription = document.getElementById("modalDescription");
+                this.modalSymbol = document.getElementById("modalSymbol");
+                this.modalError = document.getElementById("modalError");
+                this.confirmButton = document.getElementById("confirmStatus");
+                this.cancelButton = document.getElementById("cancelModal");
+                this.closeButton = document.getElementById("closeModal");
+
+                this.submitting = false;
+
                 this.setupEvents();
                 this.checkSuccessMessage();
             }
 
-            // Set up navigation events
+            // Set up navigation and confirmation events
             setupEvents() {
                 document.getElementById("logoutButton").addEventListener(
-                    "click", () => {
-                        window.location.href = "/";
-                    }
+                    "click", () => window.location.href = "/"
                 );
+
+                this.statusButton.addEventListener(
+                    "click", () => this.openModal()
+                );
+
+                this.cancelButton.addEventListener(
+                    "click", () => this.closeModalWindow()
+                );
+
+                this.closeButton.addEventListener(
+                    "click", () => this.closeModalWindow()
+                );
+
+                this.confirmButton.addEventListener(
+                    "click", () => this.confirmStatusChange()
+                );
+
+                // Close when clicking outside the pop-up
+                this.modal.addEventListener("click", event => {
+                    if (event.target === this.modal && !this.submitting) {
+                        this.closeModalWindow();
+                    }
+                });
+
+                // Close with Escape
+                document.addEventListener("keydown", event => {
+                    if (
+                        event.key === "Escape" &&
+                        !this.modal.hidden &&
+                        !this.submitting
+                    ) {
+                        this.closeModalWindow();
+                    }
+                });
             }
 
-            // Display success message after updating a project
+            // Display success notifications
             checkSuccessMessage() {
                 const params = new URLSearchParams(
                     window.location.search
@@ -330,23 +466,154 @@
                     "successMessage"
                 );
 
+                let message = "";
+
                 if (params.get("updated") === "1") {
-                    successMessage.textContent =
-                        "Project updated successfully.";
+                    message = "Project updated successfully.";
+                } else if (params.get("suspended") === "1") {
+                    message = "Project suspended successfully.";
+                } else if (params.get("reactivated") === "1") {
+                    message = "Project reactivated successfully.";
+                }
 
-                    successMessage.hidden = false;
+                if (!message) {
+                    return;
+                }
 
-                    // Remove the success parameter from the URL
-                    params.delete("updated");
+                successMessage.textContent = message;
+                successMessage.hidden = false;
 
-                    const query = params.toString();
+                params.delete("updated");
+                params.delete("suspended");
+                params.delete("reactivated");
 
-                    window.history.replaceState(
-                        {},
-                        "",
-                        window.location.pathname +
-                        (query ? "?" + query : "")
-                    );
+                const query = params.toString();
+
+                window.history.replaceState(
+                    {},
+                    "",
+                    window.location.pathname +
+                    (query ? "?" + query : "")
+                );
+            }
+
+            // Open the suspension or reactivation confirmation
+            openModal() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                const isSuspending = this.action === "suspend";
+
+                this.modalTitle.textContent = isSuspending
+                    ? "Confirm suspension"
+                    : "Confirm reactivation";
+
+                this.modalDescription.textContent = isSuspending
+                    ? 'Are you sure you want to suspend "' +
+                      this.projectName + '"? The project status will change to Suspended.'
+                    : 'Are you sure you want to reactivate "' +
+                      this.projectName + '"? The project status will change to Active.';
+
+                this.confirmButton.textContent = isSuspending
+                    ? "Suspend"
+                    : "Reactivate";
+
+                this.modalSymbol.textContent = isSuspending ? "!" : "✓";
+
+                this.modalSymbol.classList.toggle(
+                    "reactivate",
+                    !isSuspending
+                );
+
+                this.confirmButton.classList.toggle(
+                    "reactivate",
+                    !isSuspending
+                );
+
+                this.modal.hidden = false;
+                this.confirmButton.focus();
+            }
+
+            // Close the confirmation pop-up
+            closeModalWindow() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.modal.hidden = true;
+                this.statusButton.focus();
+            }
+
+            // Submit the requested status change to Flask
+            async confirmStatusChange() {
+                if (this.submitting) {
+                    return;
+                }
+
+                this.submitting = true;
+                this.confirmButton.disabled = true;
+                this.modalError.hidden = true;
+                this.modalError.textContent = "";
+
+                const newStatus = this.action === "suspend"
+                    ? "suspended"
+                    : "active";
+
+                const statusUrl =
+                    "/interior-designer/projects/" +
+                    encodeURIComponent(this.projectId) +
+                    "/status?account_id=" +
+                    encodeURIComponent(this.accountId);
+
+                try {
+                    const response = await fetch(statusUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            status: newStatus
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const params = new URLSearchParams(
+                            window.location.search
+                        );
+
+                        if (newStatus === "suspended") {
+                            params.set("suspended", "1");
+                        } else {
+                            params.set("reactivated", "1");
+                        }
+
+                        window.location.href =
+                            window.location.pathname +
+                            "?" + params.toString();
+
+                    } else {
+                        this.modalError.textContent =
+                            result.message ||
+                            "Unable to update project status.";
+
+                        this.modalError.hidden = false;
+                    }
+
+                } catch (error) {
+                    this.modalError.textContent =
+                        "Unable to connect to the server.";
+
+                    this.modalError.hidden = false;
+
+                } finally {
+                    this.submitting = false;
+                    this.confirmButton.disabled = false;
                 }
             }
         }

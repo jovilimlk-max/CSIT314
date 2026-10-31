@@ -3,11 +3,11 @@
 What this code does?
 - Initialise the Project database.
 - Create new projects linked to a company.
-- Retrieve an individual project using its Project ID.
+- Retrieve individual projects.
 - Retrieve all projects belonging to a company.
 - Retrieve ongoing and completed projects separately.
 - Update existing project information.
-- Preserve the project's company association and status.
+- Suspend or reactivate existing projects.
 '''
 
 import sqlite3
@@ -94,7 +94,6 @@ class Project:
 
             connection.commit()
 
-            # Return the ID of the newly created project
             return cursor.lastrowid
 
         finally:
@@ -210,7 +209,6 @@ class Project:
             if progress == "Ongoing":
                 end_date = None
 
-            # Update project details without changing company_id or status
             cursor.execute('''
                 UPDATE projects
                 SET project_name = ?,
@@ -230,7 +228,32 @@ class Project:
 
             connection.commit()
 
-            # Return True if a project record was found and updated
+            return cursor.rowcount > 0
+
+        finally:
+            connection.close()
+
+    # Suspend or reactivate an existing project
+    def update_project_status(self, project_id, status):
+
+        connection = sqlite3.connect(self.database_path)
+
+        try:
+            cursor = connection.cursor()
+
+            # Update only the project's status
+            cursor.execute('''
+                UPDATE projects
+                SET status = ?
+                WHERE project_id = ?
+            ''', (
+                status,
+                project_id
+            ))
+
+            connection.commit()
+
+            # Return True if the project was updated
             return cursor.rowcount > 0
 
         finally:
