@@ -1,11 +1,10 @@
 
 '''
 What this code does?
-- Entry point for Flask.
 - Initialise Flask and the databases.
-- Connect the BCE classes and register the HTTP routes.
-- Register Login page display through the Boundary.
-- Register Login authentication through the Controller.
+- Connect Boundary, Controller and Entity classes.
+- Register routes for Login, User Admin, Company Information and Projects.
+- Use the revised BCE flow for Login and User Admin Dashboard.
 '''
 
 from flask import Flask
@@ -23,14 +22,10 @@ from Boundary.suspendUserProfilePage import SuspendUserProfilePage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
-
-# Company Information Boundaries
 from Boundary.createCompanyInformationPage import CreateCompanyInformationPage
 from Boundary.viewCompanyInformationPage import ViewCompanyInformationPage
 from Boundary.updateCompanyInformationPage import UpdateCompanyInformationPage
 from Boundary.suspendCompanyInformationPage import SuspendCompanyInformationPage
-
-# Project Boundaries
 from Boundary.createProjectPage import CreateProjectPage
 from Boundary.viewProjectsPage import ViewProjectsPage
 from Boundary.viewProjectPage import ViewProjectPage
@@ -49,14 +44,10 @@ from Controllers.suspendUserProfileController import SuspendUserProfileControlle
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
-
-# Company Information Controllers
 from Controllers.createCompanyInformationController import CreateCompanyInformationController
 from Controllers.viewCompanyInformationController import ViewCompanyInformationController
 from Controllers.updateCompanyInformationController import UpdateCompanyInformationController
 from Controllers.suspendCompanyInformationController import SuspendCompanyInformationController
-
-# Project Controllers
 from Controllers.createProjectController import CreateProjectController
 from Controllers.viewProjectsController import ViewProjectsController
 from Controllers.viewProjectController import ViewProjectController
@@ -73,7 +64,7 @@ from Entities.project import Project
 
 class RenovoApp:
 
-    # Initialise Flask, create BCE objects and register routes
+    # Initialise Flask, Entities, Boundaries and Controllers
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
 
@@ -90,21 +81,23 @@ class RenovoApp:
         self.project = Project()
         self.project.initialise_database()
 
-        # Initialise Login Boundary
+        # Initialise Login Boundary and Controller
         self.login_boundary = UserLoginPage()
 
-        # Initialise Login Controller
         self.login_controller = UserLoginController(
             self.login_boundary,
             self.user_account
         )
 
-        # Initialise User Admin Controllers
+        # Initialise User Admin Dashboard Boundary and Controller
+        self.dashboard_boundary = UserAdminDashboardPage()
+
         self.dashboard_controller = UserAdminDashboardController(
-            self.user_account,
-            self.user_profile
+            self.dashboard_boundary,
+            self.user_account
         )
 
+        # Initialise User Account Controllers
         self.create_account_controller = CreateUserAccountController(
             self.user_account
         )
@@ -123,6 +116,7 @@ class RenovoApp:
             self.user_account
         )
 
+        # Initialise User Profile Controllers
         self.create_profile_controller = CreateUserProfileController(
             self.user_profile
         )
@@ -197,10 +191,10 @@ class RenovoApp:
             self.user_account
         )
 
-        # Register application routes
+        # Register all Flask routes
         self.register_routes()
 
-    # Connect URLs to their respective Boundary or Controller classes
+    # Connect URLs to Boundaries and Controllers
     def register_routes(self):
 
         # Display Login page through the Boundary
@@ -211,7 +205,7 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Handle Login submission through the Controller
+        # Process Login through the Controller
         login_view = UserLoginController.as_view(
             "user_login",
             self.login_boundary,
@@ -224,10 +218,11 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # User Admin Dashboard
-        dashboard_view = UserAdminDashboardPage.as_view(
+        # User Admin Dashboard through the Controller
+        dashboard_view = UserAdminDashboardController.as_view(
             "user_admin_dashboard",
-            self.dashboard_controller
+            self.dashboard_boundary,
+            self.user_account
         )
 
         self.app.add_url_rule(

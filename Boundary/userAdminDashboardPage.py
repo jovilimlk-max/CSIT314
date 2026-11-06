@@ -1,36 +1,42 @@
 
 '''
 What this code does?
-- Display the User Admin Dashboard page.
 - Retrieve the username from the URL.
-- Request dashboard statistics from the Controller.
-- Pass the username and statistics to the HTML page.
-- Return an error if the statistics cannot be retrieved.
+- Strip and prepare the username for display.
+- Receive dashboard statistics from the Controller.
+- Display the dashboard with the username and statistics.
+- Return an error response if statistics cannot be retrieved.
 '''
 
 from flask import render_template, jsonify, request
-from flask.views import MethodView
 
 
-class UserAdminDashboardPage(MethodView):
+class UserAdminDashboardPage:
 
-    def __init__(self, dashboard_controller):
-        self.dashboard_controller = dashboard_controller
+    # Retrieve and prepare the username from the URL
+    def get_dashboard_details(self):
 
-    # Retrieve the username and dashboard statistics
-    def get(self):
-        username = request.args.get("username", "User Admin").strip()
+        username = request.args.get(
+            "username",
+            default="User Admin"
+        )
+
+        # Strip whitespace and use a default username if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
 
-        result, status_code = (
-            self.dashboard_controller.get_dashboard_statistics()
-        )
+        return username
 
+    # Display the dashboard using results provided by the Controller
+    def display_dashboard(self, username, result, status_code):
+
+        # Display an error if dashboard statistics could not be retrieved
         if not result["success"]:
             return jsonify(result), status_code
 
+        # Render the User Admin Dashboard
         return render_template(
             "userAdminDashboard.html",
             username=username,

@@ -1,30 +1,35 @@
 
 '''
 What this code does?
-- Retrieve the User Admin Dashboard statistics.
-- Ask the UserAccount Entity for total and suspended account counts.
-- Ask the UserProfile Entity for the total profile count.
-- Return the statistics to the Dashboard Boundary.
+- Coordinate communication between the User Admin Dashboard Boundary and Entity.
+- Retrieve the prepared username from the Boundary.
+- Request dashboard statistics from the Entity.
+- Pass the Entity result to the Boundary for display.
+- Does not perform validation or database operations.
 '''
 
+from flask.views import MethodView
 
-class UserAdminDashboardController:
 
-    def __init__(self, user_account, user_profile):
+class UserAdminDashboardController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, dashboard_boundary, user_account):
+        self.boundary = dashboard_boundary
         self.user_account = user_account
-        self.user_profile = user_profile
 
-    # Retrieve the dashboard statistics from both Entities
-    def get_dashboard_statistics(self):
-        total_accounts = self.user_account.get_total_accounts()
-        total_profiles = self.user_profile.get_total_profiles()
-        suspended_accounts = self.user_account.get_suspended_accounts()
+    # Coordinate retrieval and display of dashboard information
+    def get(self):
 
-        return {
-            "success": True,
-            "statistics": {
-                "total_accounts": total_accounts,
-                "total_profiles": total_profiles,
-                "suspended_accounts": suspended_accounts
-            }
-        }, 200
+        # Retrieve the prepared username from the Boundary
+        username = self.boundary.get_dashboard_details()
+
+        # Request all dashboard statistics from the Entity
+        result, status_code = self.user_account.get_dashboard_statistics()
+
+        # Pass the result to the Boundary for display
+        return self.boundary.display_dashboard(
+            username,
+            result,
+            status_code
+        )

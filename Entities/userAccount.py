@@ -8,12 +8,14 @@ What this code does?
 - Create new user accounts without an assigned User Profile.
 - Update existing account details and optional profile assignments.
 - Suspend or reactivate existing user accounts.
-- Retrieve total and suspended account counts.
+- Retrieve account counts and User Admin Dashboard statistics.
 '''
 
 import sqlite3
 from pathlib import Path
 from werkzeug.security import check_password_hash
+
+from Entities.userProfile import UserProfile
 
 
 class UserAccount:
@@ -118,24 +120,12 @@ class UserAccount:
 
         if profile_id is not None:
 
-            # Retrieve profile information within the Entity layer
-            from Entities.userProfile import UserProfile
-
+            # Retrieve the assigned profile through the Entity layer
             user_profile = UserProfile()
             profile = user_profile.get_profile_by_id(profile_id)
 
-            # Block login if the assigned profile does not exist
-            if profile is None:
-                return {
-                    "data": {
-                        "success": False,
-                        "message": "Your assigned user profile is suspended or unavailable. Please contact the administrator."
-                    },
-                    "status_code": 403
-                }
-
-            # Block login if the assigned profile is suspended
-            if profile["status"] != "active":
+            # Block login if the profile does not exist or is suspended
+            if profile is None or profile["status"] != "active":
                 return {
                     "data": {
                         "success": False,
@@ -172,7 +162,6 @@ class UserAccount:
             """, (name, email, password_hash, role))
 
             connection.commit()
-
             return True
 
         except sqlite3.IntegrityError:
@@ -317,7 +306,7 @@ class UserAccount:
     # Suspend or reactivate an existing user account
     def update_account_status(self, account_id, status):
 
-        # Only allow recognised account statuses
+        # Only allow the recognised account statuses
         if status not in {"active", "suspended"}:
             return False
 
@@ -326,7 +315,6 @@ class UserAccount:
         try:
             cursor = connection.cursor()
 
-            # Update only when the account has a different status
             cursor.execute("""
                 UPDATE user_accounts
                 SET status = ?,
@@ -362,7 +350,7 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Count user accounts with suspended status
+    # Count accounts with suspended status
     def get_suspended_accounts(self):
         connection = sqlite3.connect(self.db_path)
 
@@ -379,6 +367,27 @@ class UserAccount:
 
         finally:
             connection.close()
+
+    # Retrieve and prepare all User Admin Dashboard statistics
+    def get_dashboard_statistics(self):
+
+        # Retrieve User Account statistics
+        total_accounts = self.get_total_accounts()
+        suspended_accounts = self.get_suspended_accounts()
+
+        # Retrieve User Profile statistics within the Entity layer
+        user_profile = UserProfile()
+        total_profiles = user_profile.get_total_profiles()
+
+        # Return the complete result to the Controller
+        return {
+            "success": True,
+            "statistics": {
+                "total_accounts": total_accounts,
+                "total_profiles": total_profiles,
+                "suspended_accounts": suspended_accounts
+            }
+        }, 200
 
     # Initialise the User Account database
     def initialise_database(self):
