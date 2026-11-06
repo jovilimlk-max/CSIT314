@@ -1,19 +1,43 @@
 
 '''
 What this code does?
+- Handle the HTTP POST request for Suspend/Reactivate Company Information.
 - Retrieve the Interior Designer's Account ID from the URL.
 - Retrieve the requested company status from submitted JSON.
 - Strip unnecessary whitespace from the requested status.
 - Validate the Account ID and requested company status.
+- Pass validated details to the Suspend Company Information Controller.
 - Return validation errors and status update results to the frontend.
 - Support both suspension and reactivation of company information.
-- Does not directly communicate with Controllers or Entities.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import request, jsonify
 
 
 class SuspendCompanyInformationPage:
+
+    # Store the Suspend Company Information Controller
+    def __init__(self, suspend_company_controller):
+        self.controller = suspend_company_controller
+
+    # Handle the Suspend/Reactivate Company Information POST request
+    def post(self):
+
+        # Retrieve and validate the submitted status details
+        status_details, error = self.get_status_details()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated details to the Controller
+        result = self.controller.change_company_status(
+            status_details
+        )
+
+        # Return the result through the Boundary
+        return self.display_status_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):

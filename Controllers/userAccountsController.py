@@ -1,30 +1,25 @@
 
 '''
 What this code does?
-- Coordinate communication between the User Accounts Boundary and Entity.
-- Request all User Accounts from the Entity.
-- Pass the Entity result to the Boundary for display.
-- Does not perform database operations, validation or business logic.
+- Receive a request from the User Accounts Boundary.
+- Request all user accounts from the User Account Entity.
+- Return the Entity result and status code to the Boundary.
+- Support the User Accounts management listing.
+- Does not handle HTTP requests, validation, HTML or database operations.
 '''
 
-from flask.views import MethodView
 
+class UserAccountsController:
 
-class UserAccountsController(MethodView):
-
-    # Store references to the Boundary and Entity
-    def __init__(self, accounts_boundary, user_account):
-        self.boundary = accounts_boundary
+    # Store the User Account Entity
+    def __init__(self, user_account):
         self.user_account = user_account
 
-    # Coordinate displaying the User Accounts management page
-    def get(self):
+    # Coordinate retrieving all user accounts
+    def view_all_accounts(self):
 
-        # Request all User Accounts from the Entity
+        # Request all user accounts from the Entity
         result, status_code = self.user_account.view_all_accounts()
 
-        # Pass the result to the Boundary for display
-        return self.boundary.display_accounts(
-            result,
-            status_code
-        )
+        # Return the result to the calling Boundary
+        return result, status_code

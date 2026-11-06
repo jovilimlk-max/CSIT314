@@ -1,15 +1,18 @@
 
 '''
 What this code does?
+- Handle GET and POST requests for Create Project.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and prepare the Interior Designer's username.
 - Extract and strip submitted project details.
 - Validate project name, description, type and dates.
 - Support Current IDP and Past IDP project creation.
 - Use lowercase 'current' and 'past' project type values.
+- Call the Create Project Controller to retrieve company information.
+- Pass validated project details to the Create Project Controller.
 - Display the Create Project page when company information exists.
 - Return validation errors and project creation results.
-- Does not directly communicate with Controllers or Entities.
+- Does not communicate directly with the Entity.
 '''
 
 from datetime import date
@@ -18,6 +21,49 @@ from flask import request, render_template, jsonify
 
 
 class CreateProjectPage:
+
+    # Store the Create Project Controller
+    def __init__(self, create_project_controller):
+        self.controller = create_project_controller
+
+    # Handle the GET request to display the Create Project page
+    def get(self):
+
+        # Retrieve and validate the Account ID
+        account_id, error = self.get_account_id()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_page_validation_error(error)
+
+        # Call the Controller to retrieve company information
+        result, status_code = self.controller.get_create_project_company(
+            account_id
+        )
+
+        # Display the result returned by the Controller
+        return self.display_create_project_page(
+            result,
+            status_code
+        )
+
+    # Handle the POST request to create a project
+    def post(self):
+
+        # Retrieve and validate submitted project details
+        project_details, error = self.get_project_details()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated project details to the Controller
+        result = self.controller.create_project(
+            project_details
+        )
+
+        # Return the project creation result through the Boundary
+        return self.display_create_project_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):
@@ -219,7 +265,7 @@ class CreateProjectPage:
     # Display the Create Project page
     def display_create_project_page(self, result, status_code):
 
-        # Return errors from the Entity
+        # Return errors from the Entity through the Boundary
         if not result["success"]:
             return result["message"], status_code
 
@@ -236,14 +282,17 @@ class CreateProjectPage:
 
     # Return Account ID validation errors for GET requests
     def display_page_validation_error(self, error):
+
         return error["message"], 400
 
     # Return validation errors for POST requests
     def display_validation_error(self, error):
+
         return jsonify(error), 400
 
     # Return the project creation result
     def display_create_project_result(self, result):
+
         return jsonify(
             result["data"]
         ), result["status_code"]

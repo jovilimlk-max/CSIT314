@@ -1,15 +1,20 @@
 
 '''
 What this code does?
+- Handle the HTTP POST request for user login.
 - Extract login details from the frontend.
 - Strip email and role inputs without stripping the password.
 - Validate required fields, email format and selected role.
-- Return validated login details or a validation error.
-- Prepare login results for the frontend.
-- Display the login HTML page.
+- Pass validated login details to the User Login Controller.
+- Receive authentication results from the Controller.
+- Return login results and validation errors to the frontend.
+- Display the existing login HTML page.
+- Support all four user roles.
+- Does not communicate directly with the Entity.
 '''
 
 import re
+
 from flask import request, jsonify, render_template
 
 
@@ -17,6 +22,28 @@ class UserLoginPage:
 
     # Define the available login roles
     VALID_ROLES = {"customer", "designer", "admin", "manager"}
+
+    # Store the User Login Controller
+    def __init__(self, user_login_controller):
+        self.controller = user_login_controller
+
+    # Handle the User Login POST request
+    def post(self):
+
+        # Retrieve and validate submitted login details
+        login_details, error = self.get_login_details()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated login details to the Controller
+        result = self.controller.authenticate_login(
+            login_details
+        )
+
+        # Return the authentication result through the Boundary
+        return self.display_login_result(result)
 
     # Retrieve, clean and validate the submitted login details
     def get_login_details(self):
@@ -69,12 +96,17 @@ class UserLoginPage:
 
     # Prepare validation errors for the frontend
     def display_validation_error(self, error):
+
         return jsonify(error), 400
 
-    # Prepare the Entity's login result for the frontend
+    # Prepare the authentication result for the frontend
     def display_login_result(self, result):
-        return jsonify(result["data"]), result["status_code"]
 
-    # Display the login HTML page
+        return jsonify(
+            result["data"]
+        ), result["status_code"]
+
+    # Display the existing login HTML page
     def display_login_page(self):
+
         return render_template("LoginPage.html")

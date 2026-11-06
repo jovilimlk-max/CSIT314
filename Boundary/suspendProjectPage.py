@@ -1,20 +1,48 @@
 
 '''
 What this code does?
+- Handle the HTTP POST request for Suspend/Reactivate Project.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and validate the selected Project ID.
 - Extract the requested project status from JSON.
 - Validate that the requested status is 'active' or 'suspended'.
-- Return validation errors as JSON responses.
-- Return successful or unsuccessful status updates as JSON.
+- Pass validated details to the Suspend Project Controller.
+- Return validation errors and status update results as JSON.
 - Support suspending and reactivating Current IDP and Past IDP.
-- Does not directly communicate with Controllers or Entities.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import request, jsonify
 
 
 class SuspendProjectPage:
+
+    # Store the Suspend Project Controller
+    def __init__(self, suspend_project_controller):
+        self.controller = suspend_project_controller
+
+    # Handle the Suspend/Reactivate Project POST request
+    def post(self, project_id):
+
+        # Retrieve and validate the submitted status details
+        status_details, error = self.get_status_details(
+            project_id
+        )
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated details to the Controller
+        result, status_code = self.controller.change_project_status(
+            status_details
+        )
+
+        # Return the result through the Boundary
+        return self.display_status_result(
+            result,
+            status_code
+        )
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):
@@ -110,7 +138,7 @@ class SuspendProjectPage:
 
         return jsonify(error), 400
 
-    # Return the Entity's status update result
+    # Return the project status update result
     def display_status_result(self, result, status_code):
 
         return jsonify(result), status_code

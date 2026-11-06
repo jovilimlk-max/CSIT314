@@ -1,6 +1,7 @@
 
 '''
 What this code does?
+- Handle GET and POST requests for Update Project.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and validate the selected Project ID.
 - Retrieve and prepare the Interior Designer's username.
@@ -8,9 +9,11 @@ What this code does?
 - Validate project name, description, type and dates.
 - Support updating both Current IDP and Past IDP.
 - Use lowercase 'current' and 'past' project type values.
+- Call the Update Project Controller to retrieve existing project information.
+- Pass validated updated project information to the Controller.
 - Display the Update Project form with existing information.
 - Return validation errors and update results to the frontend.
-- Does not directly communicate with Controllers or Entities.
+- Does not communicate directly with the Entity.
 '''
 
 from datetime import date
@@ -19,6 +22,53 @@ from flask import request, render_template, jsonify
 
 
 class UpdateProjectPage:
+
+    # Store the Update Project Controller
+    def __init__(self, update_project_controller):
+        self.controller = update_project_controller
+
+    # Handle the GET request to display the Update Project form
+    def get(self, project_id):
+
+        # Retrieve and validate the Account ID and Project ID
+        view_details, error = self.get_view_details(
+            project_id
+        )
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_page_validation_error(error)
+
+        # Call the Controller to retrieve existing project information
+        result, status_code = self.controller.view_project(
+            view_details
+        )
+
+        # Display the existing project through the Boundary
+        return self.display_update_project_page(
+            result,
+            status_code
+        )
+
+    # Handle the POST request to update project information
+    def post(self, project_id):
+
+        # Retrieve and validate submitted project information
+        project_details, error = self.get_project_details(
+            project_id
+        )
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated updated project information to the Controller
+        result = self.controller.update_project(
+            project_details
+        )
+
+        # Return the update result through the Boundary
+        return self.display_update_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):

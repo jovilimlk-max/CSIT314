@@ -1,20 +1,47 @@
 
 '''
 What this code does?
+- Handle the HTTP GET request for View Projects.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and prepare the Interior Designer's username.
-- Receive company and project information from the Controller.
+- Call the View Projects Controller using the validated Account ID.
+- Receive company and project information returned by the Controller.
 - Display Current IDP and Past IDP projects on the Projects page.
 - Display an empty state when no projects exist.
 - Display a Create Company Information option when no company exists.
 - Return validation and retrieval errors.
-- Does not directly communicate with Controllers or Entities.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import request, render_template
 
 
 class ViewProjectsPage:
+
+    # Store the View Projects Controller
+    def __init__(self, view_projects_controller):
+        self.controller = view_projects_controller
+
+    # Handle the View Projects GET request
+    def get(self):
+
+        # Retrieve and validate the Account ID
+        account_id, error = self.get_account_id()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass the validated Account ID to the Controller
+        result, status_code = self.controller.view_projects(
+            account_id
+        )
+
+        # Display the result returned by the Controller
+        return self.display_projects_page(
+            result,
+            status_code
+        )
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):

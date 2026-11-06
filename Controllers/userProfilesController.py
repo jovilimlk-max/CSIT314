@@ -1,31 +1,25 @@
 
 '''
 What this code does?
-- Coordinate communication between the User Profiles Boundary and Entity.
-- Request the list of existing User Profiles from the Entity.
-- Pass the Entity result to the Boundary for display.
-- Support the existing frontend search and filtering functionality.
-- Does not perform validation or database operations.
+- Receive a request from the User Profiles Boundary.
+- Request all User Profiles from the User Profile Entity.
+- Return the Entity result and status code to the Boundary.
+- Support the existing User Profiles listing.
+- Does not handle HTTP requests, validation, HTML or database operations.
 '''
 
-from flask.views import MethodView
 
+class UserProfilesController:
 
-class UserProfilesController(MethodView):
-
-    # Store references to the Boundary and Entity
-    def __init__(self, profiles_boundary, user_profile):
-        self.boundary = profiles_boundary
+    # Store the User Profile Entity
+    def __init__(self, user_profile):
         self.user_profile = user_profile
 
-    # Coordinate retrieving and displaying all User Profiles
-    def get(self):
+    # Coordinate retrieving all User Profiles
+    def view_all_profiles(self):
 
-        # Request the complete profile listing from the Entity
+        # Request all User Profiles from the Entity
         result, status_code = self.user_profile.view_all_profiles()
 
-        # Pass the Entity result to the Boundary for display
-        return self.boundary.display_profiles(
-            result,
-            status_code
-        )
+        # Return the Entity result to the calling Boundary
+        return result, status_code

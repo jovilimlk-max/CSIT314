@@ -1,17 +1,36 @@
 
 '''
 What this code does?
-- Retrieve and prepare the administrator's display name.
-- Receive User Account information from the Controller.
+- Handle the HTTP GET request for the User Accounts page.
+- Retrieve and prepare the User Admin's display name.
+- Call the User Accounts Controller to retrieve all user accounts.
+- Receive user account information returned by the Controller.
 - Display the User Accounts management page.
 - Pass the accounts and username to the HTML template.
 - Return an error if account information cannot be retrieved.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import render_template, jsonify, request
 
 
 class UserAccountsPage:
+
+    # Store the User Accounts Controller
+    def __init__(self, user_accounts_controller):
+        self.controller = user_accounts_controller
+
+    # Handle the User Accounts GET request
+    def get(self):
+
+        # Request all user accounts through the Controller
+        result, status_code = self.controller.view_all_accounts()
+
+        # Display the result through the Boundary
+        return self.display_accounts(
+            result,
+            status_code
+        )
 
     # Retrieve and prepare the administrator's display name
     def get_username(self):

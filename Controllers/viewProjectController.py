@@ -1,43 +1,27 @@
 
 '''
 What this code does?
-- Coordinate communication between the View Project Boundary and Entity.
-- Retrieve the validated Account ID and Project ID from the Boundary.
+- Receive the validated Account ID and Project ID from the View Project Boundary.
 - Pass the validated IDs to the Project Entity.
 - Retrieve the selected Current IDP or Past IDP through the Entity.
-- Return the Entity result to the Boundary for display.
-- Does not perform account checks, business logic or database operations.
+- Return the Entity result to the Boundary.
+- Does not handle HTTP requests, validation, HTML or database operations.
 '''
 
-from flask.views import MethodView
 
+class ViewProjectController:
 
-class ViewProjectController(MethodView):
-
-    # Store references to the Boundary and Entity
-    def __init__(self, view_project_boundary, project):
-        self.boundary = view_project_boundary
+    # Store the Project Entity
+    def __init__(self, project):
         self.project = project
 
-    # Coordinate displaying an individual project
-    def get(self, project_id):
+    # Coordinate retrieving an individual project
+    def view_project(self, view_details):
 
-        # Retrieve validated Account ID and Project ID
-        view_details, error = self.boundary.get_view_details(
-            project_id
-        )
-
-        # Return validation errors through the Boundary
-        if error:
-            return self.boundary.display_validation_error(error)
-
-        # Retrieve the selected project through the Entity
+        # Pass the validated Account ID and Project ID to the Entity
         result, status_code = self.project.view_project(
             view_details
         )
 
-        # Return the Entity result to the Boundary
-        return self.boundary.display_project_page(
-            result,
-            status_code
-        )
+        # Return the Entity result to the calling Boundary
+        return result, status_code

@@ -1,13 +1,14 @@
 
 '''
 What this code does?
-- Initialise Flask and the project databases.
-- Connect Boundary, Controller and Entity classes.
-- Register routes for Login, User Admin, Company Information and Projects.
-- Use the revised BCE architecture for Company Information features.
-- Use the revised BCE architecture for Create, View, Update, Suspend and Search Project.
+- Initialise Flask and the Renovo databases.
+- Connect Entity, Controller and Boundary classes.
+- Register Flask routes through their respective Boundaries.
+- Follow the BCE architecture: Boundary -> Controller -> Entity.
+- Return Entity results through Controller -> Boundary.
+- Support Login, User Admin, Company Information and Projects.
 - Support Current IDP and Past IDP using the project_type field.
-- Preserve existing User Admin and Company Information functionality.
+- Preserve existing URLs and frontend functionality.
 - Avoid Flask sessions and repeated post-login account checks.
 '''
 
@@ -16,11 +17,13 @@ from flask import Flask
 # Boundaries
 from Boundary.userLoginPage import UserLoginPage
 from Boundary.userAdminDashboardPage import UserAdminDashboardPage
+
 from Boundary.userAccountsPage import UserAccountsPage
 from Boundary.createUserAccountPage import CreateUserAccountPage
 from Boundary.viewUserAccountPage import ViewUserAccountPage
 from Boundary.updateUserAccountPage import UpdateUserAccountPage
 from Boundary.suspendUserAccountPage import SuspendUserAccountPage
+
 from Boundary.userProfilesPage import UserProfilesPage
 from Boundary.createUserProfilePage import CreateUserProfilePage
 from Boundary.viewUserProfilePage import ViewUserProfilePage
@@ -42,11 +45,13 @@ from Boundary.searchProjectPage import SearchProjectPage
 # Controllers
 from Controllers.userLoginController import UserLoginController
 from Controllers.userAdminDashboardController import UserAdminDashboardController
+
 from Controllers.userAccountsController import UserAccountsController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.viewUserAccountController import ViewUserAccountController
 from Controllers.updateUserAccountController import UpdateUserAccountController
 from Controllers.suspendUserAccountController import SuspendUserAccountController
+
 from Controllers.userProfilesController import UserProfilesController
 from Controllers.createUserProfileController import CreateUserProfileController
 from Controllers.viewUserProfileController import ViewUserProfileController
@@ -74,7 +79,7 @@ from Entities.project import Project
 
 class RenovoApp:
 
-    # Initialise Flask, Entities, Boundaries and Controllers
+    # Initialise Flask and connect the BCE layers
     def __init__(self):
 
         self.app = Flask(
@@ -82,7 +87,10 @@ class RenovoApp:
             template_folder="FrontEnd"
         )
 
+        # ==========================================
         # Initialise Entities and databases
+        # ==========================================
+
         self.user_account = UserAccount()
         self.user_account.initialise_database()
 
@@ -95,45 +103,216 @@ class RenovoApp:
         self.project = Project()
         self.project.initialise_database()
 
-        # Login and User Admin Boundaries
-        self.login_boundary = UserLoginPage()
-        self.dashboard_boundary = UserAdminDashboardPage()
+        # ==========================================
+        # Initialise Controllers
+        # Controllers communicate only with Entities
+        # ==========================================
+
+        # Login and Dashboard Controllers
+        self.login_controller = UserLoginController(
+            self.user_account
+        )
+
+        self.dashboard_controller = UserAdminDashboardController(
+            self.user_account
+        )
+
+        # User Account Controllers
+        self.accounts_controller = UserAccountsController(
+            self.user_account
+        )
+
+        self.create_account_controller = CreateUserAccountController(
+            self.user_account
+        )
+
+        self.view_account_controller = ViewUserAccountController(
+            self.user_account
+        )
+
+        self.update_account_controller = UpdateUserAccountController(
+            self.user_account
+        )
+
+        self.suspend_account_controller = SuspendUserAccountController(
+            self.user_account
+        )
+
+        # User Profile Controllers
+        self.profiles_controller = UserProfilesController(
+            self.user_profile
+        )
+
+        self.create_profile_controller = CreateUserProfileController(
+            self.user_profile
+        )
+
+        self.view_profile_controller = ViewUserProfileController(
+            self.user_profile
+        )
+
+        self.update_profile_controller = UpdateUserProfileController(
+            self.user_profile
+        )
+
+        self.suspend_profile_controller = SuspendUserProfileController(
+            self.user_profile
+        )
+
+        # Company Information Controllers
+        self.create_company_controller = CreateCompanyInformationController(
+            self.company_information
+        )
+
+        self.view_company_controller = ViewCompanyInformationController(
+            self.company_information
+        )
+
+        self.update_company_controller = UpdateCompanyInformationController(
+            self.company_information
+        )
+
+        self.suspend_company_controller = SuspendCompanyInformationController(
+            self.company_information
+        )
+
+        # Project Controllers
+        self.create_project_controller = CreateProjectController(
+            self.project
+        )
+
+        self.view_projects_controller = ViewProjectsController(
+            self.project
+        )
+
+        self.view_project_controller = ViewProjectController(
+            self.project
+        )
+
+        self.update_project_controller = UpdateProjectController(
+            self.project
+        )
+
+        self.suspend_project_controller = SuspendProjectController(
+            self.project
+        )
+
+        self.search_project_controller = SearchProjectController(
+            self.project
+        )
+
+        # ==========================================
+        # Initialise Boundaries
+        # Boundaries communicate only with Controllers
+        # ==========================================
+
+        # Login and Dashboard Boundaries
+        self.login_boundary = UserLoginPage(
+            self.login_controller
+        )
+
+        self.dashboard_boundary = UserAdminDashboardPage(
+            self.dashboard_controller
+        )
 
         # User Account Boundaries
-        self.accounts_boundary = UserAccountsPage()
-        self.create_account_boundary = CreateUserAccountPage()
-        self.view_account_boundary = ViewUserAccountPage()
-        self.update_account_boundary = UpdateUserAccountPage()
-        self.suspend_account_boundary = SuspendUserAccountPage()
+        self.accounts_boundary = UserAccountsPage(
+            self.accounts_controller
+        )
+
+        self.create_account_boundary = CreateUserAccountPage(
+            self.create_account_controller
+        )
+
+        self.view_account_boundary = ViewUserAccountPage(
+            self.view_account_controller
+        )
+
+        self.update_account_boundary = UpdateUserAccountPage(
+            self.update_account_controller
+        )
+
+        self.suspend_account_boundary = SuspendUserAccountPage(
+            self.suspend_account_controller
+        )
 
         # User Profile Boundaries
-        self.profiles_boundary = UserProfilesPage()
-        self.create_profile_boundary = CreateUserProfilePage()
-        self.view_profile_boundary = ViewUserProfilePage()
-        self.update_profile_boundary = UpdateUserProfilePage()
-        self.suspend_profile_boundary = SuspendUserProfilePage()
+        self.profiles_boundary = UserProfilesPage(
+            self.profiles_controller
+        )
+
+        self.create_profile_boundary = CreateUserProfilePage(
+            self.create_profile_controller
+        )
+
+        self.view_profile_boundary = ViewUserProfilePage(
+            self.view_profile_controller
+        )
+
+        self.update_profile_boundary = UpdateUserProfilePage(
+            self.update_profile_controller
+        )
+
+        self.suspend_profile_boundary = SuspendUserProfilePage(
+            self.suspend_profile_controller
+        )
 
         # Company Information Boundaries
-        self.create_company_boundary = CreateCompanyInformationPage()
-        self.view_company_boundary = ViewCompanyInformationPage()
-        self.update_company_boundary = UpdateCompanyInformationPage()
-        self.suspend_company_boundary = SuspendCompanyInformationPage()
+        self.create_company_boundary = CreateCompanyInformationPage(
+            self.create_company_controller
+        )
+
+        self.view_company_boundary = ViewCompanyInformationPage(
+            self.view_company_controller
+        )
+
+        self.update_company_boundary = UpdateCompanyInformationPage(
+            self.update_company_controller
+        )
+
+        self.suspend_company_boundary = SuspendCompanyInformationPage(
+            self.suspend_company_controller
+        )
 
         # Project Boundaries
-        self.create_project_boundary = CreateProjectPage()
-        self.view_projects_boundary = ViewProjectsPage()
-        self.view_project_boundary = ViewProjectPage()
-        self.update_project_boundary = UpdateProjectPage()
-        self.suspend_project_boundary = SuspendProjectPage()
-        self.search_project_boundary = SearchProjectPage()
+        self.create_project_boundary = CreateProjectPage(
+            self.create_project_controller
+        )
 
-        # Register Flask routes
+        self.view_projects_boundary = ViewProjectsPage(
+            self.view_projects_controller
+        )
+
+        self.view_project_boundary = ViewProjectPage(
+            self.view_project_controller
+        )
+
+        self.update_project_boundary = UpdateProjectPage(
+            self.update_project_controller
+        )
+
+        self.suspend_project_boundary = SuspendProjectPage(
+            self.suspend_project_controller
+        )
+
+        self.search_project_boundary = SearchProjectPage(
+            self.search_project_controller
+        )
+
+        # Register all Flask routes
         self.register_routes()
 
-    # Connect Flask URLs to Boundaries and Controllers
+    # ==========================================
+    # Register Flask routes through Boundaries
+    # ==========================================
+
     def register_routes(self):
 
-        # Display Login page
+        # ------------------------------------------
+        # Login
+        # ------------------------------------------
+
+        # Display the Login page
         self.app.add_url_rule(
             "/",
             endpoint="login_page",
@@ -144,33 +323,31 @@ class RenovoApp:
         # Process Login
         self.app.add_url_rule(
             "/login",
-            view_func=UserLoginController.as_view(
-                "user_login",
-                self.login_boundary,
-                self.user_account
-            ),
+            endpoint="user_login",
+            view_func=self.login_boundary.post,
             methods=["POST"]
         )
 
+        # ------------------------------------------
         # User Admin Dashboard
+        # ------------------------------------------
+
         self.app.add_url_rule(
             "/user-admin/dashboard",
-            view_func=UserAdminDashboardController.as_view(
-                "user_admin_dashboard",
-                self.dashboard_boundary,
-                self.user_account
-            ),
+            endpoint="user_admin_dashboard",
+            view_func=self.dashboard_boundary.get,
             methods=["GET"]
         )
 
-        # View User Accounts listing
+        # ------------------------------------------
+        # User Account Routes
+        # ------------------------------------------
+
+        # View all User Accounts
         self.app.add_url_rule(
             "/user-admin/accounts",
-            view_func=UserAccountsController.as_view(
-                "user_accounts",
-                self.accounts_boundary,
-                self.user_account
-            ),
+            endpoint="user_accounts",
+            view_func=self.accounts_boundary.get,
             methods=["GET"]
         )
 
@@ -182,58 +359,55 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Create User Account
+        # Create a User Account
         self.app.add_url_rule(
             "/user-admin/accounts",
-            view_func=CreateUserAccountController.as_view(
-                "create_user_account",
-                self.create_account_boundary,
-                self.user_account
-            ),
+            endpoint="create_user_account",
+            view_func=self.create_account_boundary.post,
             methods=["POST"]
         )
 
-        # View User Account
+        # View an individual User Account
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>",
-            view_func=ViewUserAccountController.as_view(
-                "view_user_account",
-                self.view_account_boundary,
-                self.user_account
-            ),
+            endpoint="view_user_account",
+            view_func=self.view_account_boundary.get,
             methods=["GET"]
         )
 
-        # Update User Account
+        # Display Update User Account page
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/edit",
-            view_func=UpdateUserAccountController.as_view(
-                "update_user_account",
-                self.update_account_boundary,
-                self.user_account
-            ),
-            methods=["GET", "POST"]
+            endpoint="update_user_account_page",
+            view_func=self.update_account_boundary.get,
+            methods=["GET"]
         )
 
-        # Suspend or Reactivate User Account
+        # Update a User Account
         self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>/status",
-            view_func=SuspendUserAccountController.as_view(
-                "suspend_user_account",
-                self.suspend_account_boundary,
-                self.user_account
-            ),
+            "/user-admin/accounts/<int:account_id>/edit",
+            endpoint="update_user_account",
+            view_func=self.update_account_boundary.post,
             methods=["POST"]
         )
 
-        # View User Profiles listing
+        # Suspend or Reactivate a User Account
+        self.app.add_url_rule(
+            "/user-admin/accounts/<int:account_id>/status",
+            endpoint="suspend_user_account",
+            view_func=self.suspend_account_boundary.post,
+            methods=["POST"]
+        )
+
+        # ------------------------------------------
+        # User Profile Routes
+        # ------------------------------------------
+
+        # View all User Profiles
         self.app.add_url_rule(
             "/user-admin/profiles",
-            view_func=UserProfilesController.as_view(
-                "user_profiles",
-                self.profiles_boundary,
-                self.user_profile
-            ),
+            endpoint="user_profiles",
+            view_func=self.profiles_boundary.get,
             methods=["GET"]
         )
 
@@ -245,50 +419,49 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Create User Profile
+        # Create a User Profile
         self.app.add_url_rule(
             "/user-admin/profiles",
-            view_func=CreateUserProfileController.as_view(
-                "create_user_profile",
-                self.create_profile_boundary,
-                self.user_profile
-            ),
+            endpoint="create_user_profile",
+            view_func=self.create_profile_boundary.post,
             methods=["POST"]
         )
 
-        # View User Profile
+        # View an individual User Profile
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>",
-            view_func=ViewUserProfileController.as_view(
-                "view_user_profile",
-                self.view_profile_boundary,
-                self.user_profile
-            ),
+            endpoint="view_user_profile",
+            view_func=self.view_profile_boundary.get,
             methods=["GET"]
         )
 
-        # Update User Profile
-        # Correctly uses the User Profile Boundary
+        # Display Update User Profile page
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>/edit",
-            view_func=UpdateUserProfileController.as_view(
-                "update_user_profile",
-                self.update_profile_boundary,
-                self.user_profile
-            ),
-            methods=["GET", "POST"]
+            endpoint="update_user_profile_page",
+            view_func=self.update_profile_boundary.get,
+            methods=["GET"]
         )
 
-        # Suspend or Reactivate User Profile
+        # Update a User Profile
         self.app.add_url_rule(
-            "/user-admin/profiles/<int:profile_id>/status",
-            view_func=SuspendUserProfileController.as_view(
-                "suspend_user_profile",
-                self.suspend_profile_boundary,
-                self.user_profile
-            ),
+            "/user-admin/profiles/<int:profile_id>/edit",
+            endpoint="update_user_profile",
+            view_func=self.update_profile_boundary.post,
             methods=["POST"]
         )
+
+        # Suspend or Reactivate a User Profile
+        self.app.add_url_rule(
+            "/user-admin/profiles/<int:profile_id>/status",
+            endpoint="suspend_user_profile",
+            view_func=self.suspend_profile_boundary.post,
+            methods=["POST"]
+        )
+
+        # ------------------------------------------
+        # Company Information Routes
+        # ------------------------------------------
 
         # Display Create Company Information page
         self.app.add_url_rule(
@@ -301,115 +474,114 @@ class RenovoApp:
         # Create Company Information
         self.app.add_url_rule(
             "/company/create",
-            view_func=CreateCompanyInformationController.as_view(
-                "create_company_information",
-                self.create_company_boundary,
-                self.company_information
-            ),
+            endpoint="create_company_information",
+            view_func=self.create_company_boundary.post,
             methods=["POST"]
         )
 
         # View Company Information
         self.app.add_url_rule(
             "/interior-designer/company",
-            view_func=ViewCompanyInformationController.as_view(
-                "view_company_information",
-                self.view_company_boundary,
-                self.company_information
-            ),
+            endpoint="view_company_information",
+            view_func=self.view_company_boundary.get,
+            methods=["GET"]
+        )
+
+        # Display Update Company Information page
+        self.app.add_url_rule(
+            "/interior-designer/company/edit",
+            endpoint="update_company_information_page",
+            view_func=self.update_company_boundary.get,
             methods=["GET"]
         )
 
         # Update Company Information
         self.app.add_url_rule(
             "/interior-designer/company/edit",
-            view_func=UpdateCompanyInformationController.as_view(
-                "update_company_information",
-                self.update_company_boundary,
-                self.company_information
-            ),
-            methods=["GET", "POST"]
+            endpoint="update_company_information",
+            view_func=self.update_company_boundary.post,
+            methods=["POST"]
         )
 
         # Suspend or Reactivate Company Information
         self.app.add_url_rule(
             "/interior-designer/company/status",
-            view_func=SuspendCompanyInformationController.as_view(
-                "suspend_company_information",
-                self.suspend_company_boundary,
-                self.company_information
-            ),
+            endpoint="suspend_company_information",
+            view_func=self.suspend_company_boundary.post,
             methods=["POST"]
         )
+
+        # ------------------------------------------
+        # Interior Designer Project Routes
+        # ------------------------------------------
 
         # View all Current IDP and Past IDP projects
         self.app.add_url_rule(
             "/interior-designer/projects",
-            view_func=ViewProjectsController.as_view(
-                "view_projects",
-                self.view_projects_boundary,
-                self.project
-            ),
+            endpoint="view_projects",
+            view_func=self.view_projects_boundary.get,
             methods=["GET"]
         )
 
-        # Create Current IDP or Past IDP
+        # Display Create Project page
         self.app.add_url_rule(
             "/interior-designer/projects/create",
-            view_func=CreateProjectController.as_view(
-                "create_project",
-                self.create_project_boundary,
-                self.project
-            ),
-            methods=["GET", "POST"]
+            endpoint="create_project_page",
+            view_func=self.create_project_boundary.get,
+            methods=["GET"]
+        )
+
+        # Create a Current IDP or Past IDP
+        self.app.add_url_rule(
+            "/interior-designer/projects/create",
+            endpoint="create_project",
+            view_func=self.create_project_boundary.post,
+            methods=["POST"]
         )
 
         # Search Current IDP and Past IDP projects
         self.app.add_url_rule(
             "/interior-designer/projects/search",
-            view_func=SearchProjectController.as_view(
-                "search_project",
-                self.search_project_boundary,
-                self.project
-            ),
+            endpoint="search_project",
+            view_func=self.search_project_boundary.get,
             methods=["GET"]
         )
 
         # View an individual Current IDP or Past IDP
         self.app.add_url_rule(
             "/interior-designer/projects/<int:project_id>",
-            view_func=ViewProjectController.as_view(
-                "view_project",
-                self.view_project_boundary,
-                self.project
-            ),
+            endpoint="view_project",
+            view_func=self.view_project_boundary.get,
             methods=["GET"]
         )
 
-        # Update Current IDP or Past IDP
+        # Display Update Project page
         self.app.add_url_rule(
             "/interior-designer/projects/<int:project_id>/edit",
-            view_func=UpdateProjectController.as_view(
-                "update_project",
-                self.update_project_boundary,
-                self.project
-            ),
-            methods=["GET", "POST"]
+            endpoint="update_project_page",
+            view_func=self.update_project_boundary.get,
+            methods=["GET"]
         )
 
-        # Suspend or Reactivate Current IDP or Past IDP
+        # Update a Current IDP or Past IDP
+        self.app.add_url_rule(
+            "/interior-designer/projects/<int:project_id>/edit",
+            endpoint="update_project",
+            view_func=self.update_project_boundary.post,
+            methods=["POST"]
+        )
+
+        # Suspend or Reactivate a Project
         self.app.add_url_rule(
             "/interior-designer/projects/<int:project_id>/status",
-            view_func=SuspendProjectController.as_view(
-                "suspend_project",
-                self.suspend_project_boundary,
-                self.project
-            ),
+            endpoint="suspend_project",
+            view_func=self.suspend_project_boundary.post,
             methods=["POST"]
         )
 
     # Run the Flask application
     def run(self):
+
         self.app.run(debug=True)
 
 

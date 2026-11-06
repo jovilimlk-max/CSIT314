@@ -1,34 +1,27 @@
 
 '''
 What this code does?
-- Coordinate communication between the Login Boundary and UserAccount Entity.
-- Retrieve validated login details from the Boundary.
-- Pass the validated details to the Entity for authentication.
-- Pass the Entity result back to the Boundary for display.
+- Receive validated login details from the User Login Boundary.
+- Pass the validated login details to the User Account Entity.
+- Return the authentication result to the Boundary.
+- Support login authentication for all four user roles.
+- Does not handle HTTP requests, input validation, HTML or database operations.
 '''
 
-from flask.views import MethodView
 
+class UserLoginController:
 
-class UserLoginController(MethodView):
-
-    # Store references to the Boundary and Entity
-    def __init__(self, login_boundary, user_account):
-        self.boundary = login_boundary
+    # Store the User Account Entity
+    def __init__(self, user_account):
         self.user_account = user_account
 
-    # Coordinate the login request
-    def post(self):
-
-        # Retrieve validated login details from the Boundary
-        login_details, error = self.boundary.get_login_details()
-
-        # Return validation errors through the Boundary
-        if error:
-            return self.boundary.display_validation_error(error)
+    # Coordinate user login authentication
+    def authenticate_login(self, login_details):
 
         # Pass validated login details to the Entity
-        result = self.user_account.authenticate_login(login_details)
+        result = self.user_account.authenticate_login(
+            login_details
+        )
 
-        # Pass the Entity result back to the Boundary
-        return self.boundary.display_login_result(result)
+        # Return the Entity result to the calling Boundary
+        return result

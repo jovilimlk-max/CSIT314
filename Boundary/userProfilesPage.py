@@ -1,17 +1,36 @@
 
 '''
 What this code does?
-- Retrieve and prepare the administrator's display name.
-- Receive User Profile listing results from the Controller.
+- Handle the HTTP GET request for the User Profiles page.
+- Retrieve and prepare the User Admin's display name.
+- Call the User Profiles Controller to retrieve all user profiles.
+- Receive the User Profile information returned by the Controller.
 - Display the User Profiles management HTML page.
 - Provide profile information for frontend searching and filtering.
 - Return an error if profile information cannot be retrieved.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import render_template, jsonify, request
 
 
 class UserProfilesPage:
+
+    # Store the User Profiles Controller
+    def __init__(self, user_profiles_controller):
+        self.controller = user_profiles_controller
+
+    # Handle the User Profiles GET request
+    def get(self):
+
+        # Request all User Profiles through the Controller
+        result, status_code = self.controller.view_all_profiles()
+
+        # Display the result through the Boundary
+        return self.display_profiles(
+            result,
+            status_code
+        )
 
     # Retrieve and prepare the administrator's display name
     def get_username(self):

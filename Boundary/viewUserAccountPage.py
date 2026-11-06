@@ -1,11 +1,14 @@
 
 '''
 What this code does?
+- Handle the HTTP GET request for View User Account.
 - Retrieve and validate the selected User Account ID.
 - Retrieve and prepare the administrator's display name.
+- Pass the validated Account ID to the View User Account Controller.
 - Receive the selected account information from the Controller.
 - Display the View User Account HTML page.
-- Return an error response if account information cannot be retrieved.
+- Return validation and account retrieval errors.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import render_template, jsonify, request
@@ -13,11 +16,42 @@ from flask import render_template, jsonify, request
 
 class ViewUserAccountPage:
 
+    # Store the View User Account Controller
+    def __init__(self, view_account_controller):
+        self.controller = view_account_controller
+
+    # Handle the View User Account GET request
+    def get(self, account_id):
+
+        # Retrieve and validate the selected Account ID
+        validated_account_id, error = self.get_account_id(
+            account_id
+        )
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass the validated Account ID to the Controller
+        result, status_code = self.controller.view_user_account(
+            validated_account_id
+        )
+
+        # Display the result through the Boundary
+        return self.display_account(
+            result,
+            status_code
+        )
+
     # Retrieve and validate the selected Account ID
     def get_account_id(self, account_id):
 
         # Validate that the Account ID is a positive integer
-        if not isinstance(account_id, int) or account_id <= 0:
+        if (
+            not isinstance(account_id, int)
+            or isinstance(account_id, bool)
+            or account_id <= 0
+        ):
             return None, {
                 "success": False,
                 "message": "Invalid user account ID."
@@ -43,6 +77,7 @@ class ViewUserAccountPage:
 
     # Prepare Account ID validation errors for the frontend
     def display_validation_error(self, error):
+
         return jsonify(error), 400
 
     # Display the selected User Account

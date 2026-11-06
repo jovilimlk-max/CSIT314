@@ -1,13 +1,15 @@
 
 '''
 What this code does?
+- Handle GET and POST requests for Update Company Information.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and prepare the Interior Designer's username.
 - Extract and strip submitted company information.
 - Validate required fields, company email format and established date.
+- Call the Update Company Information Controller.
 - Display the Update Company Information page with existing details.
 - Return validation errors and update results to the frontend.
-- Does not directly communicate with Controllers or Entities.
+- Does not directly communicate with the Entity.
 '''
 
 import re
@@ -17,6 +19,47 @@ from flask import request, jsonify, render_template
 
 
 class UpdateCompanyInformationPage:
+
+    # Store the Update Company Information Controller
+    def __init__(self, update_company_controller):
+        self.controller = update_company_controller
+
+    # Handle the GET request to display existing company information
+    def get(self):
+
+        # Retrieve and validate the Account ID
+        account_id, error = self.get_account_id()
+
+        if error:
+            return self.display_validation_error(error)
+
+        # Call the Controller to retrieve existing company information
+        result, status_code = self.controller.view_company_information(
+            account_id
+        )
+
+        # Display the result through the Boundary
+        return self.display_update_company_page(
+            result,
+            status_code
+        )
+
+    # Handle the POST request to update company information
+    def post(self):
+
+        # Retrieve and validate submitted company information
+        company_details, error = self.get_company_details()
+
+        if error:
+            return self.display_field_errors(error)
+
+        # Pass validated information to the Controller
+        result = self.controller.update_company_information(
+            company_details
+        )
+
+        # Return the result through the Boundary
+        return self.display_update_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):
@@ -130,7 +173,7 @@ class UpdateCompanyInformationPage:
                     "Please enter a valid established date."
                 )
 
-        # Return validation errors to the Controller
+        # Return validation errors through the Boundary
         if errors:
             return None, {
                 "success": False,
@@ -152,7 +195,7 @@ class UpdateCompanyInformationPage:
     # Display the Update Company Information form
     def display_update_company_page(self, result, status_code):
 
-        # Return the Entity error if retrieval was unsuccessful
+        # Return the retrieval error if unsuccessful
         if not result["success"]:
             return result["message"], status_code
 
@@ -167,7 +210,7 @@ class UpdateCompanyInformationPage:
         account_id, error = self.get_account_id()
         username = self.get_username()
 
-        # Display the form with the existing company information
+        # Display the form with existing company information
         return render_template(
             "updateCompanyInformation.html",
             account_id=account_id,

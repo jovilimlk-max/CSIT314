@@ -1,18 +1,45 @@
 
 '''
 What this code does?
+- Handle the HTTP GET request for View Company Information.
 - Retrieve and validate the Interior Designer's Account ID from the URL.
 - Retrieve and prepare the Interior Designer's username.
-- Receive company information results from the Controller.
+- Call the View Company Information Controller using the validated Account ID.
+- Receive company information results returned by the Controller.
 - Display existing company information or an empty state.
 - Return validation and company retrieval errors.
-- Does not directly communicate with the Controller or Entity.
+- Does not directly communicate with the Entity.
 '''
 
 from flask import request, render_template
 
 
 class ViewCompanyInformationPage:
+
+    # Store the View Company Information Controller
+    def __init__(self, view_company_controller):
+        self.controller = view_company_controller
+
+    # Handle the View Company Information request
+    def get(self):
+
+        # Retrieve and validate the Account ID
+        account_id, error = self.get_account_id()
+
+        # Return validation errors
+        if error:
+            return self.display_validation_error(error)
+
+        # Call the Controller using the validated Account ID
+        result, status_code = self.controller.view_company_information(
+            account_id
+        )
+
+        # Return the result through the Boundary
+        return self.display_company(
+            result,
+            status_code
+        )
 
     # Retrieve and validate the Interior Designer's Account ID
     def get_account_id(self):

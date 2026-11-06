@@ -1,17 +1,39 @@
 
 '''
 What this code does?
-- Retrieve the username from the URL.
-- Strip and prepare the username for display.
-- Receive dashboard statistics from the Controller.
-- Display the dashboard with the username and statistics.
+- Handle the HTTP GET request for the User Admin Dashboard.
+- Retrieve and prepare the username from the URL.
+- Call the User Admin Dashboard Controller to retrieve statistics.
+- Receive dashboard statistics returned by the Controller.
+- Display total accounts, total profiles and suspended accounts.
 - Return an error response if statistics cannot be retrieved.
+- Does not communicate directly with the Entity.
 '''
 
 from flask import render_template, jsonify, request
 
 
 class UserAdminDashboardPage:
+
+    # Store the User Admin Dashboard Controller
+    def __init__(self, dashboard_controller):
+        self.controller = dashboard_controller
+
+    # Handle the User Admin Dashboard GET request
+    def get(self):
+
+        # Retrieve the username from the Boundary
+        username = self.get_dashboard_details()
+
+        # Request dashboard statistics through the Controller
+        result, status_code = self.controller.get_dashboard_statistics()
+
+        # Display the result through the Boundary
+        return self.display_dashboard(
+            username,
+            result,
+            status_code
+        )
 
     # Retrieve and prepare the username from the URL
     def get_dashboard_details(self):

@@ -1,12 +1,15 @@
 
 '''
 What this code does?
+- Handle the HTTP requests for Create Company Information.
 - Retrieve the Interior Designer's username and account ID from the URL.
 - Extract and strip submitted company information.
 - Validate required fields, email format and established date.
 - Pass validated company information to the Controller.
+- Receive company creation results from the Controller.
 - Display the Create Company Information HTML page.
 - Return validation errors and company creation results to the frontend.
+- Does not communicate directly with the Entity.
 '''
 
 import re
@@ -16,6 +19,28 @@ from flask import request, jsonify, render_template
 
 
 class CreateCompanyInformationPage:
+
+    # Store the Create Company Information Controller
+    def __init__(self, create_company_controller):
+        self.controller = create_company_controller
+
+    # Handle the Create Company Information POST request
+    def post(self):
+
+        # Retrieve and validate submitted company information
+        company_details, error = self.get_company_details()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.display_validation_error(error)
+
+        # Pass validated company information to the Controller
+        result = self.controller.create_company_information(
+            company_details
+        )
+
+        # Display the result returned by the Controller
+        return self.display_create_company_result(result)
 
     # Retrieve and prepare the Interior Designer's username
     def get_username(self):
@@ -117,7 +142,7 @@ class CreateCompanyInformationPage:
                     "Please enter a valid established date."
                 )
 
-        # Return validation errors to the Controller
+        # Return validation errors through the Boundary
         if errors:
             return None, {
                 "success": False,
@@ -153,6 +178,6 @@ class CreateCompanyInformationPage:
     def display_validation_error(self, error):
         return jsonify(error), 400
 
-    # Return the Entity's company creation result
+    # Return the company creation result to the frontend
     def display_create_company_result(self, result):
         return jsonify(result["data"]), result["status_code"]
