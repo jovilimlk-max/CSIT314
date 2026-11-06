@@ -1,20 +1,44 @@
 
 '''
 What this code does?
-- Retrieve all existing user profiles.
-- Retrieve a specific user profile using its ID.
-- Ask the UserProfile Entity to retrieve profile information.
-- Return the profile retrieval results.
+- Coordinate communication between the View User Profile Boundary and Entity.
+- Retrieve the validated Profile ID from the Boundary.
+- Pass the Profile ID to the Entity to retrieve profile information.
+- Pass the Entity result to the Boundary for display.
+- Temporarily preserve existing methods used by other features.
 '''
 
+from flask.views import MethodView
 
-class ViewUserProfileController:
 
-    # Stores a reference to the Entity object
-    def __init__(self, user_profile):
+class ViewUserProfileController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, view_profile_boundary, user_profile):
+        self.boundary = view_profile_boundary
         self.user_profile = user_profile
 
-    # Retrieve all user profiles for the management page
+    # Coordinate viewing an individual User Profile
+    def get(self, profile_id):
+
+        # Retrieve the validated Profile ID from the Boundary
+        validated_id, error = self.boundary.get_profile_id(profile_id)
+
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Pass the Profile ID to the Entity
+        result, status_code = self.user_profile.view_profile(validated_id)
+
+        # Pass the Entity result to the Boundary for display
+        return self.boundary.display_profile(
+            result,
+            status_code
+        )
+
+    # Existing method retained for User Profile listing
+    # To be refactored when working on the listing feature
     def get_all_profiles(self):
         profiles = self.user_profile.get_all_profiles()
 
@@ -23,7 +47,8 @@ class ViewUserProfileController:
             "profiles": profiles
         }, 200
 
-    # Retrieve the details of a selected user profile
+    # Existing method retained for other dependent features
+    # To be refactored when those features are updated
     def get_profile_by_id(self, profile_id):
         profile = self.user_profile.get_profile_by_id(profile_id)
 

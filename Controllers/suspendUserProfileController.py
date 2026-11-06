@@ -1,80 +1,46 @@
 
 '''
 What this code does?
-- Check whether the selected User Profile exists.
-- Validate the requested suspension or reactivation action.
-- Prevent repeated suspension or reactivation.
-- Ask the UserProfile Entity to update the profile status.
-- Return the suspension or reactivation result.
+- Coordinate communication between the Suspend User Profile Boundary and Entity.
+- Retrieve the validated Profile ID from the Boundary.
+- Retrieve the validated suspension or reactivation action from the Boundary.
+- Pass the validated information to the Entity.
+- Return the Entity result through the Boundary.
+- Does not perform business validation or database operations.
 '''
 
+from flask.views import MethodView
 
-class SuspendUserProfileController:
 
-    # Store a reference to the UserProfile Entity
-    def __init__(self, user_profile):
+class SuspendUserProfileController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, suspend_profile_boundary, user_profile):
+        self.boundary = suspend_profile_boundary
         self.user_profile = user_profile
 
-    # Suspend or reactivate an existing User Profile
-    def change_profile_status(self, profile_id, action):
+    # Coordinate suspension or reactivation of a User Profile
+    def post(self, profile_id):
 
-        # Check whether the selected profile exists
-        existing_profile = self.user_profile.get_profile_by_id(profile_id)
+        # Retrieve the validated Profile ID from the Boundary
+        validated_id, error = self.boundary.get_profile_id(profile_id)
 
-        if existing_profile is None:
-            return {
-                "success": False,
-                "message": "User Profile not found."
-            }, 404
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Validate the requested action
-        if action not in {"suspend", "reactivate"}:
-            return {
-                "success": False,
-                "message": "Invalid profile status action."
-            }, 400
+        # Retrieve the validated action from the Boundary
+        action, error = self.boundary.get_status_action()
 
-        current_status = existing_profile["status"]
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Determine the new profile status
-        if action == "suspend":
-            new_status = "suspended"
-
-            if current_status == "suspended":
-                return {
-                    "success": False,
-                    "message": "User Profile is already suspended."
-                }, 409
-
-        else:
-            new_status = "active"
-
-            if current_status == "active":
-                return {
-                    "success": False,
-                    "message": "User Profile is already active."
-                }, 409
-
-        # Ask the Entity to update the profile status
-        updated = self.user_profile.update_profile_status(
-            profile_id,
-            new_status
+        # Pass the validated ID and action to the Entity
+        result = self.user_profile.change_profile_status(
+            validated_id,
+            action
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update profile status. Please try again."
-            }, 409
-
-        # Return the appropriate success message
-        if action == "suspend":
-            message = "User Profile suspended successfully."
-        else:
-            message = "User Profile reactivated successfully."
-
-        return {
-            "success": True,
-            "message": message,
-            "status": new_status
-        }, 200
+        # Pass the Entity result to the Boundary
+        return self.boundary.display_status_result(result)

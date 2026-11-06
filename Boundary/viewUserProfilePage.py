@@ -1,52 +1,61 @@
 
 '''
 What this code does?
-- Receive the selected user profile ID from the URL.
-- Validate the profile ID.
-- Request the selected user profile details from the Controller.
-- Retrieve the administrator's display name from the URL.
+- Retrieve the selected User Profile ID from the URL.
+- Validate the Profile ID.
+- Retrieve and prepare the administrator's display name.
 - Display the View User Profile HTML page.
-- Return an error if the user profile cannot be found.
+- Return an error if the profile cannot be retrieved.
 '''
 
 from flask import render_template, jsonify, request
-from flask.views import MethodView
 
 
-class ViewUserProfilePage(MethodView):
+class ViewUserProfilePage:
 
-    # Receive and store a reference to the Controller
-    def __init__(self, view_profile_controller):
-        self.view_profile_controller = view_profile_controller
+    # Retrieve and validate the selected Profile ID
+    def get_profile_id(self, profile_id):
 
-    # Retrieve and display the selected user profile
-    def get(self, profile_id):
-
-        # Validate that the profile ID is a positive integer
-        if profile_id <= 0:
-            return jsonify({
+        # Validate that the Profile ID is a positive integer
+        if not isinstance(profile_id, int) or profile_id <= 0:
+            return None, {
                 "success": False,
                 "message": "Invalid user profile ID."
-            }), 400
+            }
 
-        # Request the profile details from the Controller
-        result, status_code = self.view_profile_controller.get_profile_by_id(
-            profile_id
+        return profile_id, None
+
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
+
+        username = request.args.get(
+            "username",
+            default="User Admin"
         )
 
-        # Return an error if the profile does not exist
-        if not result["success"]:
-            return jsonify(result), status_code
-
-        # Retrieve the administrator's display name
-        username = request.args.get(
-            "username", "User Admin"
-        ).strip()
+        # Strip whitespace and use a default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
 
-        # Display the selected profile information
+        return username
+
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Display the selected User Profile
+    def display_profile(self, result, status_code):
+
+        # Return an error if the profile could not be retrieved
+        if not result["success"]:
+            return jsonify(result), status_code
+
+        # Retrieve the prepared username
+        username = self.get_username()
+
+        # Render the View User Profile page
         return render_template(
             "viewUserProfile.html",
             profile=result["profile"],

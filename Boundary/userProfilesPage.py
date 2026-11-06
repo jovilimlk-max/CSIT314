@@ -1,44 +1,47 @@
 
 '''
 What this code does?
-- Display the main User Profiles management page.
-- Request the list of existing profiles from the Controller.
-- Retrieve the administrator's display name from the URL.
-- Pass the profiles and username to the HTML template.
+- Retrieve and prepare the administrator's display name.
+- Receive User Profile listing results from the Controller.
+- Display the User Profiles management HTML page.
+- Provide profile information for frontend searching and filtering.
+- Return an error if profile information cannot be retrieved.
 '''
 
-from flask import render_template, request
-from flask.views import MethodView
+from flask import render_template, jsonify, request
 
 
-class UserProfilesPage(MethodView):
+class UserProfilesPage:
 
-    # Receive and store a reference to the Controller
-    def __init__(self, view_profile_controller):
-        self.view_profile_controller = view_profile_controller
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
 
-    # Retrieve existing profiles and display the management page
-    def get(self):
-        result, status_code = (
-            self.view_profile_controller.get_all_profiles()
+        username = request.args.get(
+            "username",
+            default="User Admin"
         )
 
-        # Return the Controller's error if retrieval fails
-        if not result["success"]:
-            return result, status_code
-
-        profiles = result["profiles"]
-
-        # Retrieve the logged-in administrator's display name
-        username = request.args.get(
-            "username", "User Admin"
-        ).strip()
+        # Strip whitespace and use the default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
 
+        return username
+
+    # Display the User Profiles management page
+    def display_profiles(self, result, status_code):
+
+        # Return an error if profiles could not be retrieved
+        if not result["success"]:
+            return jsonify(result), status_code
+
+        # Retrieve the administrator's display name
+        username = self.get_username()
+
+        # Render the page with the existing profiles
         return render_template(
             "userProfiles.html",
-            profiles=profiles,
+            profiles=result["profiles"],
             username=username
         ), status_code

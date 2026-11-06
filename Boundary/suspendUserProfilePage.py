@@ -1,66 +1,63 @@
 
 '''
 What this code does?
-- Receive the selected User Profile ID from the URL.
-- Validate the profile ID.
-- Receive the suspension or reactivation action.
-- Validate the requested action.
-- Pass valid requests to the Controller.
-- Return the suspension or reactivation result.
+- Retrieve and validate the selected User Profile ID.
+- Extract and strip the submitted suspension or reactivation action.
+- Validate that the action is either suspend or reactivate.
+- Return validated information to the Controller.
+- Prepare validation errors and status change results for the frontend.
 '''
 
 from flask import request, jsonify
-from flask.views import MethodView
 
 
-class SuspendUserProfilePage(MethodView):
+class SuspendUserProfilePage:
 
     VALID_ACTIONS = {"suspend", "reactivate"}
 
-    # Receive and store a reference to the Controller
-    def __init__(self, suspend_profile_controller):
-        self.suspend_profile_controller = suspend_profile_controller
+    # Retrieve and validate the selected User Profile ID
+    def get_profile_id(self, profile_id):
 
-    # Retrieve the submitted suspension or reactivation action
+        # Validate that the Profile ID is a positive integer
+        if not isinstance(profile_id, int) or profile_id <= 0:
+            return None, {
+                "success": False,
+                "message": "Invalid User Profile ID."
+            }
+
+        return profile_id, None
+
+    # Retrieve, strip and validate the requested status action
     def get_status_action(self):
+
+        # Retrieve JSON data from the frontend
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
             data = {}
 
+        # Extract and strip the submitted action
         action = data.get("action", "")
 
-        return action.strip() if isinstance(action, str) else ""
-
-    # Validate the selected profile ID and requested action
-    def validate_status_action(self, profile_id, action):
-
-        if profile_id <= 0:
-            return "Invalid User Profile ID."
-
-        if action not in self.VALID_ACTIONS:
-            return "Invalid profile status action."
-
-        return None
-
-    # Process the profile suspension or reactivation request
-    def post(self, profile_id):
-        action = self.get_status_action()
-
-        error = self.validate_status_action(profile_id, action)
-
-        if error:
-            return jsonify({
-                "success": False,
-                "message": error
-            }), 400
-
-        # Pass the valid request to the Controller
-        result, status_code = (
-            self.suspend_profile_controller.change_profile_status(
-                profile_id,
-                action
-            )
+        action = (
+            action.strip()
+            if isinstance(action, str) else ""
         )
 
-        return jsonify(result), status_code
+        # Validate the requested action
+        if action not in self.VALID_ACTIONS:
+            return None, {
+                "success": False,
+                "message": "Invalid profile status action."
+            }
+
+        # Return the validated action
+        return action, None
+
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Prepare the Entity's status change result for the frontend
+    def display_status_result(self, result):
+        return jsonify(result["data"]), result["status_code"]

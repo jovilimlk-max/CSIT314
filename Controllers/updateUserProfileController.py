@@ -1,54 +1,65 @@
 
 '''
 What this code does?
-- Check whether the user profile exists.
-- Check whether the updated profile name is already in use.
-- Ask the Entity to update the user profile.
-- Return the profile update result.
+- Coordinate communication between the Update User Profile Boundary and Entity.
+- Retrieve and validate the selected Profile ID through the Boundary.
+- Retrieve existing profile information from the Entity for display.
+- Retrieve validated updated profile information from the Boundary.
+- Pass updated information to the Entity.
+- Return Entity results through the Boundary.
 '''
 
+from flask.views import MethodView
 
-class UpdateUserProfileController:
 
-    # Stores a reference to the Entity object
-    def __init__(self, user_profile):
+class UpdateUserProfileController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, update_profile_boundary, user_profile):
+        self.boundary = update_profile_boundary
         self.user_profile = user_profile
 
-    # Coordinate the updating of an existing user profile
-    def update_profile(self, profile_id, profile_details):
-        profile_name = profile_details["profile_name"]
-        description = profile_details["description"]
+    # Coordinate displaying the Update User Profile page
+    def get(self, profile_id):
 
-        # Check whether the selected profile exists
-        existing_profile = self.user_profile.get_profile_by_id(profile_id)
+        # Retrieve the validated Profile ID from the Boundary
+        validated_id, error = self.boundary.get_profile_id(profile_id)
 
-        if existing_profile is None:
-            return {
-                "success": False,
-                "message": "User profile not found."
-            }, 404
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Check whether another profile already uses the updated name
-        if self.user_profile.profile_name_exists(
-            profile_name, exclude_id=profile_id
-        ):
-            return {
-                "success": False,
-                "message": "A profile with this name already exists."
-            }, 409
+        # Request existing profile information from the Entity
+        result, status_code = self.user_profile.view_profile(validated_id)
 
-        # Ask the Entity to update the profile details
-        updated = self.user_profile.update_user_profile(
-            profile_id, profile_name, description
+        # Pass the result to the Boundary for display
+        return self.boundary.display_update_profile_page(
+            result,
+            status_code
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update profile. Please try again."
-            }, 409
+    # Coordinate updating the selected User Profile
+    def post(self, profile_id):
 
-        return {
-            "success": True,
-            "message": "User profile updated successfully."
-        }, 200
+        # Retrieve the validated Profile ID from the Boundary
+        validated_id, error = self.boundary.get_profile_id(profile_id)
+
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Retrieve validated updated information from the Boundary
+        profile_details, error = self.boundary.get_profile_details()
+
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Pass the updated information to the Entity
+        result = self.user_profile.update_profile(
+            validated_id,
+            profile_details
+        )
+
+        # Pass the Entity result to the Boundary
+        return self.boundary.display_update_profile_result(result)

@@ -3,11 +3,12 @@
 What this code does?
 - Initialise the User Profile database.
 - Create new user profiles and check for duplicate names.
-- Retrieve all user profiles or a specific profile.
+- Retrieve individual profiles and the complete profile listing.
+- Support the User Profiles listing and frontend search functionality.
 - Update existing user profile information.
-- Suspend or reactivate existing user profiles.
-- Count the total number of user profiles.
-- Handle the complete Create User Profile database process.
+- Suspend or reactivate user profiles.
+- Prevent repeated suspension or reactivation.
+- Count the total number of profiles for the dashboard.
 '''
 
 import sqlite3
@@ -31,13 +32,13 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Exclude the current profile when checking for duplicates
+            # Exclude the selected profile when checking for duplicates
             if exclude_id is not None:
                 cursor.execute("""
                     SELECT id
                     FROM user_profiles
                     WHERE profile_name = ? COLLATE NOCASE
-                    AND id != ?
+                      AND id != ?
                 """, (profile_name, exclude_id))
 
             else:
@@ -69,13 +70,13 @@ class UserProfile:
                 "status_code": 409
             }
 
-        # Create the new profile in the database
+        # Create the new profile
         created = self.create_user_profile(
             profile_name,
             description
         )
 
-        # Return an error if profile creation was unsuccessful
+        # Return an error if creation was unsuccessful
         if not created:
             return {
                 "data": {
@@ -101,7 +102,7 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # New profiles are automatically assigned active status
+            # New profiles automatically receive active status
             cursor.execute("""
                 INSERT INTO user_profiles
                 (profile_name, description, status)
@@ -132,13 +133,25 @@ class UserProfile:
                 ORDER BY profile_name ASC
             """)
 
-            profiles = cursor.fetchall()
-
-            # Convert database rows into dictionaries
-            return [dict(profile) for profile in profiles]
+            return [
+                dict(profile)
+                for profile in cursor.fetchall()
+            ]
 
         finally:
             connection.close()
+
+    # Handle the complete User Profiles listing process
+    def view_all_profiles(self):
+
+        # Retrieve all profiles from the database
+        profiles = self.get_all_profiles()
+
+        # Return the complete listing result
+        return {
+            "success": True,
+            "profiles": profiles
+        }, 200
 
     # Retrieve a specific user profile using its ID
     def get_profile_by_id(self, profile_id):
@@ -157,13 +170,75 @@ class UserProfile:
 
             profile = cursor.fetchone()
 
-            if profile:
-                return dict(profile)
-
-            return None
+            return dict(profile) if profile else None
 
         finally:
             connection.close()
+
+    # Handle the complete View User Profile process
+    def view_profile(self, profile_id):
+
+        # Retrieve the selected profile
+        profile = self.get_profile_by_id(profile_id)
+
+        # Return an error if the profile does not exist
+        if profile is None:
+            return {
+                "success": False,
+                "message": "User profile not found."
+            }, 404
+
+        # Return the selected profile information
+        return {
+            "success": True,
+            "profile": profile
+        }, 200
+
+    # Handle the complete Update User Profile process
+    def update_profile(self, profile_id, profile_details):
+
+        # Retrieve validated information from the Controller
+        profile_name = profile_details["profile_name"]
+        description = profile_details["description"]
+
+        # Check whether another profile uses the updated name
+        if self.profile_name_exists(
+            profile_name,
+            exclude_id=profile_id
+        ):
+            return {
+                "data": {
+                    "success": False,
+                    "message": "A profile with this name already exists."
+                },
+                "status_code": 409
+            }
+
+        # Update the selected profile
+        updated = self.update_user_profile(
+            profile_id,
+            profile_name,
+            description
+        )
+
+        # Return an error if the update was unsuccessful
+        if not updated:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update profile. Please try again."
+                },
+                "status_code": 409
+            }
+
+        # Return the successful update result
+        return {
+            "data": {
+                "success": True,
+                "message": "User profile updated successfully."
+            },
+            "status_code": 200
+        }
 
     # Update an existing user profile in the database
     def update_user_profile(self, profile_id, profile_name, description):
@@ -172,7 +247,6 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Update the profile information and timestamp
             cursor.execute("""
                 UPDATE user_profiles
                 SET profile_name = ?,
@@ -181,8 +255,8 @@ class UserProfile:
                 WHERE id = ?
             """, (profile_name, description, profile_id))
 
-            # Check whether an existing profile was updated
             if cursor.rowcount == 0:
+                connection.rollback()
                 return False
 
             connection.commit()
@@ -195,10 +269,93 @@ class UserProfile:
         finally:
             connection.close()
 
-    # Suspend or reactivate an existing user profile
+    # Handle the complete Suspend / Reactivate User Profile process
+    def change_profile_status(self, profile_id, action):
+
+        # Retrieve the selected profile from the database
+        profile = self.get_profile_by_id(profile_id)
+
+        # Return an error if the profile cannot be found
+        if profile is None:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "User Profile not found."
+                },
+                "status_code": 404
+            }
+
+        current_status = profile["status"]
+
+        # Determine the new status based on the requested action
+        if action == "suspend":
+            new_status = "suspended"
+            success_message = "User Profile suspended successfully."
+
+            # Prevent suspending an already suspended profile
+            if current_status == "suspended":
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "User Profile is already suspended."
+                    },
+                    "status_code": 409
+                }
+
+        elif action == "reactivate":
+            new_status = "active"
+            success_message = "User Profile reactivated successfully."
+
+            # Prevent reactivating an already active profile
+            if current_status == "active":
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "User Profile is already active."
+                    },
+                    "status_code": 409
+                }
+
+        else:
+            # Safeguard for an unrecognised action
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Invalid profile status action."
+                },
+                "status_code": 400
+            }
+
+        # Update the profile status in the database
+        updated = self.update_profile_status(
+            profile_id,
+            new_status
+        )
+
+        # Return an error if the status could not be updated
+        if not updated:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update profile status. Please try again."
+                },
+                "status_code": 409
+            }
+
+        # Return the successful status change result
+        return {
+            "data": {
+                "success": True,
+                "message": success_message,
+                "status": new_status
+            },
+            "status_code": 200
+        }
+
+    # Update the status of an existing user profile
     def update_profile_status(self, profile_id, status):
 
-        # Only allow recognised profile statuses
+        # Only accept recognised profile statuses
         if status not in {"active", "suspended"}:
             return False
 
@@ -207,7 +364,7 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Update only if the profile has a different status
+            # Update only when the new status differs
             cursor.execute("""
                 UPDATE user_profiles
                 SET status = ?,
@@ -226,7 +383,7 @@ class UserProfile:
         finally:
             connection.close()
 
-    # Count all existing user profiles for the dashboard
+    # Count all User Profiles for the User Admin Dashboard
     def get_total_profiles(self):
         connection = sqlite3.connect(self.db_path)
 
@@ -243,7 +400,7 @@ class UserProfile:
         finally:
             connection.close()
 
-    # Initialise the database
+    # Initialise the User Profile database
     def initialise_database(self):
         self.db_path.parent.mkdir(
             parents=True,

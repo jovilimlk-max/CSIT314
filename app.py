@@ -1,10 +1,11 @@
 
 '''
 What this code does?
-- Initialise Flask and the databases.
+- Initialise Flask and the project databases.
 - Connect Boundary, Controller and Entity classes.
 - Register routes for Login, User Admin, Company Information and Projects.
-- Use the revised BCE flow for Login, User Admin Dashboard and Create User Profile.
+- Use the revised BCE architecture for Login, Dashboard and User Profiles.
+- Preserve existing routes for features not yet refactored.
 '''
 
 from flask import Flask
@@ -38,6 +39,7 @@ from Controllers.userLoginController import UserLoginController
 from Controllers.userAdminDashboardController import UserAdminDashboardController
 from Controllers.createUserAccountController import CreateUserAccountController
 from Controllers.createUserProfileController import CreateUserProfileController
+from Controllers.userProfilesController import UserProfilesController
 from Controllers.viewUserProfileController import ViewUserProfileController
 from Controllers.updateUserProfileController import UpdateUserProfileController
 from Controllers.suspendUserProfileController import SuspendUserProfileController
@@ -68,7 +70,7 @@ class RenovoApp:
     def __init__(self):
         self.app = Flask(__name__, template_folder="FrontEnd")
 
-        # Initialise Entities
+        # Initialise Entities and databases
         self.user_account = UserAccount()
         self.user_account.initialise_database()
 
@@ -116,6 +118,14 @@ class RenovoApp:
             self.user_account
         )
 
+        # Initialise User Profiles listing Boundary and Controller
+        self.profiles_boundary = UserProfilesPage()
+
+        self.profiles_controller = UserProfilesController(
+            self.profiles_boundary,
+            self.user_profile
+        )
+
         # Initialise Create User Profile Boundary and Controller
         self.create_profile_boundary = CreateUserProfilePage()
 
@@ -124,16 +134,27 @@ class RenovoApp:
             self.user_profile
         )
 
-        # Initialise remaining User Profile Controllers
+        # Initialise View User Profile Boundary and Controller
+        self.view_profile_boundary = ViewUserProfilePage()
+
         self.view_profile_controller = ViewUserProfileController(
+            self.view_profile_boundary,
             self.user_profile
         )
+
+        # Initialise Update User Profile Boundary and Controller
+        self.update_profile_boundary = UpdateUserProfilePage()
 
         self.update_profile_controller = UpdateUserProfileController(
+            self.update_profile_boundary,
             self.user_profile
         )
 
+        # Initialise Suspend User Profile Boundary and Controller
+        self.suspend_profile_boundary = SuspendUserProfilePage()
+
         self.suspend_profile_controller = SuspendUserProfileController(
+            self.suspend_profile_boundary,
             self.user_profile
         )
 
@@ -195,13 +216,13 @@ class RenovoApp:
             self.user_account
         )
 
-        # Register all Flask routes
+        # Register Flask routes
         self.register_routes()
 
     # Connect URLs to Boundaries and Controllers
     def register_routes(self):
 
-        # Display Login page through the Boundary
+        # Display Login page through Boundary
         self.app.add_url_rule(
             "/",
             endpoint="login_page",
@@ -209,7 +230,7 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Process Login through the Controller
+        # Process Login through Controller
         login_view = UserLoginController.as_view(
             "user_login",
             self.login_boundary,
@@ -222,7 +243,7 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # User Admin Dashboard through the Controller
+        # Display User Admin Dashboard
         dashboard_view = UserAdminDashboardController.as_view(
             "user_admin_dashboard",
             self.dashboard_boundary,
@@ -235,7 +256,7 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # User Accounts management
+        # Display User Accounts listing
         accounts_view = UserAccountsPage.as_view(
             "user_accounts",
             self.view_account_controller
@@ -265,7 +286,7 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # View User Account
+        # View individual User Account
         view_account_view = ViewUserAccountPage.as_view(
             "view_user_account",
             self.view_account_controller
@@ -288,16 +309,10 @@ class RenovoApp:
         self.app.add_url_rule(
             "/user-admin/accounts/<int:account_id>/edit",
             view_func=update_account_view,
-            methods=["GET"]
+            methods=["GET", "POST"]
         )
 
-        self.app.add_url_rule(
-            "/user-admin/accounts/<int:account_id>/edit",
-            view_func=update_account_view,
-            methods=["POST"]
-        )
-
-        # Suspend / Reactivate User Account
+        # Suspend or Reactivate User Account
         suspend_account_view = SuspendUserAccountPage.as_view(
             "suspend_user_account",
             self.suspend_account_controller
@@ -309,10 +324,11 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # User Profiles management
-        profiles_view = UserProfilesPage.as_view(
+        # Display User Profiles listing through the new Controller
+        profiles_view = UserProfilesController.as_view(
             "user_profiles",
-            self.view_profile_controller
+            self.profiles_boundary,
+            self.user_profile
         )
 
         self.app.add_url_rule(
@@ -321,7 +337,7 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Display Create User Profile page through the Boundary
+        # Display Create User Profile page through Boundary
         self.app.add_url_rule(
             "/user-admin/profiles/create",
             endpoint="create_user_profile_page",
@@ -329,7 +345,7 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Process Create User Profile through the Controller
+        # Process Create User Profile through Controller
         create_profile_view = CreateUserProfileController.as_view(
             "create_user_profile",
             self.create_profile_boundary,
@@ -342,10 +358,11 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # View User Profile
-        view_profile_view = ViewUserProfilePage.as_view(
+        # View individual User Profile
+        view_profile_view = ViewUserProfileController.as_view(
             "view_user_profile",
-            self.view_profile_controller
+            self.view_profile_boundary,
+            self.user_profile
         )
 
         self.app.add_url_rule(
@@ -355,28 +372,23 @@ class RenovoApp:
         )
 
         # Update User Profile
-        update_profile_view = UpdateUserProfilePage.as_view(
+        update_profile_view = UpdateUserProfileController.as_view(
             "update_user_profile",
-            self.update_profile_controller,
-            self.view_profile_controller
+            self.update_profile_boundary,
+            self.user_profile
         )
 
         self.app.add_url_rule(
             "/user-admin/profiles/<int:profile_id>/edit",
             view_func=update_profile_view,
-            methods=["GET"]
+            methods=["GET", "POST"]
         )
 
-        self.app.add_url_rule(
-            "/user-admin/profiles/<int:profile_id>/edit",
-            view_func=update_profile_view,
-            methods=["POST"]
-        )
-
-        # Suspend / Reactivate User Profile
-        suspend_profile_view = SuspendUserProfilePage.as_view(
+        # Suspend or Reactivate User Profile
+        suspend_profile_view = SuspendUserProfileController.as_view(
             "suspend_user_profile",
-            self.suspend_profile_controller
+            self.suspend_profile_boundary,
+            self.user_profile
         )
 
         self.app.add_url_rule(
@@ -422,7 +434,7 @@ class RenovoApp:
             methods=["GET", "POST"]
         )
 
-        # Suspend / Reactivate Company Information
+        # Suspend or Reactivate Company Information
         suspend_company_view = SuspendCompanyInformationPage.as_view(
             "suspend_company_information",
             self.suspend_company_controller
@@ -434,7 +446,7 @@ class RenovoApp:
             methods=["POST"]
         )
 
-        # View Projects listing
+        # Display Projects listing
         view_projects_view = ViewProjectsPage.as_view(
             "view_projects",
             self.view_projects_controller
@@ -496,7 +508,7 @@ class RenovoApp:
             methods=["GET", "POST"]
         )
 
-        # Suspend / Reactivate Project
+        # Suspend or Reactivate Project
         suspend_project_view = SuspendProjectPage.as_view(
             "suspend_project",
             self.suspend_project_controller
