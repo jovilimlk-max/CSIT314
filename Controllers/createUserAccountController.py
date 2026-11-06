@@ -1,52 +1,35 @@
 
 '''
 What this code does?
-- Check whether the email is already registered.
-- Hash the password before storing it.
-- Ask the Entity to create the user account.
-- Return the account creation result.
+- Coordinate communication between the Create User Account Boundary and Entity.
+- Retrieve validated account information from the Boundary.
+- Pass account information to the Entity for creation.
+- Pass the Entity result back to the Boundary for display.
+- Does not perform validation, password hashing or database operations.
 '''
 
-from werkzeug.security import generate_password_hash
+from flask.views import MethodView
 
 
-class CreateUserAccountController:
+class CreateUserAccountController(MethodView):
 
-    # Stores a reference to the Entity object
-    def __init__(self, user_account):
+    # Store references to the Boundary and Entity
+    def __init__(self, create_account_boundary, user_account):
+        self.boundary = create_account_boundary
         self.user_account = user_account
 
-    # Coordinate the creation of a new user account
-    def create_account(self, account_details):
-        name = account_details["name"]
-        email = account_details["email"]
-        password = account_details["password"]
-        role = account_details["role"]
+    # Coordinate the creation of a new User Account
+    def post(self):
 
-        # Check whether the email is already registered
-        existing_user = self.user_account.get_user_by_email(email)
+        # Retrieve validated account details from the Boundary
+        account_details, error = self.boundary.get_account_details()
 
-        if existing_user is not None:
-            return {
-                "success": False,
-                "message": "Email address is already registered."
-            }, 409
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Hash the password before storing it
-        password_hash = generate_password_hash(password)
+        # Pass validated account information to the Entity
+        result = self.user_account.create_account(account_details)
 
-        # Ask the Entity to create the account
-        created = self.user_account.create_user_account(
-            name, email, password_hash, role
-        )
-
-        if not created:
-            return {
-                "success": False,
-                "message": "Email address is already registered."
-            }, 409
-
-        return {
-            "success": True,
-            "message": "User account created successfully."
-        }, 201
+        # Pass the Entity result back to the Boundary
+        return self.boundary.display_create_account_result(result)

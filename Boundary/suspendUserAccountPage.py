@@ -1,66 +1,63 @@
 
 '''
 What this code does?
-- Receive the selected user account ID from the URL.
-- Validate the account ID.
-- Receive the suspension or reactivation action.
-- Validate the requested action.
-- Pass valid requests to the Controller.
-- Return the suspension or reactivation result.
+- Retrieve and validate the selected User Account ID.
+- Extract and strip the submitted suspension or reactivation action.
+- Validate that the action is either suspend or reactivate.
+- Return validated information to the Controller.
+- Prepare validation errors and status change results for the frontend.
 '''
 
 from flask import request, jsonify
-from flask.views import MethodView
 
 
-class SuspendUserAccountPage(MethodView):
+class SuspendUserAccountPage:
 
     VALID_ACTIONS = {"suspend", "reactivate"}
 
-    # Receive and store a reference to the Controller object
-    def __init__(self, suspend_account_controller):
-        self.suspend_account_controller = suspend_account_controller
+    # Retrieve and validate the selected Account ID
+    def get_account_id(self, account_id):
 
-    # Retrieve the submitted suspension or reactivation action
+        # Validate that the Account ID is a positive integer
+        if not isinstance(account_id, int) or account_id <= 0:
+            return None, {
+                "success": False,
+                "message": "Invalid user account ID."
+            }
+
+        return account_id, None
+
+    # Retrieve, strip and validate the requested status action
     def get_status_action(self):
+
+        # Retrieve JSON data from the frontend
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
             data = {}
 
+        # Extract and strip the submitted action
         action = data.get("action", "")
 
-        return action.strip() if isinstance(action, str) else ""
-
-    # Validate the selected account ID and requested action
-    def validate_status_action(self, account_id, action):
-
-        if account_id <= 0:
-            return "Invalid user account ID."
-
-        if action not in self.VALID_ACTIONS:
-            return "Invalid account status action."
-
-        return None
-
-    # Process the account suspension or reactivation request
-    def post(self, account_id):
-        action = self.get_status_action()
-
-        error = self.validate_status_action(account_id, action)
-
-        if error:
-            return jsonify({
-                "success": False,
-                "message": error
-            }), 400
-
-        # Pass the valid request to the Controller
-        result, status_code = (
-            self.suspend_account_controller.change_account_status(
-                account_id,
-                action
-            )
+        action = (
+            action.strip()
+            if isinstance(action, str) else ""
         )
 
-        return jsonify(result), status_code
+        # Validate the requested action
+        if action not in self.VALID_ACTIONS:
+            return None, {
+                "success": False,
+                "message": "Invalid account status action."
+            }
+
+        # Return the validated action
+        return action, None
+
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Prepare the Entity's status change result for the frontend
+    def display_status_result(self, result):
+        return jsonify(result["data"]), result["status_code"]

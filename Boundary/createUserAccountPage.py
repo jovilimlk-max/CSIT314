@@ -2,90 +2,101 @@
 '''
 What this code does?
 - Display the Create User Account HTML page.
-- Retrieve the username from the URL.
-- Receive new user account details.
-- Clean the appropriate inputs.
+- Retrieve and prepare the administrator's display name.
+- Extract and strip new account information, except the password.
 - Validate required fields, email format and selected role.
-- Pass valid account details to the Controller.
-- Return the account creation result.
+- Return validated account details or a validation error.
+- Prepare account creation results for the frontend.
 '''
 
 import re
 from flask import request, jsonify, render_template
-from flask.views import MethodView
 
 
-class CreateUserAccountPage(MethodView):
+class CreateUserAccountPage:
 
     VALID_ROLES = {"customer", "designer", "admin", "manager"}
 
-    # Receives and stores a reference to the Controller object
-    def __init__(self, create_account_controller):
-        self.create_account_controller = create_account_controller
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
 
-    # Retrieve and clean the submitted account details
-    def get_account_details(self):
-        data = request.get_json(silent=True)
+        username = request.args.get(
+            "username",
+            default="User Admin"
+        )
 
-        if not isinstance(data, dict):
-            data = {}
-
-        name = data.get("name", "")
-        email = data.get("email", "")
-        password = data.get("password", "")
-        role = data.get("role", "")
-
-        return {
-            "name": name.strip() if isinstance(name, str) else "",
-            "email": email.strip() if isinstance(email, str) else "",
-            "password": password if isinstance(password, str) else "",
-            "role": role.strip() if isinstance(role, str) else ""
-        }
-
-    # Validate the submitted account details
-    def validate_account_details(self, account_details):
-        name = account_details["name"]
-        email = account_details["email"]
-        password = account_details["password"]
-        role = account_details["role"]
-
-        if not name or not email or not password or not role:
-            return "Please fill in all required fields."
-
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-            return "Please enter a valid email address."
-
-        if role not in self.VALID_ROLES:
-            return "Please select a valid user type."
-
-        return None
-
-    # Display the Create User Account HTML page
-    def get(self):
-        username = request.args.get("username", "User Admin").strip()
+        # Strip whitespace and use a default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
+
+        return username
+
+    # Display the Create User Account HTML page
+    def display_create_account_page(self):
+
+        username = self.get_username()
 
         return render_template(
             "createUserAccount.html",
             username=username
         )
 
-    # Process the account creation request
-    def post(self):
-        account_details = self.get_account_details()
+    # Retrieve, clean and validate submitted account information
+    def get_account_details(self):
 
-        error = self.validate_account_details(account_details)
+        # Retrieve JSON data from the frontend
+        data = request.get_json(silent=True)
 
-        if error:
-            return jsonify({
+        if not isinstance(data, dict):
+            data = {}
+
+        # Extract the submitted account information
+        name = data.get("name", "")
+        email = data.get("email", "")
+        password = data.get("password", "")
+        role = data.get("role", "")
+
+        # Strip whitespace from all fields except the password
+        name = name.strip() if isinstance(name, str) else ""
+        email = email.strip() if isinstance(email, str) else ""
+        password = password if isinstance(password, str) else ""
+        role = role.strip() if isinstance(role, str) else ""
+
+        # Validate all required fields
+        if not name or not email or not password or not role:
+            return None, {
                 "success": False,
-                "message": error
-            }), 400
+                "message": "Please fill in all required fields."
+            }
 
-        result, status_code = self.create_account_controller.create_account(
-            account_details
-        )
+        # Validate the email address format
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            return None, {
+                "success": False,
+                "message": "Please enter a valid email address."
+            }
 
-        return jsonify(result), status_code
+        # Validate the selected role
+        if role not in self.VALID_ROLES:
+            return None, {
+                "success": False,
+                "message": "Please select a valid user type."
+            }
+
+        # Return validated account information
+        return {
+            "name": name,
+            "email": email,
+            "password": password,
+            "role": role
+        }, None
+
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Prepare the Entity's account creation result for the frontend
+    def display_create_account_result(self, result):
+        return jsonify(result["data"]), result["status_code"]

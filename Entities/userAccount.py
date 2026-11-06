@@ -2,18 +2,19 @@
 '''
 What this code does?
 - Initialise the User Account database.
-- Retrieve user accounts and account information.
-- Authenticate users, including role and suspension checks.
-- Check assigned User Profile status during login.
-- Create new user accounts without an assigned User Profile.
-- Update existing account details and optional profile assignments.
-- Suspend or reactivate existing user accounts.
-- Retrieve account counts and User Admin Dashboard statistics.
+- Authenticate users and check account and profile suspension.
+- Create new user accounts with hashed passwords.
+- Retrieve all accounts for listing, searching and filtering.
+- Retrieve individual accounts with assigned User Profile details.
+- Retrieve account information and available profiles for editing.
+- Update account details, passwords and profile assignments.
+- Suspend or reactivate accounts.
+- Retrieve User Admin Dashboard statistics.
 '''
 
 import sqlite3
 from pathlib import Path
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from Entities.userProfile import UserProfile
 
@@ -43,7 +44,6 @@ class UserAccount:
             """, (email,))
 
             user = cursor.fetchone()
-
             return dict(user) if user else None
 
         finally:
@@ -53,28 +53,9 @@ class UserAccount:
     def verify_password(self, password, password_hash):
         return check_password_hash(password_hash, password)
 
-    # Authenticate an account using its email and password
-    def authenticate_user(self, email, password):
-        user = self.get_user_by_email(email)
-
-        if user is None:
-            return None
-
-        if not self.verify_password(password, user["password_hash"]):
-            return None
-
-        return {
-            "id": user["id"],
-            "email": user["email"],
-            "role": user["role"],
-            "status": user["status"],
-            "profile_id": user["profile_id"]
-        }
-
     # Handle the complete login authentication process
     def authenticate_login(self, login_details):
 
-        # Retrieve the validated login details
         email = login_details["email"]
         password = login_details["password"]
         selected_role = login_details["role"]
@@ -82,7 +63,7 @@ class UserAccount:
         # Retrieve the registered account
         user = self.get_user_by_email(email)
 
-        # Check whether the account exists and password matches
+        # Check the email and password
         if user is None or not self.verify_password(
             password,
             user["password_hash"]
@@ -95,7 +76,7 @@ class UserAccount:
                 "status_code": 401
             }
 
-        # Check whether the selected role matches the registered role
+        # Check the selected user role
         if selected_role != user["role"]:
             return {
                 "data": {
@@ -105,7 +86,7 @@ class UserAccount:
                 "status_code": 401
             }
 
-        # Check whether the individual account is active
+        # Check the individual account status
         if user["status"] != "active":
             return {
                 "data": {
@@ -115,16 +96,13 @@ class UserAccount:
                 "status_code": 403
             }
 
-        # Check the assigned User Profile, if one exists
+        # Check the assigned profile, if any
         profile_id = user["profile_id"]
 
         if profile_id is not None:
-
-            # Retrieve the assigned profile through the Entity layer
             user_profile = UserProfile()
             profile = user_profile.get_profile_by_id(profile_id)
 
-            # Block login if the profile does not exist or is suspended
             if profile is None or profile["status"] != "active":
                 return {
                     "data": {
@@ -134,7 +112,7 @@ class UserAccount:
                     "status_code": 403
                 }
 
-        # Return the authenticated user's information
+        # Return successful login details
         return {
             "data": {
                 "success": True,
@@ -149,7 +127,53 @@ class UserAccount:
             "status_code": 200
         }
 
-    # Create an account without an assigned User Profile
+    # Handle the complete Create User Account process
+    def create_account(self, account_details):
+
+        name = account_details["name"]
+        email = account_details["email"]
+        password = account_details["password"]
+        role = account_details["role"]
+
+        # Check whether the email is already registered
+        if self.email_exists(email):
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Email address is already registered."
+                },
+                "status_code": 409
+            }
+
+        # Hash the password without stripping it
+        password_hash = generate_password_hash(password)
+
+        # Create an account with no assigned profile
+        created = self.create_user_account(
+            name,
+            email,
+            password_hash,
+            role
+        )
+
+        if not created:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Email address is already registered."
+                },
+                "status_code": 409
+            }
+
+        return {
+            "data": {
+                "success": True,
+                "message": "User account created successfully."
+            },
+            "status_code": 201
+        }
+
+    # Insert a new account into SQLite
     def create_user_account(self, name, email, password_hash, role):
         connection = sqlite3.connect(self.db_path)
 
@@ -171,7 +195,7 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Retrieve all existing user accounts
+    # Retrieve all accounts in ascending Account ID order
     def get_all_accounts(self):
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
@@ -182,7 +206,7 @@ class UserAccount:
             cursor.execute("""
                 SELECT id, name, email, role, status, profile_id
                 FROM user_accounts
-                ORDER BY id DESC
+                ORDER BY id ASC
             """)
 
             return [
@@ -193,7 +217,19 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Retrieve a specific user account using its ID
+    # Handle the complete View All User Accounts process
+    def view_all_accounts(self):
+
+        # Retrieve all accounts from SQLite
+        accounts = self.get_all_accounts()
+
+        # Return account data to the Controller
+        return {
+            "success": True,
+            "accounts": accounts
+        }, 200
+
+    # Retrieve a specific account using its ID
     def get_account_by_id(self, account_id):
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
@@ -208,11 +244,41 @@ class UserAccount:
             """, (account_id,))
 
             account = cursor.fetchone()
-
             return dict(account) if account else None
 
         finally:
             connection.close()
+
+    # Handle the complete View User Account process
+    def view_account(self, account_id):
+
+        # Retrieve the selected account
+        account = self.get_account_by_id(account_id)
+
+        if account is None:
+            return {
+                "success": False,
+                "message": "User account not found."
+            }, 404
+
+        # Retrieve the name of the assigned User Profile
+        profile_id = account["profile_id"]
+
+        if profile_id is not None:
+            user_profile = UserProfile()
+            profile = user_profile.get_profile_by_id(profile_id)
+
+            account["profile_name"] = (
+                profile["profile_name"]
+                if profile else None
+            )
+        else:
+            account["profile_name"] = None
+
+        return {
+            "success": True,
+            "account": account
+        }, 200
 
     # Check whether an email is used by another account
     def email_exists(self, email, exclude_id=None):
@@ -234,7 +300,92 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Update an existing user account
+    # Retrieve existing account details and profiles for editing
+    def get_account_update_details(self, account_id):
+
+        # Retrieve the account with its assigned profile name
+        account_result, status_code = self.view_account(account_id)
+
+        if not account_result["success"]:
+            return account_result, status_code
+
+        # Retrieve available profiles from the User Profile Entity
+        user_profile = UserProfile()
+        profiles = user_profile.get_all_profiles()
+
+        return {
+            "success": True,
+            "account": account_result["account"],
+            "profiles": profiles
+        }, 200
+
+    # Handle the complete Update User Account process
+    def update_account(self, account_id, account_details):
+
+        name = account_details["name"]
+        email = account_details["email"]
+        password = account_details["password"]
+        role = account_details["role"]
+        profile_id = account_details["profile_id"]
+
+        # Check for a duplicate email belonging to another account
+        if self.email_exists(email, exclude_id=account_id):
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Email address is already registered."
+                },
+                "status_code": 409
+            }
+
+        # Check the assigned profile if one was selected
+        if profile_id is not None:
+            user_profile = UserProfile()
+            profile = user_profile.get_profile_by_id(profile_id)
+
+            if profile is None:
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Selected user profile not found."
+                    },
+                    "status_code": 404
+                }
+
+        # Only hash the password when a new one is provided
+        password_hash = None
+
+        if password:
+            password_hash = generate_password_hash(password)
+
+        # Save the updated account information
+        updated = self.update_user_account(
+            account_id,
+            name,
+            email,
+            role,
+            profile_id,
+            password_hash
+        )
+
+        if not updated:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update account. Please try again."
+                },
+                "status_code": 409
+            }
+
+        return {
+            "data": {
+                "success": True,
+                "message": "User account updated successfully."
+            },
+            "status_code": 200
+        }
+
+    # Update account information in SQLite
     def update_user_account(
         self,
         account_id,
@@ -251,7 +402,7 @@ class UserAccount:
 
             if password_hash is None:
 
-                # Keep the existing password
+                # Preserve the existing password
                 cursor.execute("""
                     UPDATE user_accounts
                     SET name = ?,
@@ -270,7 +421,7 @@ class UserAccount:
 
             else:
 
-                # Replace the password with its new hash
+                # Save the newly hashed password
                 cursor.execute("""
                     UPDATE user_accounts
                     SET name = ?,
@@ -303,10 +454,86 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Suspend or reactivate an existing user account
+    # Handle the complete Suspend / Reactivate process
+    def change_account_status(self, account_id, action):
+
+        # Retrieve the account and its current status
+        account = self.get_account_by_id(account_id)
+
+        if account is None:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "User account not found."
+                },
+                "status_code": 404
+            }
+
+        current_status = account["status"]
+
+        # Determine the new status and prevent repeated changes
+        if action == "suspend":
+            new_status = "suspended"
+            success_message = "User account suspended successfully."
+
+            if current_status == "suspended":
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "User account is already suspended."
+                    },
+                    "status_code": 409
+                }
+
+        elif action == "reactivate":
+            new_status = "active"
+            success_message = "User account reactivated successfully."
+
+            if current_status == "active":
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "User account is already active."
+                    },
+                    "status_code": 409
+                }
+
+        else:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Invalid account status action."
+                },
+                "status_code": 400
+            }
+
+        # Update the account status in SQLite
+        updated = self.update_account_status(
+            account_id,
+            new_status
+        )
+
+        if not updated:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update account status. Please try again."
+                },
+                "status_code": 409
+            }
+
+        return {
+            "data": {
+                "success": True,
+                "message": success_message,
+                "status": new_status
+            },
+            "status_code": 200
+        }
+
+    # Update an account's status in the database
     def update_account_status(self, account_id, status):
 
-        # Only allow the recognised account statuses
         if status not in {"active", "suspended"}:
             return False
 
@@ -333,7 +560,7 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Count all user accounts
+    # Count all User Accounts
     def get_total_accounts(self):
         connection = sqlite3.connect(self.db_path)
 
@@ -350,7 +577,7 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Count accounts with suspended status
+    # Count suspended User Accounts
     def get_suspended_accounts(self):
         connection = sqlite3.connect(self.db_path)
 
@@ -368,18 +595,16 @@ class UserAccount:
         finally:
             connection.close()
 
-    # Retrieve and prepare all User Admin Dashboard statistics
+    # Retrieve Dashboard statistics
     def get_dashboard_statistics(self):
 
-        # Retrieve User Account statistics
         total_accounts = self.get_total_accounts()
         suspended_accounts = self.get_suspended_accounts()
 
-        # Retrieve User Profile statistics within the Entity layer
+        # Retrieve the User Profile count from its Entity
         user_profile = UserProfile()
         total_profiles = user_profile.get_total_profiles()
 
-        # Return the complete result to the Controller
         return {
             "success": True,
             "statistics": {

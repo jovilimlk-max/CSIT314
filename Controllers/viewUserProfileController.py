@@ -5,7 +5,7 @@ What this code does?
 - Retrieve the validated Profile ID from the Boundary.
 - Pass the Profile ID to the Entity to retrieve profile information.
 - Pass the Entity result to the Boundary for display.
-- Temporarily preserve existing methods used by other features.
+- Does not perform business logic or database operations.
 '''
 
 from flask.views import MethodView
@@ -29,36 +29,12 @@ class ViewUserProfileController(MethodView):
             return self.boundary.display_validation_error(error)
 
         # Pass the Profile ID to the Entity
-        result, status_code = self.user_profile.view_profile(validated_id)
+        result, status_code = self.user_profile.view_profile(
+            validated_id
+        )
 
         # Pass the Entity result to the Boundary for display
         return self.boundary.display_profile(
             result,
             status_code
         )
-
-    # Existing method retained for User Profile listing
-    # To be refactored when working on the listing feature
-    def get_all_profiles(self):
-        profiles = self.user_profile.get_all_profiles()
-
-        return {
-            "success": True,
-            "profiles": profiles
-        }, 200
-
-    # Existing method retained for other dependent features
-    # To be refactored when those features are updated
-    def get_profile_by_id(self, profile_id):
-        profile = self.user_profile.get_profile_by_id(profile_id)
-
-        if profile is None:
-            return {
-                "success": False,
-                "message": "User profile not found."
-            }, 404
-
-        return {
-            "success": True,
-            "profile": profile
-        }, 200

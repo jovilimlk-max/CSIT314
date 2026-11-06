@@ -1,81 +1,68 @@
 
 '''
 What this code does?
-- Check whether the user account exists.
-- Check whether the updated email is already in use.
-- Check whether the selected user profile exists, if assigned.
-- Hash a new password if one is provided.
-- Ask the Entity to update the user account.
-- Return the account update result.
+- Coordinate communication between the Update User Account Boundary and Entity.
+- Retrieve and validate the selected Account ID through the Boundary.
+- Request existing account details and available profiles from the Entity.
+- Retrieve validated updated account information from the Boundary.
+- Pass the updated information to the Entity.
+- Return Entity results through the Boundary.
+- Does not perform business validation, password hashing or database operations.
 '''
 
-from werkzeug.security import generate_password_hash
+from flask.views import MethodView
 
 
-class UpdateUserAccountController:
+class UpdateUserAccountController(MethodView):
 
-    # Store references to the UserAccount and UserProfile Entities
-    def __init__(self, user_account, user_profile):
+    # Store references to the Boundary and Entity
+    def __init__(self, update_account_boundary, user_account):
+        self.boundary = update_account_boundary
         self.user_account = user_account
-        self.user_profile = user_profile
 
-    # Coordinate the updating of an existing user account
-    def update_account(self, account_id, account_details):
-        name = account_details["name"]
-        email = account_details["email"]
-        password = account_details["password"]
-        role = account_details["role"]
-        profile_id = account_details["profile_id"]
+    # Coordinate displaying the Update User Account page
+    def get(self, account_id):
 
-        # Check whether the selected account exists
-        existing_account = self.user_account.get_account_by_id(account_id)
+        # Retrieve the validated Account ID from the Boundary
+        validated_id, error = self.boundary.get_account_id(account_id)
 
-        if existing_account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Check whether another account already uses the updated email
-        if self.user_account.email_exists(email, exclude_id=account_id):
-            return {
-                "success": False,
-                "message": "Email address is already registered."
-            }, 409
-
-        # Check whether the selected User Profile exists
-        if profile_id is not None:
-            existing_profile = self.user_profile.get_profile_by_id(profile_id)
-
-            if existing_profile is None:
-                return {
-                    "success": False,
-                    "message": "Selected user profile not found."
-                }, 404
-
-        # Only hash the password if a new one was entered
-        password_hash = None
-
-        if password:
-            password_hash = generate_password_hash(password)
-
-        # Ask the Entity to update the account details
-        updated = self.user_account.update_user_account(
-            account_id,
-            name,
-            email,
-            role,
-            profile_id,
-            password_hash
+        # Request existing account details and available profiles
+        result, status_code = self.user_account.get_account_update_details(
+            validated_id
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update account. Please try again."
-            }, 409
+        # Pass the result to the Boundary for display
+        return self.boundary.display_update_account_page(
+            result,
+            status_code
+        )
 
-        return {
-            "success": True,
-            "message": "User account updated successfully."
-        }, 200
+    # Coordinate updating the selected User Account
+    def post(self, account_id):
+
+        # Retrieve the validated Account ID from the Boundary
+        validated_id, error = self.boundary.get_account_id(account_id)
+
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Retrieve validated account information from the Boundary
+        account_details, error = self.boundary.get_account_details()
+
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Pass validated information to the Entity
+        result = self.user_account.update_account(
+            validated_id,
+            account_details
+        )
+
+        # Pass the Entity result to the Boundary
+        return self.boundary.display_update_account_result(result)

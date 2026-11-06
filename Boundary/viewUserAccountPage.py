@@ -1,50 +1,61 @@
 
 '''
 What this code does?
-- Receive the selected user account ID from the URL.
-- Validate the account ID.
-- Retrieve the username from the URL.
-- Request the selected user account details from the Controller.
-- Pass the username and account details to the HTML page.
-- Return an error if the user account cannot be found.
+- Retrieve and validate the selected User Account ID.
+- Retrieve and prepare the administrator's display name.
+- Receive the selected account information from the Controller.
+- Display the View User Account HTML page.
+- Return an error response if account information cannot be retrieved.
 '''
 
 from flask import render_template, jsonify, request
-from flask.views import MethodView
 
 
-class ViewUserAccountPage(MethodView):
+class ViewUserAccountPage:
 
-    # Receives and stores a reference to the Controller object
-    def __init__(self, view_account_controller):
-        self.view_account_controller = view_account_controller
+    # Retrieve and validate the selected Account ID
+    def get_account_id(self, account_id):
 
-    # Retrieve and display the selected user account
-    def get(self, account_id):
-
-        # Validate that the account ID is a positive integer
-        if account_id <= 0:
-            return jsonify({
+        # Validate that the Account ID is a positive integer
+        if not isinstance(account_id, int) or account_id <= 0:
+            return None, {
                 "success": False,
                 "message": "Invalid user account ID."
-            }), 400
+            }
 
-        # Retrieve the username from the URL
-        username = request.args.get("username", "User Admin").strip()
+        return account_id, None
+
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
+
+        username = request.args.get(
+            "username",
+            default="User Admin"
+        )
+
+        # Strip whitespace and use the default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
 
-        # Request the account details from the Controller
-        result, status_code = self.view_account_controller.get_account_by_id(
-            account_id
-        )
+        return username
 
-        # Return an error if the account does not exist
+    # Prepare Account ID validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Display the selected User Account
+    def display_account(self, result, status_code):
+
+        # Return an error if the account could not be retrieved
         if not result["success"]:
             return jsonify(result), status_code
 
-        # Display the selected account information
+        # Retrieve the prepared username
+        username = self.get_username()
+
+        # Render the View User Account HTML page
         return render_template(
             "viewUserAccount.html",
             account=result["account"],

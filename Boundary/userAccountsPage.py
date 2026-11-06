@@ -1,36 +1,46 @@
 
 '''
 What this code does?
-- Display the main User Accounts management page.
-- Retrieve the username from the URL.
-- Request all user accounts from the Controller.
-- Pass the username and account information to the HTML page.
+- Retrieve and prepare the administrator's display name.
+- Receive User Account information from the Controller.
+- Display the User Accounts management page.
+- Pass the accounts and username to the HTML template.
+- Return an error if account information cannot be retrieved.
 '''
 
 from flask import render_template, jsonify, request
-from flask.views import MethodView
 
 
-class UserAccountsPage(MethodView):
+class UserAccountsPage:
 
-    # Receives and stores a reference to the Controller object
-    def __init__(self, view_account_controller):
-        self.view_account_controller = view_account_controller
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
 
-    # Retrieve the username and display all user accounts
-    def get(self):
-        username = request.args.get("username", "User Admin").strip()
+        # Retrieve the username from the URL
+        username = request.args.get(
+            "username",
+            default="User Admin"
+        )
+
+        # Strip whitespace and use the default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
 
-        result, status_code = self.view_account_controller.get_all_accounts()
+        return username
 
-        # Return an error if the accounts cannot be retrieved
+    # Display the User Accounts management page
+    def display_accounts(self, result, status_code):
+
+        # Return an error if account information cannot be retrieved
         if not result["success"]:
             return jsonify(result), status_code
 
-        # Display the User Accounts management page
+        # Retrieve the administrator's display name
+        username = self.get_username()
+
+        # Render the User Accounts management page
         return render_template(
             "userAccounts.html",
             accounts=result["accounts"],

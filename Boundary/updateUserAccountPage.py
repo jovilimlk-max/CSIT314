@@ -1,145 +1,137 @@
 
 '''
 What this code does?
-- Display the Update User Account HTML page.
-- Retrieve existing account details and available User Profiles.
-- Retrieve the username from the URL.
-- Receive and clean updated account details.
-- Validate required fields, email format, role and profile ID.
-- Pass valid details to the Controller.
-- Return the account update result.
+- Retrieve and validate the selected User Account ID.
+- Retrieve and prepare the administrator's display name.
+- Extract and strip updated account information, except the password.
+- Validate required fields, email format, selected role and optional Profile ID.
+- Allow password and User Profile assignment to remain optional.
+- Display the Update User Account page with existing account details.
+- Return validation errors and account update results to the frontend.
 '''
 
 import re
 from flask import request, jsonify, render_template
-from flask.views import MethodView
 
 
-class UpdateUserAccountPage(MethodView):
+class UpdateUserAccountPage:
 
     VALID_ROLES = {"customer", "designer", "admin", "manager"}
 
-    # Receive references to the Controller objects
-    def __init__(
-        self,
-        update_account_controller,
-        view_account_controller,
-        view_profile_controller
-    ):
-        self.update_account_controller = update_account_controller
-        self.view_account_controller = view_account_controller
-        self.view_profile_controller = view_profile_controller
+    # Retrieve and validate the selected Account ID
+    def get_account_id(self, account_id):
 
-    # Retrieve and clean the submitted account details
+        # Validate that the Account ID is a positive integer
+        if not isinstance(account_id, int) or account_id <= 0:
+            return None, {
+                "success": False,
+                "message": "Invalid user account ID."
+            }
+
+        return account_id, None
+
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
+
+        username = request.args.get(
+            "username",
+            default="User Admin"
+        )
+
+        # Strip whitespace and use a default if empty
+        username = username.strip()
+
+        if not username:
+            username = "User Admin"
+
+        return username
+
+    # Retrieve, clean and validate updated account information
     def get_account_details(self):
+
+        # Retrieve JSON data from the frontend
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
             data = {}
 
+        # Extract submitted account information
         name = data.get("name", "")
         email = data.get("email", "")
         password = data.get("password", "")
         role = data.get("role", "")
         profile_id = data.get("profile_id", None)
 
-        # Convert an empty selection to an unassigned profile
+        # Strip whitespace from all text fields except password
+        name = name.strip() if isinstance(name, str) else ""
+        email = email.strip() if isinstance(email, str) else ""
+        password = password if isinstance(password, str) else ""
+        role = role.strip() if isinstance(role, str) else ""
+
+        # Convert an empty profile selection to no assigned profile
         if profile_id == "":
             profile_id = None
 
-        return {
-            "name": name.strip() if isinstance(name, str) else "",
-            "email": email.strip() if isinstance(email, str) else "",
-            "password": password if isinstance(password, str) else "",
-            "role": role.strip() if isinstance(role, str) else "",
-            "profile_id": profile_id
-        }
-
-    # Validate submitted account information
-    def validate_account_details(self, account_details):
-        name = account_details["name"]
-        email = account_details["email"]
-        role = account_details["role"]
-        profile_id = account_details["profile_id"]
-
+        # Validate required fields
         if not name or not email or not role:
-            return "Please fill in all required fields."
+            return None, {
+                "success": False,
+                "message": "Please fill in all required fields."
+            }
 
+        # Validate email address format
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-            return "Please enter a valid email address."
+            return None, {
+                "success": False,
+                "message": "Please enter a valid email address."
+            }
 
+        # Validate selected role
         if role not in self.VALID_ROLES:
-            return "Please select a valid user type."
+            return None, {
+                "success": False,
+                "message": "Please select a valid user type."
+            }
 
-        # User Profile is optional but must be a positive integer if supplied
+        # Validate optional User Profile ID
         if profile_id is not None:
             if type(profile_id) is not int or profile_id <= 0:
-                return "Please select a valid user profile."
+                return None, {
+                    "success": False,
+                    "message": "Please select a valid user profile."
+                }
 
-        return None
+        # Return validated account information
+        return {
+            "name": name,
+            "email": email,
+            "password": password,
+            "role": role,
+            "profile_id": profile_id
+        }, None
 
-    # Display the Edit Account form with existing account details
-    def get(self, account_id):
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
 
-        # Validate the selected account ID
-        if account_id <= 0:
-            return jsonify({
-                "success": False,
-                "message": "Invalid user account ID."
-            }), 400
+    # Display the Update User Account page
+    def display_update_account_page(self, result, status_code):
 
-        # Retrieve the existing account
-        account_result, account_status = (
-            self.view_account_controller.get_account_by_id(account_id)
-        )
+        # Return an error if account information cannot be retrieved
+        if not result["success"]:
+            return jsonify(result), status_code
 
-        if not account_result["success"]:
-            return jsonify(account_result), account_status
+        # Retrieve the administrator's display name
+        username = self.get_username()
 
-        # Retrieve available User Profiles for assignment
-        profiles_result, profiles_status = (
-            self.view_profile_controller.get_all_profiles()
-        )
-
-        if not profiles_result["success"]:
-            return jsonify(profiles_result), profiles_status
-
-        username = request.args.get("username", "User Admin").strip()
-
-        if not username:
-            username = "User Admin"
-
+        # Render the form with the existing account and available profiles
         return render_template(
             "updateUserAccount.html",
-            account=account_result["account"],
-            profiles=profiles_result["profiles"],
+            account=result["account"],
+            profiles=result["profiles"],
             username=username
-        ), 200
+        ), status_code
 
-    # Process the account update request
-    def post(self, account_id):
-
-        # Validate the selected account ID
-        if account_id <= 0:
-            return jsonify({
-                "success": False,
-                "message": "Invalid user account ID."
-            }), 400
-
-        account_details = self.get_account_details()
-
-        error = self.validate_account_details(account_details)
-
-        if error:
-            return jsonify({
-                "success": False,
-                "message": error
-            }), 400
-
-        # Pass the validated details to the Controller
-        result, status_code = self.update_account_controller.update_account(
-            account_id,
-            account_details
-        )
-
-        return jsonify(result), status_code
+    # Return the account update result to the frontend
+    def display_update_account_result(self, result):
+        return jsonify(result["data"]), result["status_code"]

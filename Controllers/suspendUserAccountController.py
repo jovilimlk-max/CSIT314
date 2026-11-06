@@ -1,80 +1,46 @@
 
 '''
 What this code does?
-- Check whether the selected user account exists.
-- Check whether the requested suspension or reactivation is valid.
-- Prevent repeated suspension or reactivation.
-- Ask the UserAccount Entity to update the account status.
-- Return the suspension or reactivation result.
+- Coordinate communication between the Suspend User Account Boundary and Entity.
+- Retrieve the validated Account ID from the Boundary.
+- Retrieve the validated suspension or reactivation action from the Boundary.
+- Pass the validated information to the Entity.
+- Return the Entity result through the Boundary.
+- Does not perform business validation or database operations.
 '''
 
+from flask.views import MethodView
 
-class SuspendUserAccountController:
 
-    # Store a reference to the UserAccount Entity
-    def __init__(self, user_account):
+class SuspendUserAccountController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, suspend_account_boundary, user_account):
+        self.boundary = suspend_account_boundary
         self.user_account = user_account
 
-    # Suspend or reactivate an existing user account
-    def change_account_status(self, account_id, action):
+    # Coordinate suspension or reactivation of a User Account
+    def post(self, account_id):
 
-        # Check whether the selected account exists
-        existing_account = self.user_account.get_account_by_id(account_id)
+        # Retrieve the validated Account ID from the Boundary
+        validated_id, error = self.boundary.get_account_id(account_id)
 
-        if existing_account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Validate the requested action
-        if action not in {"suspend", "reactivate"}:
-            return {
-                "success": False,
-                "message": "Invalid account status action."
-            }, 400
+        # Retrieve the validated action from the Boundary
+        action, error = self.boundary.get_status_action()
 
-        current_status = existing_account["status"]
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Determine the new account status
-        if action == "suspend":
-            new_status = "suspended"
-
-            if current_status == "suspended":
-                return {
-                    "success": False,
-                    "message": "User account is already suspended."
-                }, 409
-
-        else:
-            new_status = "active"
-
-            if current_status == "active":
-                return {
-                    "success": False,
-                    "message": "User account is already active."
-                }, 409
-
-        # Ask the Entity to update the account status
-        updated = self.user_account.update_account_status(
-            account_id,
-            new_status
+        # Pass the validated ID and action to the Entity
+        result = self.user_account.change_account_status(
+            validated_id,
+            action
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update account status. Please try again."
-            }, 409
-
-        # Return the appropriate success message
-        if action == "suspend":
-            message = "User account suspended successfully."
-        else:
-            message = "User account reactivated successfully."
-
-        return {
-            "success": True,
-            "message": message,
-            "status": new_status
-        }, 200
+        # Pass the Entity result to the Boundary
+        return self.boundary.display_status_result(result)
