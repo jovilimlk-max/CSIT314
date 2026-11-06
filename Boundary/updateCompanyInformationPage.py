@@ -1,71 +1,69 @@
 
 '''
 What this code does?
-- Display the Update Company Information HTML page.
-- Retrieve the Interior Designer account ID from the URL.
-- Ask the Controller to retrieve existing company information.
-- Pre-fill the update form with existing company details.
-- Receive updated company information as JSON.
-- Validate required fields, email format and established date.
-- Ask the Controller to update company information.
-- Return the result to the frontend.
+- Retrieve and validate the Interior Designer's Account ID.
+- Retrieve and prepare the Interior Designer's username.
+- Extract and strip submitted company information.
+- Validate required fields, company email format and established date.
+- Display the Update Company Information page with existing details.
+- Return validation errors and update results to the frontend.
+- Does not directly communicate with Controllers or Entities.
 '''
 
 import re
 from datetime import date
 
 from flask import request, jsonify, render_template
-from flask.views import MethodView
 
 
-class UpdateCompanyInformationPage(MethodView):
+class UpdateCompanyInformationPage:
 
-    # Receive references to the Controllers
-    def __init__(
-        self,
-        update_company_controller,
-        view_company_controller
-    ):
-        self.update_company_controller = update_company_controller
-        self.view_company_controller = view_company_controller
+    # Retrieve and validate the Interior Designer's Account ID
+    def get_account_id(self):
 
-    # Retrieve the updated company details from the request
+        # Retrieve Account ID from the URL
+        account_id = request.args.get(
+            "account_id",
+            type=int
+        )
+
+        # Validate the Account ID
+        if account_id is None or account_id <= 0:
+            return None, {
+                "success": False,
+                "message": "Invalid account ID."
+            }
+
+        return account_id, None
+
+    # Retrieve and prepare the Interior Designer's username
+    def get_username(self):
+
+        # Retrieve username from the URL
+        username = request.args.get(
+            "username",
+            "Interior Designer"
+        )
+
+        # Remove unnecessary whitespace
+        username = username.strip()
+
+        # Use the default username if empty
+        if not username:
+            username = "Interior Designer"
+
+        return username
+
+    # Retrieve and validate the submitted company information
     def get_company_details(self):
+
+        # Retrieve submitted JSON data
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
             data = {}
 
-        fields = [
-            "company_name",
-            "company_address",
-            "working_hours",
-            "company_email",
-            "company_phone",
-            "established_date",
-            "company_description"
-        ]
-
-        company_details = {}
-
-        for field in fields:
-            value = data.get(field, "")
-
-            company_details[field] = (
-                value.strip() if isinstance(value, str) else ""
-            )
-
-        company_details["account_id"] = request.args.get(
-            "account_id",
-            type=int
-        )
-
-        return company_details
-
-    # Validate the updated company information
-    def validate_company_details(self, company_details):
-        errors = {}
-
+        # Define required company information fields
         field_labels = {
             "company_name": "Company name",
             "company_address": "Company address",
@@ -76,38 +74,52 @@ class UpdateCompanyInformationPage(MethodView):
             "company_description": "What the company does"
         }
 
-        account_id = company_details["account_id"]
+        company_details = {}
+        errors = {}
 
-        # Check whether the account ID is valid
-        if account_id is None or account_id <= 0:
-            errors["account_id"] = "Invalid account ID."
-
-        # Check that all required fields have been completed
+        # Extract, strip and validate required fields
         for field, label in field_labels.items():
+
+            value = data.get(field, "")
+
+            company_details[field] = (
+                value.strip() if isinstance(value, str) else ""
+            )
+
+            # Check whether the field is empty
             if not company_details[field]:
                 errors[field] = f"{label} is required."
 
-        # Validate the company email address
+        # Retrieve and validate Account ID
+        account_id, account_error = self.get_account_id()
+
+        if account_error:
+            errors["account_id"] = "Invalid account ID."
+
+        company_details["account_id"] = account_id
+
+        # Validate company email format
         company_email = company_details["company_email"]
 
-        if company_email:
-            if not re.fullmatch(
-                r"[^@\s]+@[^@\s]+\.[^@\s]+",
-                company_email
-            ):
-                errors["company_email"] = (
-                    "Please enter a valid company email address."
-                )
+        if company_email and not re.fullmatch(
+            r"[^@\s]+@[^@\s]+\.[^@\s]+",
+            company_email
+        ):
+            errors["company_email"] = (
+                "Please enter a valid company email address."
+            )
 
-        # Validate the established date
+        # Validate established date
         established_date = company_details["established_date"]
 
         if established_date:
+
             try:
                 selected_date = date.fromisoformat(
                     established_date
                 )
 
+                # Established date cannot be in the future
                 if selected_date > date.today():
                     errors["established_date"] = (
                         "Established date cannot be in the future."
@@ -118,47 +130,44 @@ class UpdateCompanyInformationPage(MethodView):
                     "Please enter a valid established date."
                 )
 
-        return errors
+        # Return validation errors to the Controller
+        if errors:
+            return None, {
+                "success": False,
+                "message": "Please correct the highlighted fields.",
+                "errors": errors
+            }
 
-    # Display the Update Company Information page
-    def get(self):
+        # Return validated information
+        return company_details, None
 
-        # Retrieve the account ID from the URL
-        account_id = request.args.get(
-            "account_id",
-            type=int
-        )
+    # Display Account ID validation errors
+    def display_validation_error(self, error):
+        return error["message"], 400
 
-        if account_id is None or account_id <= 0:
-            return "Invalid account ID.", 400
+    # Display submitted field validation errors
+    def display_field_errors(self, error):
+        return jsonify(error), 400
 
-        # Retrieve the username for display
-        username = request.args.get(
-            "username",
-            "Interior Designer"
-        ).strip()
+    # Display the Update Company Information form
+    def display_update_company_page(self, result, status_code):
 
-        if not username:
-            username = "Interior Designer"
-
-        # Ask the View Controller to retrieve company information
-        result, status_code = (
-            self.view_company_controller.view_company_information(
-                account_id
-            )
-        )
-
-        # Handle invalid or suspended user accounts
+        # Return the Entity error if retrieval was unsuccessful
         if not result["success"]:
             return result["message"], status_code
 
-        # Check that company information exists before editing
+        # Retrieve existing company information
         company = result["company"]
 
+        # A company record must exist before it can be updated
         if company is None:
             return "Company information not found.", 404
 
-        # Display the edit page with existing company details
+        # Retrieve Account ID and username for the frontend
+        account_id, error = self.get_account_id()
+        username = self.get_username()
+
+        # Display the form with the existing company information
         return render_template(
             "updateCompanyInformation.html",
             account_id=account_id,
@@ -166,29 +175,9 @@ class UpdateCompanyInformationPage(MethodView):
             company=company
         ), 200
 
-    # Process the submitted company information updates
-    def post(self):
+    # Return the company update result to the frontend
+    def display_update_result(self, result):
 
-        # Retrieve the updated details
-        company_details = self.get_company_details()
-
-        # Validate the submitted information
-        errors = self.validate_company_details(
-            company_details
-        )
-
-        if errors:
-            return jsonify({
-                "success": False,
-                "message": "Please correct the highlighted fields.",
-                "errors": errors
-            }), 400
-
-        # Ask the Update Controller to save the changes
-        result, status_code = (
-            self.update_company_controller.update_company_information(
-                company_details
-            )
-        )
-
-        return jsonify(result), status_code
+        return jsonify(
+            result["data"]
+        ), result["status_code"]

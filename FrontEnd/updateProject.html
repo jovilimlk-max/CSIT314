@@ -71,6 +71,7 @@
         .message { display: none; margin: 0 0 24px; padding: 13px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
         .message.show { display: block; }
         .message.error { background: #fff0f0; border: 1px solid #f2cbd1; color: #a22735; }
+
         [hidden] { display: none !important; }
         a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
 
@@ -190,8 +191,10 @@
 
                 <h2 class="form-heading">Project Details</h2>
 
-                <p class="message" id="message"
-                   role="alert" aria-live="polite"></p>
+                <p class="message"
+                   id="message"
+                   role="alert"
+                   aria-live="polite"></p>
 
                 <form id="updateProjectForm" novalidate>
 
@@ -228,28 +231,33 @@
                            id="project_description_error"></p>
                     </div>
 
-                    <!-- Project Progress -->
+                    <!-- Project Type -->
                     <div class="field">
-                        <label for="progress">
-                            Project Progress <span class="required">*</span>
+                        <label for="project_type">
+                            Project Type <span class="required">*</span>
                         </label>
 
                         <select class="control"
-                                id="progress"
-                                name="progress"
+                                id="project_type"
+                                name="project_type"
                                 required>
-                            <option value="">Select project progress</option>
-                            <option value="Ongoing"
-                                    {% if project.progress == "Ongoing" %}selected{% endif %}>
-                                Ongoing
+
+                            <option value="">
+                                Select project type
                             </option>
-                            <option value="Completed"
-                                    {% if project.progress == "Completed" %}selected{% endif %}>
-                                Completed
+
+                            <option value="current"
+                                    {% if project.project_type == "current" %}selected{% endif %}>
+                                Current IDP
+                            </option>
+
+                            <option value="past"
+                                    {% if project.project_type == "past" %}selected{% endif %}>
+                                Past IDP
                             </option>
                         </select>
 
-                        <p class="field-error" id="progress_error"></p>
+                        <p class="field-error" id="project_type_error"></p>
                     </div>
 
                     <!-- Date Fields -->
@@ -271,8 +279,11 @@
                             <p class="field-error" id="start_date_error"></p>
                         </div>
 
-                        <!-- End Date -->
-                        <div class="field" id="endDateField" hidden>
+                        <!-- End Date: Only shown for Past IDP -->
+                        <div class="field"
+                             id="endDateField"
+                             {% if project.project_type != "past" %}hidden{% endif %}>
+
                             <label for="end_date">
                                 End Date <span class="required">*</span>
                             </label>
@@ -281,7 +292,8 @@
                                    id="end_date"
                                    name="end_date"
                                    type="date"
-                                   value="{{ project.end_date or '' }}">
+                                   value="{{ project.end_date or '' }}"
+                                   {% if project.project_type == "past" %}required{% endif %}>
 
                             <p class="field-error" id="end_date_error"></p>
                         </div>
@@ -309,44 +321,69 @@
 
     <script>
         class UpdateProjectPage {
+
             constructor() {
+
+                // Retrieve information passed from Flask
                 this.accountId = {{ account_id | tojson }};
                 this.username = {{ display_username | tojson }};
                 this.projectId = {{ project.project_id | tojson }};
 
+                // Retrieve form elements
                 this.form = document.getElementById("updateProjectForm");
                 this.message = document.getElementById("message");
                 this.submitButton = document.getElementById("submitButton");
 
+                // All project fields submitted to the Boundary
                 this.fields = [
                     "project_name",
                     "project_description",
-                    "progress",
+                    "project_type",
                     "start_date",
                     "end_date"
                 ];
 
-                this.progressField = document.getElementById("progress");
-                this.startDateField = document.getElementById("start_date");
-                this.endDateField = document.getElementById("end_date");
-                this.endDateContainer = document.getElementById("endDateField");
+                // Retrieve Project Type and date elements
+                this.projectTypeField = document.getElementById(
+                    "project_type"
+                );
 
+                this.startDateField = document.getElementById(
+                    "start_date"
+                );
+
+                this.endDateField = document.getElementById(
+                    "end_date"
+                );
+
+                this.endDateContainer = document.getElementById(
+                    "endDateField"
+                );
+
+                // View Project URL
                 this.projectUrl =
                     "/interior-designer/projects/" +
                     encodeURIComponent(this.projectId) +
-                    "?account_id=" + encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                    "?account_id=" +
+                    encodeURIComponent(this.accountId) +
+                    "&username=" +
+                    encodeURIComponent(this.username);
 
+                // View Projects listing URL
                 this.projectsUrl =
                     "/interior-designer/projects?account_id=" +
                     encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                    "&username=" +
+                    encodeURIComponent(this.username);
 
+                // Company Information URL
                 this.companyInfoUrl =
                     "/interior-designer/company?account_id=" +
                     encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                    "&username=" +
+                    encodeURIComponent(this.username);
 
+                // Update Project URL
                 this.updateUrl =
                     "/interior-designer/projects/" +
                     encodeURIComponent(this.projectId) +
@@ -356,64 +393,87 @@
                 this.submitting = false;
                 this.saved = false;
 
+                // Initialise date input limits and visibility
                 this.setDateLimits();
                 this.updateDateFields(false);
 
+                // Store original values to detect unsaved changes
                 this.originalDetails = this.getProjectDetails();
 
+                // Register page events
                 this.setupEvents();
             }
 
             // Set up navigation and form events
             setupEvents() {
+
+                // Submit project updates
                 this.form.addEventListener(
-                    "submit", event => this.handleUpdateProject(event)
+                    "submit",
+                    event => this.handleUpdateProject(event)
                 );
 
-                this.progressField.addEventListener(
-                    "change", () => this.updateDateFields(true)
+                // Show or hide End Date when Project Type changes
+                this.projectTypeField.addEventListener(
+                    "change",
+                    () => this.updateDateFields(true)
                 );
 
+                // Update the minimum End Date when Start Date changes
                 this.startDateField.addEventListener(
-                    "change", () => this.updateEndDateLimit()
+                    "change",
+                    () => this.updateEndDateLimit()
                 );
 
+                // Return to View Project
                 document.getElementById("backButton").addEventListener(
-                    "click", () => this.navigateTo(this.projectUrl)
+                    "click",
+                    () => this.navigateTo(this.projectUrl)
                 );
 
+                // Cancel editing
                 document.getElementById("cancelButton").addEventListener(
-                    "click", () => this.navigateTo(this.projectUrl)
+                    "click",
+                    () => this.navigateTo(this.projectUrl)
                 );
 
+                // Navigate to Company Information
                 document.getElementById("companyInfoLink").addEventListener(
-                    "click", event => {
+                    "click",
+                    event => {
                         event.preventDefault();
                         this.navigateTo(this.companyInfoUrl);
                     }
                 );
 
+                // Navigate to Projects listing
                 document.getElementById("projectsLink").addEventListener(
-                    "click", event => {
+                    "click",
+                    event => {
                         event.preventDefault();
                         this.navigateTo(this.projectsUrl);
                     }
                 );
 
+                // Log out
                 document.getElementById("logoutButton").addEventListener(
-                    "click", () => this.navigateTo("/")
+                    "click",
+                    () => this.navigateTo("/")
                 );
 
-                // Clear validation errors as the user edits fields
+                // Clear displayed errors when fields are edited
                 this.fields.forEach(field => {
+
                     document.getElementById(field).addEventListener(
-                        "input", () => this.clearFieldError(field)
+                        "input",
+                        () => this.clearFieldError(field)
                     );
                 });
             }
 
-            // Set the maximum allowed date to today
+            // Set the maximum selectable date to today
             setDateLimits() {
+
                 const today = new Date();
 
                 const localDate = new Date(
@@ -427,26 +487,37 @@
                 this.updateEndDateLimit();
             }
 
-            // Show or hide End Date based on project progress
+            // Show End Date only when Past IDP is selected
             updateDateFields(clearEndDate) {
-                const isCompleted =
-                    this.progressField.value === "Completed";
 
-                this.endDateContainer.hidden = !isCompleted;
-                this.endDateField.required = isCompleted;
+                const isPast =
+                    this.projectTypeField.value === "past";
 
-                if (!isCompleted && clearEndDate) {
+                // Show or hide End Date
+                this.endDateContainer.hidden = !isPast;
+
+                // End Date is required for Past IDP
+                this.endDateField.required = isPast;
+
+                // Clear End Date when switching to Current IDP
+                if (!isPast && clearEndDate) {
                     this.endDateField.value = "";
                     this.clearFieldError("end_date");
                 }
 
-                this.clearFieldError("progress");
+                // Refresh the End Date minimum
+                this.updateEndDateLimit();
+
+                this.clearFieldError("project_type");
             }
 
-            // Ensure End Date cannot be earlier than Start Date
+            // Set the minimum End Date to the selected Start Date
             updateEndDateLimit() {
-                this.endDateField.min = this.startDateField.value;
 
+                this.endDateField.min =
+                    this.startDateField.value || "";
+
+                // Clear an End Date that is now earlier than Start Date
                 if (
                     this.endDateField.value &&
                     this.startDateField.value &&
@@ -458,24 +529,28 @@
                 this.clearFieldError("start_date");
             }
 
-            // Retrieve the entered project details
+            // Retrieve the current project details from the form
             getProjectDetails() {
+
                 const details = {};
 
+                // Retrieve and trim each field
                 this.fields.forEach(field => {
                     details[field] =
                         document.getElementById(field).value.trim();
                 });
 
-                if (details.progress === "Ongoing") {
+                // Current IDPs do not have an End Date
+                if (details.project_type === "current") {
                     details.end_date = "";
                 }
 
                 return details;
             }
 
-            // Check whether the project details have changed
+            // Detect whether the form contains unsaved changes
             hasUnsavedChanges() {
+
                 if (this.saved) {
                     return false;
                 }
@@ -483,13 +558,16 @@
                 const currentDetails = this.getProjectDetails();
 
                 return this.fields.some(field =>
-                    currentDetails[field] !== this.originalDetails[field]
+                    currentDetails[field] !==
+                    this.originalDetails[field]
                 );
             }
 
-            // Confirm before leaving if changes have not been saved
+            // Confirm before navigating away with unsaved changes
             navigateTo(url) {
+
                 if (this.hasUnsavedChanges()) {
+
                     if (!confirm("Discard unsaved changes?")) {
                         return;
                     }
@@ -498,16 +576,27 @@
                 window.location.href = url;
             }
 
-            // Show a general error message
+            // Display general error messages
             showMessage(text) {
+
                 this.message.textContent = text;
                 this.message.className = "message show error";
             }
 
-            // Clear an individual field error
+            // Clear general error messages
+            clearMessage() {
+
+                this.message.textContent = "";
+                this.message.className = "message";
+            }
+
+            // Clear a field validation error
             clearFieldError(field) {
+
                 const input = document.getElementById(field);
-                const error = document.getElementById(field + "_error");
+                const error = document.getElementById(
+                    field + "_error"
+                );
 
                 input.classList.remove("invalid");
                 input.removeAttribute("aria-invalid");
@@ -516,136 +605,94 @@
                 error.classList.remove("show");
             }
 
-            // Display validation errors beneath the relevant fields
+            // Display field errors returned by the Flask Boundary
             showFieldErrors(errors) {
+
                 this.fields.forEach(field => {
+
                     if (errors[field]) {
+
                         const input = document.getElementById(field);
-                        const error = document.getElementById(field + "_error");
+
+                        const error = document.getElementById(
+                            field + "_error"
+                        );
 
                         input.classList.add("invalid");
                         input.setAttribute("aria-invalid", "true");
+
                         error.textContent = errors[field];
                         error.classList.add("show");
                     }
                 });
 
+                // Focus on the first field with a validation error
                 const firstInvalidField = this.fields.find(
                     field => errors[field]
                 );
 
                 if (firstInvalidField) {
-                    document.getElementById(firstInvalidField).focus();
+                    document.getElementById(
+                        firstInvalidField
+                    ).focus();
                 }
             }
 
-            // Clear all validation errors
+            // Clear all displayed validation errors
             clearErrors() {
-                this.message.textContent = "";
-                this.message.className = "message";
+
+                this.clearMessage();
 
                 this.fields.forEach(field => {
                     this.clearFieldError(field);
                 });
             }
 
-            // Validate project details before saving
-            validateProjectDetails(details) {
-                const errors = {};
-
-                if (!details.project_name) {
-                    errors.project_name = "Project name is required.";
-                } else if (details.project_name.length > 255) {
-                    errors.project_name =
-                        "Project name cannot exceed 255 characters.";
-                }
-
-                if (!details.project_description) {
-                    errors.project_description =
-                        "Project description is required.";
-                } else if (details.project_description.length > 5000) {
-                    errors.project_description =
-                        "Project description cannot exceed 5000 characters.";
-                }
-
-                if (!["Ongoing", "Completed"].includes(details.progress)) {
-                    errors.progress = "Please select project progress.";
-                }
-
-                // Validate Start Date
-                if (!details.start_date) {
-                    errors.start_date = "Start date is required.";
-                } else if (details.start_date > this.startDateField.max) {
-                    errors.start_date =
-                        "Start date cannot be in the future.";
-                }
-
-                // Validate End Date for Completed projects
-                if (details.progress === "Completed") {
-                    if (!details.end_date) {
-                        errors.end_date =
-                            "End date is required for completed projects.";
-                    } else if (
-                        details.start_date &&
-                        details.end_date < details.start_date
-                    ) {
-                        errors.end_date =
-                            "End date cannot be earlier than start date.";
-                    } else if (
-                        details.end_date > this.endDateField.max
-                    ) {
-                        errors.end_date =
-                            "End date cannot be in the future.";
-                    }
-                }
-
-                return errors;
-            }
-
-            // Submit updated project information to the Flask Boundary
+            // Submit updated project details to the Flask Boundary
             async handleUpdateProject(event) {
+
                 event.preventDefault();
 
                 if (this.submitting) {
                     return;
                 }
 
+                // Clear previous validation messages
                 this.clearErrors();
 
+                // Collect current form values
                 const details = this.getProjectDetails();
-                const errors = this.validateProjectDetails(details);
 
-                if (Object.keys(errors).length > 0) {
-                    this.showMessage(
-                        "Please correct the highlighted fields."
-                    );
-
-                    this.showFieldErrors(errors);
-                    return;
-                }
-
-                // Avoid updating the database if nothing has changed
+                // Check whether any information has changed
                 if (!this.hasUnsavedChanges()) {
+
                     this.showMessage(
                         "No changes have been made to the project."
                     );
+
                     return;
                 }
 
                 this.submitting = true;
                 this.submitButton.disabled = true;
+                this.submitButton.textContent = "Saving...";
 
+                // Prepare JSON for the Update Project Boundary
                 const projectData = {
                     project_name: details.project_name,
                     project_description: details.project_description,
-                    progress: details.progress,
+                    project_type: details.project_type,
                     start_date: details.start_date,
-                    end_date: details.progress === "Completed"
+
+                    // Past IDPs require an End Date
+                    end_date: details.project_type === "past"
                         ? details.end_date
                         : null
                 };
 
                 try {
+
+                    // Send updated details to Flask
                     const response = await fetch(this.updateUrl, {
                         method: "POST",
                         headers: {
@@ -656,32 +703,40 @@
 
                     const result = await response.json();
 
+                    // Successful update
                     if (response.ok && result.success) {
+
                         this.saved = true;
 
-                        // Return to View Project with a success message
+                        // Redirect to View Project with success message
                         window.location.href =
                             this.projectUrl + "&updated=1";
 
                     } else {
+
+                        // Display the error message returned by Boundary
                         this.showMessage(
                             result.message ||
                             "Unable to update project information."
                         );
 
+                        // Display field-level validation errors
                         if (result.errors) {
                             this.showFieldErrors(result.errors);
                         }
                     }
 
                 } catch (error) {
+
                     this.showMessage(
                         "Unable to connect to the server."
                     );
 
                 } finally {
+
                     this.submitting = false;
                     this.submitButton.disabled = false;
+                    this.submitButton.textContent = "Save Changes";
                 }
             }
         }

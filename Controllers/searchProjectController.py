@@ -1,99 +1,44 @@
 
 '''
 What this code does?
-- Verify that the Interior Designer account exists and is active.
-- Retrieve the company associated with the Interior Designer.
-- Search projects belonging to that company by project name.
-- Support partial and case-insensitive searches.
-- Include Ongoing, Completed, Active and Suspended projects.
+- Coordinate communication between the Search Project Boundary and Entity.
+- Handle GET requests to search projects.
+- Retrieve validated Account ID and search query from the Boundary.
+- Pass validated search details to the Project Entity.
+- Return matching Current IDP and Past IDP projects through the Boundary.
+- Support empty search queries to retrieve all company projects.
+- Does not perform account checks, validation or database operations.
 '''
 
+from flask.views import MethodView
 
-class SearchProjectController:
 
-    # Store references to the Entity objects
-    def __init__(self, project, company_information, user_account):
+class SearchProjectController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, search_project_boundary, project):
+        self.boundary = search_project_boundary
         self.project = project
-        self.company_information = company_information
-        self.user_account = user_account
 
-    # Search for projects belonging to the Interior Designer
-    def search_projects(self, account_id, search_query=""):
+    # Coordinate searching for projects
+    def get(self):
 
-        # Validate account ID
-        if not isinstance(account_id, int) or account_id <= 0:
-            return {
-                "success": False,
-                "message": "Invalid account ID."
-            }, 400
+        # Retrieve validated search information from the Boundary
+        search_details, error = self.boundary.get_search_details()
 
-        # Check whether the user account exists
-        account = self.user_account.get_account_by_id(account_id)
+        # Return validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(
+                error
+            )
 
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
-
-        # Only Interior Designers can search their projects
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can search projects."
-            }, 403
-
-        # Suspended accounts cannot manage projects
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Retrieve the Interior Designer's company
-        company = self.company_information.get_company_by_account_id(
-            account_id
+        # Search for matching projects through the Entity
+        result, status_code = self.project.search_projects(
+            search_details
         )
 
-        if company is None:
-            return {
-                "success": False,
-                "message": "Company information not found."
-            }, 404
-
-        # Validate the search query
-        if not isinstance(search_query, str):
-            return {
-                "success": False,
-                "message": "Invalid search query."
-            }, 400
-
-        search_query = search_query.strip()
-
-        if len(search_query) > 255:
-            return {
-                "success": False,
-                "message": "Search query cannot exceed 255 characters."
-            }, 400
-
-        # Retrieve all projects belonging to this company
-        projects = self.project.get_projects_by_company_id(
-            company["company_id"]
+        # Return the search results through the Boundary
+        return self.boundary.display_search_result(
+            result,
+            status_code
         )
-
-        # Search project names without case sensitivity
-        if search_query:
-            projects = [
-                project for project in projects
-                if search_query.casefold()
-                in project["project_name"].casefold()
-            ]
-
-        return {
-            "success": True,
-            "message": "Projects retrieved successfully.",
-            "company": company,
-            "projects": projects,
-            "search_query": search_query,
-            "total_projects": len(projects)
-        }, 200

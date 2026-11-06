@@ -1,66 +1,60 @@
 
 '''
 What this code does?
-- Display the Create Company Information HTML page.
-- Retrieve the username and account ID from the URL.
-- Receive new company information.
-- Clean the submitted company information.
+- Retrieve the Interior Designer's username and account ID from the URL.
+- Extract and strip submitted company information.
 - Validate required fields, email format and established date.
-- Pass valid company information to the Controller.
-- Return the company creation result.
+- Pass validated company information to the Controller.
+- Display the Create Company Information HTML page.
+- Return validation errors and company creation results to the frontend.
 '''
 
 import re
 from datetime import date
 
 from flask import request, jsonify, render_template
-from flask.views import MethodView
 
 
-class CreateCompanyInformationPage(MethodView):
+class CreateCompanyInformationPage:
 
-    # Receives and stores a reference to the Controller object
-    def __init__(self, create_company_controller):
-        self.create_company_controller = create_company_controller
+    # Retrieve and prepare the Interior Designer's username
+    def get_username(self):
 
-    # Retrieve and clean the submitted company details
+        username = request.args.get(
+            "username",
+            "Interior Designer"
+        ).strip()
+
+        if not username:
+            username = "Interior Designer"
+
+        return username
+
+    # Retrieve and validate the Account ID from the URL
+    def get_account_id(self):
+
+        account_id = request.args.get(
+            "account_id",
+            type=int
+        )
+
+        if account_id is None or account_id <= 0:
+            return None, {
+                "success": False,
+                "message": "Invalid account ID."
+            }
+
+        return account_id, None
+
+    # Retrieve, clean and validate submitted company information
     def get_company_details(self):
+
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
             data = {}
 
-        fields = [
-            "company_name",
-            "company_address",
-            "working_hours",
-            "company_email",
-            "company_phone",
-            "established_date",
-            "company_description"
-        ]
-
-        company_details = {}
-
-        for field in fields:
-            value = data.get(field, "")
-
-            company_details[field] = (
-                value.strip() if isinstance(value, str) else ""
-            )
-
-        # Account ID comes from the URL, not the form input
-        company_details["account_id"] = request.args.get(
-            "account_id",
-            type=int
-        )
-
-        return company_details
-
-    # Validate the submitted company information
-    def validate_company_details(self, company_details):
-        errors = {}
-
+        # Define the required company information fields
         field_labels = {
             "company_name": "Company name",
             "company_address": "Company address",
@@ -71,18 +65,31 @@ class CreateCompanyInformationPage(MethodView):
             "company_description": "What the company does"
         }
 
-        # Check the account ID
-        account_id = company_details["account_id"]
+        company_details = {}
+        errors = {}
 
-        if account_id is None or account_id <= 0:
-            errors["account_id"] = "Invalid account ID."
-
-        # Check all required fields
+        # Retrieve and strip all submitted text fields
         for field, label in field_labels.items():
+
+            value = data.get(field, "")
+
+            company_details[field] = (
+                value.strip() if isinstance(value, str) else ""
+            )
+
+            # Validate required fields
             if not company_details[field]:
                 errors[field] = f"{label} is required."
 
-        # Validate company email
+        # Retrieve and validate the Account ID
+        account_id, account_error = self.get_account_id()
+
+        if account_error:
+            errors["account_id"] = "Invalid account ID."
+
+        company_details["account_id"] = account_id
+
+        # Validate company email format
         email = company_details["company_email"]
 
         if email and not re.fullmatch(
@@ -93,7 +100,7 @@ class CreateCompanyInformationPage(MethodView):
                 "Please enter a valid company email address."
             )
 
-        # Validate established date
+        # Validate the established date
         established_date = company_details["established_date"]
 
         if established_date:
@@ -110,23 +117,30 @@ class CreateCompanyInformationPage(MethodView):
                     "Please enter a valid established date."
                 )
 
-        return errors
+        # Return validation errors to the Controller
+        if errors:
+            return None, {
+                "success": False,
+                "message": "Please correct the highlighted fields.",
+                "errors": errors
+            }
 
-    # Display the Create Company Information HTML page
-    def get(self):
-        username = request.args.get(
-            "username",
-            "Interior Designer"
-        ).strip()
+        # Return validated company information
+        return company_details, None
 
-        if not username:
-            username = "Interior Designer"
+    # Display the Create Company Information page
+    def display_create_company_page(self):
 
-        account_id = request.args.get("account_id", type=int)
+        # Retrieve the validated Account ID
+        account_id, error = self.get_account_id()
 
-        if account_id is None or account_id <= 0:
+        if error:
             return "Invalid account ID.", 400
 
+        # Retrieve the Interior Designer's username
+        username = self.get_username()
+
+        # Display the existing HTML template
         return render_template(
             "createCompanyInformation.html",
             username=username,
@@ -135,23 +149,10 @@ class CreateCompanyInformationPage(MethodView):
             form_data={}
         )
 
-    # Process the company creation request
-    def post(self):
-        company_details = self.get_company_details()
+    # Return validation errors to the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
 
-        errors = self.validate_company_details(company_details)
-
-        if errors:
-            return jsonify({
-                "success": False,
-                "message": "Please correct the highlighted fields.",
-                "errors": errors
-            }), 400
-
-        result, status_code = (
-            self.create_company_controller.create_company_information(
-                company_details
-            )
-        )
-
-        return jsonify(result), status_code
+    # Return the Entity's company creation result
+    def display_create_company_result(self, result):
+        return jsonify(result["data"]), result["status_code"]

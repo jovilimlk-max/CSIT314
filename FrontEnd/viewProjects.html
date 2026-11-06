@@ -78,12 +78,12 @@
         .view-button { display: inline-flex; justify-content: center; align-items: center; min-width: 75px; min-height: 35px; padding: 0 13px; border: 1px solid #c6dce0; border-radius: 7px; background: #eff7f8; color: #1c5062; font-size: 12px; font-weight: 750; text-decoration: none; cursor: pointer; }
         .view-button:hover { background: #dceef0; }
 
-        /* Project badges */
+        /* Project type and status badges */
         .badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 20px; font-size: 11px; font-weight: 750; white-space: nowrap; }
         .badge-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
-        .badge.active, .badge.completed { background: #e6f6f0; color: #186b4d; }
+        .badge.active, .badge.past { background: #e6f6f0; color: #186b4d; }
         .badge.suspended { background: #fff0f0; color: #a22735; }
-        .badge.ongoing { background: #e8f0ff; color: #315b9a; }
+        .badge.current { background: #e8f0ff; color: #315b9a; }
 
         /* Empty states and messages */
         .empty-state { text-align: center; padding: 58px 20px; }
@@ -119,7 +119,6 @@
             .page-title { font-size: 26px; }
             .page-header { flex-direction: column; align-items: flex-start; }
             .projects-panel { padding: 18px; }
-            .search-form { flex-wrap: wrap; }
             .search-input-wrapper { flex-basis: 100%; }
             .search-button, .clear-button { flex: 1; }
         }
@@ -201,7 +200,7 @@
                     <h1 class="page-title">Projects</h1>
 
                     <p class="page-description">
-                        View and manage your company's ongoing and completed projects.
+                        View and manage your company's Current IDP and Past IDP projects.
                     </p>
                 </div>
 
@@ -270,14 +269,17 @@
                         </button>
                     </form>
 
-                    <!-- Search Error -->
+                    <!-- Search Errors -->
                     <p class="search-error"
                        id="searchError"
                        role="alert"
                        hidden></p>
 
                     <!-- Projects Table -->
-                    <div class="table-container" id="tableContainer" {% if not projects %}hidden{% endif %}>
+                    <div class="table-container"
+                         id="tableContainer"
+                         {% if not projects %}hidden{% endif %}>
+
                         <table class="projects-table">
                             <thead>
                                 <tr>
@@ -285,77 +287,99 @@
                                     <th>Project Name</th>
                                     <th>Start Date</th>
                                     <th>End Date</th>
-                                    <th>Progress</th>
+                                    <th>Project Type</th>
                                     <th>Status</th>
                                     <th class="actions-column">Action</th>
                                 </tr>
                             </thead>
 
                             <tbody id="projectsTableBody">
+
                                 {% for project in projects %}
                                     <tr>
+
+                                        <!-- Project ID -->
                                         <td>
                                             <span class="project-id">
                                                 {{ project.project_id }}
                                             </span>
                                         </td>
 
+                                        <!-- Project Name -->
                                         <td>
                                             <span class="project-name">
                                                 {{ project.project_name }}
                                             </span>
                                         </td>
 
+                                        <!-- Start Date -->
                                         <td class="date-text">
                                             {{ project.start_date }}
                                         </td>
 
+                                        <!-- End Date -->
                                         <td class="date-text">
                                             {{ project.end_date or "-" }}
                                         </td>
 
+                                        <!-- Project Type -->
                                         <td>
-                                            {% if project.progress == "Ongoing" %}
-                                                <span class="badge ongoing">
+                                            {% if project.project_type == "current" %}
+
+                                                <span class="badge current">
                                                     <span class="badge-dot"></span>
-                                                    Ongoing
+                                                    Current IDP
                                                 </span>
-                                            {% else %}
-                                                <span class="badge completed">
+
+                                            {% elif project.project_type == "past" %}
+
+                                                <span class="badge past">
                                                     <span class="badge-dot"></span>
-                                                    Completed
+                                                    Past IDP
                                                 </span>
+
                                             {% endif %}
                                         </td>
 
+                                        <!-- Project Status -->
                                         <td>
                                             {% if project.status == "active" %}
+
                                                 <span class="badge active">
                                                     <span class="badge-dot"></span>
                                                     Active
                                                 </span>
+
                                             {% else %}
+
                                                 <span class="badge suspended">
                                                     <span class="badge-dot"></span>
                                                     Suspended
                                                 </span>
+
                                             {% endif %}
                                         </td>
 
+                                        <!-- View Project -->
                                         <td class="actions-column">
                                             <a class="view-button"
                                                href="/interior-designer/projects/{{ project.project_id }}?account_id={{ account_id }}&username={{ display_username | urlencode }}">
                                                 View
                                             </a>
                                         </td>
+
                                     </tr>
                                 {% endfor %}
+
                             </tbody>
                         </table>
                     </div>
 
                     <!-- No Projects or No Search Results -->
-                    <div class="empty-state" id="emptyState" {% if projects %}hidden{% endif %}>
+                    <div class="empty-state"
+                         id="emptyState"
+                         {% if projects %}hidden{% endif %}>
+
                         <div class="empty-icon" aria-hidden="true">⌕</div>
 
                         <h3 class="empty-title" id="emptyTitle">
@@ -363,7 +387,8 @@
                         </h3>
 
                         <p class="empty-description" id="emptyDescription">
-                            You haven't created any projects yet. Create your first project to get started.
+                            You haven't created any projects yet.
+                            Create your first project to get started.
                         </p>
                     </div>
 
@@ -378,7 +403,8 @@
                         </h3>
 
                         <p class="empty-description">
-                            You need to create your company information before you can manage projects.
+                            You need to create your company information
+                            before you can manage projects.
                         </p>
 
                         <a class="primary-button"
@@ -388,27 +414,34 @@
                     </div>
 
                 {% endif %}
+
             </section>
         </main>
     </div>
 
     <script>
         class ViewProjectsPage {
+
             constructor() {
+
+                // Retrieve details passed from Flask
                 this.accountId = {{ account_id | tojson }};
                 this.username = {{ display_username | tojson }};
                 this.hasCompany = {{ (company is not none) | tojson }};
 
+                // Retrieve search elements
                 this.searchForm = document.getElementById("searchForm");
                 this.searchInput = document.getElementById("searchInput");
                 this.searchButton = document.getElementById("searchButton");
                 this.clearButton = document.getElementById("clearButton");
                 this.searchError = document.getElementById("searchError");
 
+                // Retrieve table elements
                 this.tableContainer = document.getElementById("tableContainer");
                 this.tableBody = document.getElementById("projectsTableBody");
                 this.projectCount = document.getElementById("projectCount");
 
+                // Retrieve empty state elements
                 this.emptyState = document.getElementById("emptyState");
                 this.emptyTitle = document.getElementById("emptyTitle");
                 this.emptyDescription = document.getElementById("emptyDescription");
@@ -421,41 +454,60 @@
 
             // Set up page events
             setupEvents() {
+
+                // Log out
                 document.getElementById("logoutButton").addEventListener(
-                    "click", () => {
+                    "click",
+                    () => {
                         window.location.href = "/";
                     }
                 );
 
+                // Search is only available when company information exists
                 if (!this.hasCompany) {
                     return;
                 }
 
+                // Search button
                 this.searchForm.addEventListener(
-                    "submit", event => this.handleSearch(event)
+                    "submit",
+                    event => this.handleSearch(event)
                 );
 
+                // Clear button
                 this.clearButton.addEventListener(
-                    "click", () => this.clearSearch()
+                    "click",
+                    () => this.clearSearch()
                 );
 
-                this.searchInput.addEventListener("input", () => {
-                    this.hideSearchError();
-                });
+                // Clear search error when typing
+                this.searchInput.addEventListener(
+                    "input",
+                    () => this.hideSearchError()
+                );
             }
 
-            // Display notification after creating a project
+            // Display success notification after creating a project
             checkSuccessMessage() {
-                const params = new URLSearchParams(window.location.search);
-                const successMessage = document.getElementById("successMessage");
+
+                const params = new URLSearchParams(
+                    window.location.search
+                );
+
+                const successMessage = document.getElementById(
+                    "successMessage"
+                );
 
                 if (params.get("created") !== "1") {
                     return;
                 }
 
-                successMessage.textContent = "Project created successfully.";
+                successMessage.textContent =
+                    "Project created successfully.";
+
                 successMessage.hidden = false;
 
+                // Remove the created parameter from the URL
                 params.delete("created");
 
                 const query = params.toString();
@@ -463,18 +515,21 @@
                 window.history.replaceState(
                     {},
                     "",
-                    window.location.pathname + (query ? "?" + query : "")
+                    window.location.pathname +
+                    (query ? "?" + query : "")
                 );
             }
 
             // Display search errors
             showSearchError(message) {
+
                 this.searchError.textContent = message;
                 this.searchError.hidden = false;
             }
 
             // Hide search errors
             hideSearchError() {
+
                 if (!this.searchError) {
                     return;
                 }
@@ -483,8 +538,9 @@
                 this.searchError.hidden = true;
             }
 
-            // Search for projects using the Flask Boundary
+            // Search projects through the existing Flask route
             async handleSearch(event) {
+
                 event.preventDefault();
 
                 if (this.searching) {
@@ -493,10 +549,13 @@
 
                 const query = this.searchInput.value.trim();
 
+                // Validate search query length
                 if (query.length > 255) {
+
                     this.showSearchError(
                         "Search query cannot exceed 255 characters."
                     );
+
                     return;
                 }
 
@@ -513,6 +572,7 @@
                     encodeURIComponent(query);
 
                 try {
+
                     const response = await fetch(searchUrl, {
                         method: "GET"
                     });
@@ -520,8 +580,15 @@
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        this.displayProjects(result.projects, query);
+
+                        // Update the table using returned project data
+                        this.displayProjects(
+                            result.projects,
+                            query
+                        );
+
                     } else {
+
                         this.showSearchError(
                             result.message ||
                             "Unable to search projects."
@@ -529,19 +596,22 @@
                     }
 
                 } catch (error) {
+
                     this.showSearchError(
                         "Unable to connect to the server."
                     );
 
                 } finally {
+
                     this.searching = false;
                     this.searchButton.disabled = false;
                     this.searchButton.textContent = "Search";
                 }
             }
 
-            // Clear the search and retrieve every project
+            // Clear search and retrieve all projects
             clearSearch() {
+
                 if (this.searching) {
                     return;
                 }
@@ -552,21 +622,24 @@
                 this.searchForm.requestSubmit();
             }
 
-            // Safely create plain-text table cells
+            // Safely create text cells for the table
             createTextCell(text, className = "") {
+
                 const cell = document.createElement("td");
 
                 if (className) {
                     cell.className = className;
                 }
 
-                cell.textContent = text == null ? "" : String(text);
+                cell.textContent =
+                    text == null ? "" : String(text);
 
                 return cell;
             }
 
-            // Create a badge for project progress or status
+            // Create a project type or status badge
             createBadge(value, type) {
+
                 const cell = document.createElement("td");
                 const badge = document.createElement("span");
                 const dot = document.createElement("span");
@@ -574,67 +647,99 @@
                 badge.className = "badge";
                 dot.className = "badge-dot";
 
-                if (type === "progress") {
-                    badge.classList.add(
-                        value === "Completed" ? "completed" : "ongoing"
-                    );
+                // Display Current IDP or Past IDP
+                if (type === "project_type") {
 
-                    badge.textContent =
-                        value === "Completed" ? "Completed" : "Ongoing";
+                    if (value === "current") {
+
+                        badge.classList.add("current");
+                        badge.appendChild(dot);
+                        badge.appendChild(
+                            document.createTextNode("Current IDP")
+                        );
+
+                    } else if (value === "past") {
+
+                        badge.classList.add("past");
+                        badge.appendChild(dot);
+                        badge.appendChild(
+                            document.createTextNode("Past IDP")
+                        );
+                    }
 
                 } else {
-                    badge.classList.add(
-                        value === "active" ? "active" : "suspended"
-                    );
 
-                    badge.textContent =
-                        value === "active" ? "Active" : "Suspended";
+                    // Display active or suspended project status
+                    if (value === "active") {
+
+                        badge.classList.add("active");
+                        badge.appendChild(dot);
+                        badge.appendChild(
+                            document.createTextNode("Active")
+                        );
+
+                    } else {
+
+                        badge.classList.add("suspended");
+                        badge.appendChild(dot);
+                        badge.appendChild(
+                            document.createTextNode("Suspended")
+                        );
+                    }
                 }
 
-                badge.prepend(dot);
                 cell.appendChild(badge);
 
                 return cell;
             }
 
-            // Create a project row using the backend search results
+            // Create a project table row from search results
             createProjectRow(project) {
+
                 const row = document.createElement("tr");
 
+                // Project ID
                 const idCell = this.createTextCell(
                     project.project_id,
                     "project-id"
                 );
 
+                // Project Name
                 const nameCell = this.createTextCell(
                     project.project_name,
                     "project-name"
                 );
 
+                // Start Date
                 const startDateCell = this.createTextCell(
                     project.start_date || "-",
                     "date-text"
                 );
 
+                // End Date
                 const endDateCell = this.createTextCell(
                     project.end_date || "-",
                     "date-text"
                 );
 
-                const progressCell = this.createBadge(
-                    project.progress,
-                    "progress"
+                // Project Type
+                const projectTypeCell = this.createBadge(
+                    project.project_type,
+                    "project_type"
                 );
 
+                // Project Status
                 const statusCell = this.createBadge(
                     project.status,
                     "status"
                 );
 
+                // View button
                 const actionCell = document.createElement("td");
                 actionCell.className = "actions-column";
 
                 const viewButton = document.createElement("a");
+
                 viewButton.className = "view-button";
                 viewButton.textContent = "View";
 
@@ -648,32 +753,43 @@
 
                 actionCell.appendChild(viewButton);
 
+                // Add the cells in table order
                 row.appendChild(idCell);
                 row.appendChild(nameCell);
                 row.appendChild(startDateCell);
                 row.appendChild(endDateCell);
-                row.appendChild(progressCell);
+                row.appendChild(projectTypeCell);
                 row.appendChild(statusCell);
                 row.appendChild(actionCell);
 
                 return row;
             }
 
-            // Display the projects returned by the Controller
+            // Display projects returned by the backend search
             displayProjects(projects, query) {
+
+                // Remove existing table rows
                 this.tableBody.replaceChildren();
 
-                const projectList = Array.isArray(projects) ? projects : [];
+                const projectList = Array.isArray(projects)
+                    ? projects
+                    : [];
 
+                // Update project count
                 this.projectCount.textContent =
                     projectList.length +
-                    (projectList.length === 1 ? " project" : " projects");
+                    (projectList.length === 1
+                        ? " project"
+                        : " projects");
 
+                // Display the appropriate empty state
                 if (projectList.length === 0) {
+
                     this.tableContainer.hidden = true;
                     this.emptyState.hidden = false;
 
                     if (query) {
+
                         this.emptyTitle.textContent =
                             "No matching projects found";
 
@@ -682,7 +798,9 @@
                             '". Try searching with a different project name.';
 
                     } else {
-                        this.emptyTitle.textContent = "No projects yet";
+
+                        this.emptyTitle.textContent =
+                            "No projects yet";
 
                         this.emptyDescription.textContent =
                             "You haven't created any projects yet. " +
@@ -692,10 +810,12 @@
                     return;
                 }
 
+                // Display the returned projects
                 this.emptyState.hidden = true;
                 this.tableContainer.hidden = false;
 
                 projectList.forEach(project => {
+
                     this.tableBody.appendChild(
                         this.createProjectRow(project)
                     );
@@ -703,7 +823,7 @@
             }
         }
 
-        // Initialise View Projects page
+        // Initialise the Projects page
         new ViewProjectsPage();
     </script>
 </body>

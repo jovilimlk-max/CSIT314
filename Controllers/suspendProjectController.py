@@ -1,126 +1,46 @@
 
 '''
 What this code does?
-- Check whether the Interior Designer account exists and is active.
-- Verify that the selected project belongs to their company.
-- Validate the requested project status.
-- Suspend or reactivate a project through the Project Entity.
-- Preserve the project's other information.
+- Coordinate communication between the Suspend Project Boundary and Entity.
+- Handle POST requests to suspend or reactivate projects.
+- Retrieve validated Account ID, Project ID and status from the Boundary.
+- Pass validated information to the Project Entity.
+- Return the Entity result to the Boundary as JSON.
+- Support both Current IDP and Past IDP projects.
+- Does not perform account checks, validation or database operations.
 '''
 
+from flask.views import MethodView
 
-class SuspendProjectController:
 
-    # Store references to the Entity objects
-    def __init__(self, project, company_information, user_account):
+class SuspendProjectController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, suspend_project_boundary, project):
+        self.boundary = suspend_project_boundary
         self.project = project
-        self.company_information = company_information
-        self.user_account = user_account
 
-    # Suspend or reactivate an existing project
-    def change_project_status(self, account_id, project_id, status):
+    # Coordinate suspending or reactivating a project
+    def post(self, project_id):
 
-        # Validate account ID and project ID
-        if not isinstance(account_id, int) or account_id <= 0:
-            return {
-                "success": False,
-                "message": "Invalid account ID."
-            }, 400
-
-        if not isinstance(project_id, int) or project_id <= 0:
-            return {
-                "success": False,
-                "message": "Invalid project ID."
-            }, 400
-
-        # Check whether the user account exists
-        account = self.user_account.get_account_by_id(account_id)
-
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
-
-        # Only Interior Designers can change project status
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can change project status."
-            }, 403
-
-        # Suspended user accounts cannot manage projects
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Retrieve company information
-        company = self.company_information.get_company_by_account_id(
-            account_id
+        # Retrieve and validate submitted information through the Boundary
+        status_details, error = self.boundary.get_status_details(
+            project_id
         )
 
-        if company is None:
-            return {
-                "success": False,
-                "message": "Company information not found."
-            }, 404
+        # Return validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(
+                error
+            )
 
-        # Retrieve the selected project
-        existing_project = self.project.get_project_by_id(project_id)
-
-        if existing_project is None:
-            return {
-                "success": False,
-                "message": "Project not found."
-            }, 404
-
-        # Verify that the project belongs to the Interior Designer
-        if existing_project["company_id"] != company["company_id"]:
-            return {
-                "success": False,
-                "message": "You do not have permission to change this project's status."
-            }, 403
-
-        # Only active and suspended are valid statuses
-        if not isinstance(status, str) or status not in (
-            "active",
-            "suspended"
-        ):
-            return {
-                "success": False,
-                "message": "Invalid project status."
-            }, 400
-
-        # Check whether the project already has the requested status
-        if existing_project["status"] == status:
-            return {
-                "success": False,
-                "message": "This project is already " + status + "."
-            }, 400
-
-        # Update only the project's status
-        updated = self.project.update_project_status(
-            project_id,
-            status
+        # Update the project status through the Entity
+        result, status_code = self.project.change_project_status(
+            status_details
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update project status."
-            }, 500
-
-        # Return the successful status change
-        if status == "suspended":
-            message = "Project suspended successfully."
-        else:
-            message = "Project reactivated successfully."
-
-        return {
-            "success": True,
-            "message": message,
-            "project_id": project_id,
-            "status": status
-        }, 200
+        # Return the Entity result through the Boundary
+        return self.boundary.display_status_result(
+            result,
+            status_code
+        )

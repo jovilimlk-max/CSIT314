@@ -1,80 +1,59 @@
 
 '''
 What this code does?
-- Check whether the user account exists.
-- Verify that the account belongs to an Interior Designer.
-- Check whether the user account is active.
-- Check whether company information already exists.
-- Update the company's details through the CompanyInformation Entity.
-- Return the update result to the Boundary.
+- Coordinate communication between the Update Company Information Boundary and Entity.
+- Retrieve the validated Interior Designer Account ID from the Boundary.
+- Retrieve existing company information through the Entity.
+- Pass validated updated company information to the Entity.
+- Return retrieval, validation and update results through the Boundary.
+- Does not perform account checks, business logic or database operations.
 '''
 
+from flask.views import MethodView
 
-class UpdateCompanyInformationController:
 
-    # Store references to the Entity objects
-    def __init__(self, company_information, user_account):
+class UpdateCompanyInformationController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, update_company_boundary, company_information):
+        self.boundary = update_company_boundary
         self.company_information = company_information
-        self.user_account = user_account
 
-    # Coordinate the updating of company information
-    def update_company_information(self, company_details):
+    # Coordinate displaying the Update Company Information page
+    def get(self):
 
-        account_id = company_details["account_id"]
+        # Retrieve the validated Account ID from the Boundary
+        account_id, error = self.boundary.get_account_id()
 
-        # Check whether the account exists
-        account = self.user_account.get_account_by_id(account_id)
+        # Return Account ID validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
-
-        # Only Interior Designers can update company information
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can update company information."
-            }, 403
-
-        # Check whether the user account is active
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Check whether company information exists
-        company = self.company_information.get_company_by_account_id(
+        # Retrieve existing company information from the Entity
+        result, status_code = self.company_information.view_company(
             account_id
         )
 
-        if company is None:
-            return {
-                "success": False,
-                "message": "Company information not found."
-            }, 404
-
-        # Ask the Entity to update the company information
-        updated = self.company_information.update_company_information(
-            account_id,
-            company_details["company_name"],
-            company_details["company_address"],
-            company_details["working_hours"],
-            company_details["company_email"],
-            company_details["company_phone"],
-            company_details["established_date"],
-            company_details["company_description"]
+        # Pass the result to the Boundary to display the update form
+        return self.boundary.display_update_company_page(
+            result,
+            status_code
         )
 
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update company information."
-            }, 409
+    # Coordinate updating company information
+    def post(self):
 
-        return {
-            "success": True,
-            "message": "Company information updated successfully."
-        }, 200
+        # Retrieve validated updated company details from the Boundary
+        company_details, error = self.boundary.get_company_details()
+
+        # Return field validation errors through the Boundary
+        if error:
+            return self.boundary.display_field_errors(error)
+
+        # Pass validated information to the Entity
+        result = self.company_information.update_company(
+            company_details
+        )
+
+        # Return the Entity result through the Boundary
+        return self.boundary.display_update_result(result)

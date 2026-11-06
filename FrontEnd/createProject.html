@@ -121,7 +121,8 @@
                 </div>
             </div>
 
-            <button class="logout-button" type="button"
+            <button class="logout-button"
+                    type="button"
                     onclick="window.location.href='/'">
                 Log out
             </button>
@@ -140,9 +141,12 @@
                 <a class="nav-link"
                    href="/interior-designer/company?account_id={{ account_id }}&username={{ username | urlencode }}">
 
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2"/>
                         <path d="M8 21V9h8v12"/>
                         <path d="M3 9h18"/>
@@ -157,9 +161,12 @@
                    id="projectsLink"
                    aria-current="page">
 
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
                         <rect x="3" y="5" width="18" height="16" rx="2"/>
                         <path d="M3 9h18"/>
                         <path d="M7 5V3h6l2 2"/>
@@ -183,7 +190,7 @@
 
             <p class="page-description">
                 Add a new project to your company's portfolio.
-                Select whether the project is ongoing or completed.
+                Select whether it is a Current IDP or Past IDP.
             </p>
 
             <!-- Create Project Form -->
@@ -191,8 +198,10 @@
 
                 <h2 class="form-heading">Project Details</h2>
 
-                <div class="error-banner" id="formError"
-                     role="alert" hidden></div>
+                <div class="error-banner"
+                     id="formError"
+                     role="alert"
+                     hidden></div>
 
                 <form id="createProjectForm" novalidate>
 
@@ -211,7 +220,8 @@
                                required>
 
                         <p class="field-error"
-                           id="projectNameError" hidden></p>
+                           id="projectNameError"
+                           hidden></p>
                     </div>
 
                     <!-- Project Description -->
@@ -228,27 +238,29 @@
                                   required></textarea>
 
                         <p class="field-error"
-                           id="projectDescriptionError" hidden></p>
+                           id="projectDescriptionError"
+                           hidden></p>
                     </div>
 
-                    <!-- Project Progress -->
+                    <!-- Project Type -->
                     <div class="field">
-                        <label for="projectProgress">
-                            Project Progress <span class="required">*</span>
+                        <label for="projectType">
+                            Project Type <span class="required">*</span>
                         </label>
 
                         <select class="form-select"
-                                id="projectProgress"
-                                name="progress"
+                                id="projectType"
+                                name="project_type"
                                 required>
 
-                            <option value="">Select project progress</option>
-                            <option value="Ongoing">Ongoing</option>
-                            <option value="Completed">Completed</option>
+                            <option value="">Select project type</option>
+                            <option value="current">Current IDP</option>
+                            <option value="past">Past IDP</option>
                         </select>
 
                         <p class="field-error"
-                           id="projectProgressError" hidden></p>
+                           id="projectTypeError"
+                           hidden></p>
                     </div>
 
                     <!-- Date Fields -->
@@ -266,7 +278,8 @@
                                    name="start_date">
 
                             <p class="field-error"
-                               id="startDateError" hidden></p>
+                               id="startDateError"
+                               hidden></p>
                         </div>
 
                         <!-- End Date -->
@@ -281,12 +294,14 @@
                                    name="end_date">
 
                             <p class="field-error"
-                               id="endDateError" hidden></p>
+                               id="endDateError"
+                               hidden></p>
                         </div>
                     </div>
 
                     <!-- Form Buttons -->
                     <div class="form-actions">
+
                         <a class="secondary-button"
                            href="#"
                            id="cancelButton">
@@ -306,14 +321,18 @@
 
     <script>
         class CreateProjectPage {
+
             constructor() {
+
+                // Retrieve account information from Flask
                 this.accountId = {{ account_id | tojson }};
                 this.username = {{ username | tojson }};
 
+                // Retrieve form elements
                 this.form = document.getElementById("createProjectForm");
                 this.projectName = document.getElementById("projectName");
                 this.projectDescription = document.getElementById("projectDescription");
-                this.projectProgress = document.getElementById("projectProgress");
+                this.projectType = document.getElementById("projectType");
 
                 this.dateFields = document.getElementById("dateFields");
                 this.startDateField = document.getElementById("startDateField");
@@ -327,28 +346,34 @@
 
                 this.submitting = false;
 
+                // Build Projects page URL
                 this.projectsUrl =
                     "/interior-designer/projects?account_id=" +
                     encodeURIComponent(this.accountId) +
-                    "&username=" + encodeURIComponent(this.username);
+                    "&username=" +
+                    encodeURIComponent(this.username);
 
                 this.setupEvents();
-                this.updateDateFields();
                 this.setDateLimits();
+                this.updateDateFields();
             }
 
             // Set up form and navigation events
             setupEvents() {
-                this.projectProgress.addEventListener(
-                    "change", () => this.updateDateFields()
+
+                this.projectType.addEventListener(
+                    "change",
+                    () => this.updateDateFields()
                 );
 
                 this.startDate.addEventListener(
-                    "change", () => this.updateEndDateLimit()
+                    "change",
+                    () => this.updateEndDateLimit()
                 );
 
                 this.form.addEventListener(
-                    "submit", event => this.handleSubmit(event)
+                    "submit",
+                    event => this.handleSubmit(event)
                 );
 
                 document.getElementById("projectsLink").href =
@@ -361,11 +386,14 @@
                     this.projectsUrl;
             }
 
-            // Show date fields based on Project Progress
+            // Show date fields based on the selected project type
             updateDateFields() {
-                const progress = this.projectProgress.value;
 
-                if (!progress) {
+                const projectType = this.projectType.value;
+
+                // Hide both date fields when no project type is selected
+                if (!projectType) {
+
                     this.dateFields.hidden = true;
                     this.startDateField.hidden = true;
                     this.endDateField.hidden = true;
@@ -378,6 +406,7 @@
 
                     this.clearFieldError("startDate");
                     this.clearFieldError("endDate");
+
                     return;
                 }
 
@@ -386,13 +415,15 @@
                 this.startDateField.hidden = false;
                 this.startDate.required = true;
 
-                if (progress === "Completed") {
-                    // Completed projects require an End Date
+                // Past IDP also requires an End Date
+                if (projectType === "past") {
+
                     this.endDateField.hidden = false;
                     this.endDate.required = true;
 
                 } else {
-                    // Ongoing projects only require a Start Date
+
+                    // Current IDP does not require an End Date
                     this.endDateField.hidden = true;
                     this.endDate.required = false;
                     this.endDate.value = "";
@@ -400,11 +431,12 @@
                     this.clearFieldError("endDate");
                 }
 
-                this.clearFieldError("projectProgress");
+                this.clearFieldError("projectType");
             }
 
             // Prevent future dates
             setDateLimits() {
+
                 const today = new Date();
 
                 const localDate = new Date(
@@ -416,8 +448,9 @@
                 this.endDate.max = localDate;
             }
 
-            // Ensure the End Date is not earlier than the Start Date
+            // Ensure End Date cannot be earlier than Start Date
             updateEndDateLimit() {
+
                 this.endDate.min = this.startDate.value;
 
                 if (
@@ -431,8 +464,9 @@
                 this.clearFieldError("startDate");
             }
 
-            // Display an error beneath a field
+            // Display a validation error beneath a field
             showFieldError(fieldName, message) {
+
                 const field = document.getElementById(fieldName);
                 const error = document.getElementById(
                     fieldName + "Error"
@@ -445,6 +479,7 @@
 
             // Clear an individual field error
             clearFieldError(fieldName) {
+
                 const field = document.getElementById(fieldName);
                 const error = document.getElementById(
                     fieldName + "Error"
@@ -457,13 +492,14 @@
 
             // Clear all validation messages
             clearErrors() {
+
                 this.formError.textContent = "";
                 this.formError.hidden = true;
 
                 [
                     "projectName",
                     "projectDescription",
-                    "projectProgress",
+                    "projectType",
                     "startDate",
                     "endDate"
                 ].forEach(fieldName => {
@@ -473,95 +509,117 @@
 
             // Validate project details before submission
             validateForm() {
+
                 this.clearErrors();
 
                 let valid = true;
 
                 const name = this.projectName.value.trim();
                 const description = this.projectDescription.value.trim();
-                const progress = this.projectProgress.value;
+                const projectType = this.projectType.value;
                 const startDate = this.startDate.value;
                 const endDate = this.endDate.value;
                 const today = this.startDate.max;
 
                 // Validate Project Name
                 if (!name) {
+
                     this.showFieldError(
                         "projectName",
                         "Project name is required."
                     );
+
                     valid = false;
 
                 } else if (name.length > 255) {
+
                     this.showFieldError(
                         "projectName",
                         "Project name cannot exceed 255 characters."
                     );
+
                     valid = false;
                 }
 
                 // Validate Project Description
                 if (!description) {
+
                     this.showFieldError(
                         "projectDescription",
                         "Project description is required."
                     );
+
                     valid = false;
 
                 } else if (description.length > 5000) {
+
                     this.showFieldError(
                         "projectDescription",
                         "Project description cannot exceed 5000 characters."
                     );
+
                     valid = false;
                 }
 
-                // Validate Project Progress
-                if (!["Ongoing", "Completed"].includes(progress)) {
+                // Validate Project Type
+                if (!["current", "past"].includes(projectType)) {
+
                     this.showFieldError(
-                        "projectProgress",
-                        "Please select project progress."
+                        "projectType",
+                        "Please select a valid project type."
                     );
+
                     valid = false;
                 }
 
                 // Validate Start Date
-                if (progress && !startDate) {
+                if (projectType && !startDate) {
+
                     this.showFieldError(
                         "startDate",
                         "Start date is required."
                     );
+
                     valid = false;
 
                 } else if (startDate && startDate > today) {
+
                     this.showFieldError(
                         "startDate",
                         "Start date cannot be in the future."
                     );
+
                     valid = false;
                 }
 
-                // Validate End Date for Completed projects
-                if (progress === "Completed") {
+                // Validate End Date for Past IDP
+                if (projectType === "past") {
+
                     if (!endDate) {
+
                         this.showFieldError(
                             "endDate",
-                            "End date is required for completed projects."
+                            "End date is required for Past IDP."
                         );
+
                         valid = false;
 
                     } else if (startDate && endDate < startDate) {
+
                         this.showFieldError(
                             "endDate",
                             "End date cannot be earlier than start date."
                         );
+
                         valid = false;
 
                     } else if (endDate > today) {
+
                         this.showFieldError(
                             "endDate",
                             "End date cannot be in the future."
                         );
+
                         valid = false;
                     }
                 }
@@ -571,6 +629,7 @@
 
             // Submit project details to Flask
             async handleSubmit(event) {
+
                 event.preventDefault();
 
                 if (this.submitting) {
@@ -585,15 +644,16 @@
                 this.submitButton.disabled = true;
                 this.submitButton.textContent = "Creating...";
 
-                const progress = this.projectProgress.value;
+                const projectType = this.projectType.value;
 
+                // Prepare data using the new project_type field
                 const projectData = {
                     project_name: this.projectName.value.trim(),
                     project_description:
                         this.projectDescription.value.trim(),
-                    progress: progress,
+                    project_type: projectType,
                     start_date: this.startDate.value,
-                    end_date: progress === "Completed"
+                    end_date: projectType === "past"
                         ? this.endDate.value
                         : null
                 };
@@ -603,6 +663,7 @@
                     encodeURIComponent(this.accountId);
 
                 try {
+
                     const response = await fetch(createUrl, {
                         method: "POST",
                         headers: {
@@ -614,11 +675,13 @@
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        // Return to the Projects page
+
+                        // Return to Projects after successful creation
                         window.location.href =
                             this.projectsUrl + "&created=1";
 
                     } else {
+
                         this.formError.textContent =
                             result.message ||
                             "Unable to create project.";
@@ -632,12 +695,14 @@
                     }
 
                 } catch (error) {
+
                     this.formError.textContent =
                         "Unable to connect to the server.";
 
                     this.formError.hidden = false;
 
                 } finally {
+
                     this.submitting = false;
                     this.submitButton.disabled = false;
                     this.submitButton.textContent = "Create Project";
@@ -645,7 +710,7 @@
             }
         }
 
-        // Initialise Create Project page
+        // Initialise the Create Project page
         new CreateProjectPage();
     </script>
 </body>

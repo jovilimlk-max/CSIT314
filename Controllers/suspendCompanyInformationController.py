@@ -1,97 +1,38 @@
 
 '''
 What this code does?
-- Check whether the user account exists.
-- Verify that the account belongs to an Interior Designer.
-- Check whether the user account is active.
-- Check whether company information exists.
-- Validate the requested company status.
-- Suspend or reactivate company information through the Entity.
-- Return the result to the Boundary.
+- Coordinate communication between the Suspend Company Information Boundary and Entity.
+- Retrieve the validated Account ID and requested status from the Boundary.
+- Pass the validated details to the CompanyInformation Entity.
+- Return the Entity result through the Boundary.
+- Support both suspension and reactivation of company information.
+- Does not perform account checks, business logic or database operations.
 '''
 
+from flask.views import MethodView
 
-class SuspendCompanyInformationController:
 
-    # Store references to the Entity objects
-    def __init__(self, company_information, user_account):
+class SuspendCompanyInformationController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, suspend_company_boundary, company_information):
+        self.boundary = suspend_company_boundary
         self.company_information = company_information
-        self.user_account = user_account
 
     # Coordinate suspending or reactivating company information
-    def update_company_status(self, account_id, status):
+    def post(self):
 
-        # Check whether the user account exists
-        account = self.user_account.get_account_by_id(account_id)
+        # Retrieve validated Account ID and status from the Boundary
+        status_details, error = self.boundary.get_status_details()
 
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
+        # Return validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Only Interior Designers can change company status
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can change company status."
-            }, 403
-
-        # Check whether the individual user account is active
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Only accept valid company statuses
-        if status not in ["active", "suspended"]:
-            return {
-                "success": False,
-                "message": "Invalid company status."
-            }, 400
-
-        # Retrieve the existing company information
-        company = self.company_information.get_company_by_account_id(
-            account_id
+        # Pass the validated details to the Entity
+        result = self.company_information.change_company_status(
+            status_details
         )
 
-        if company is None:
-            return {
-                "success": False,
-                "message": "Company information not found."
-            }, 404
-
-        # Prevent unnecessary status changes
-        if company["status"] == status:
-            return {
-                "success": False,
-                "message": (
-                    "Company information is already "
-                    + status + "."
-                )
-            }, 409
-
-        # Ask the Entity to change the company status
-        updated = self.company_information.update_company_status(
-            account_id,
-            status
-        )
-
-        if not updated:
-            return {
-                "success": False,
-                "message": "Unable to update company status."
-            }, 409
-
-        # Return the appropriate success message
-        if status == "suspended":
-            message = "Company information suspended successfully."
-        else:
-            message = "Company information reactivated successfully."
-
-        return {
-            "success": True,
-            "message": message,
-            "status": status
-        }, 200
+        # Return the Entity result through the Boundary
+        return self.boundary.display_status_result(result)

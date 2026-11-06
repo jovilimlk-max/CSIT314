@@ -56,12 +56,12 @@
         .section-divider { height: 1px; border: none; background: #edf0f5; margin: 26px 0; }
         .project-id { color: #8290a3; font-size: 12px; margin: 0; }
 
-        /* Project badges */
+        /* Project type and status badges */
         .badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 20px; font-size: 12px; font-weight: 750; white-space: nowrap; }
         .badge-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
-        .badge.active, .badge.completed { background: #e6f6f0; color: #186b4d; }
+        .badge.active, .badge.past { background: #e6f6f0; color: #186b4d; }
         .badge.suspended { background: #fff0f0; color: #a22735; }
-        .badge.ongoing { background: #e8f0ff; color: #315b9a; }
+        .badge.current { background: #e8f0ff; color: #315b9a; }
         .header-badge { margin-top: 5px; }
 
         /* Action buttons */
@@ -209,7 +209,7 @@
                     <h1 class="page-title">{{ project.project_name }}</h1>
 
                     <p class="page-description">
-                        View your project's information and progress.
+                        View your project's information and details.
                     </p>
                 </div>
 
@@ -251,19 +251,19 @@
                     <div class="read-only-field description">{{ project.project_description }}</div>
                 </div>
 
-                <!-- Project Progress -->
+                <!-- Project Type -->
                 <div class="field">
-                    <label>Project Progress</label>
+                    <label>Project Type</label>
 
-                    {% if project.progress == "Ongoing" %}
-                        <span class="badge ongoing">
+                    {% if project.project_type == "current" %}
+                        <span class="badge current">
                             <span class="badge-dot"></span>
-                            Ongoing
+                            Current IDP
                         </span>
-                    {% else %}
-                        <span class="badge completed">
+                    {% elif project.project_type == "past" %}
+                        <span class="badge past">
                             <span class="badge-dot"></span>
-                            Completed
+                            Past IDP
                         </span>
                     {% endif %}
                 </div>
@@ -279,8 +279,8 @@
                         </div>
                     </div>
 
-                    <!-- End Date for Completed Projects -->
-                    {% if project.progress == "Completed" %}
+                    <!-- End Date for Past IDP -->
+                    {% if project.project_type == "past" %}
                         <div class="field">
                             <label>End Date</label>
                             <div class="read-only-field">

@@ -1,62 +1,40 @@
 
 '''
 What this code does?
-- Check whether the user account exists.
-- Verify that the account belongs to an Interior Designer.
-- Retrieve the company information associated with the account.
-- Return the company information or an appropriate error.
+- Coordinate communication between the View Company Information Boundary and Entity.
+- Retrieve the validated Account ID from the Boundary.
+- Request company information from the Entity.
+- Return the result through the Boundary.
+- Does not perform account checks, business logic or database operations.
 '''
 
+from flask.views import MethodView
 
-class ViewCompanyInformationController:
 
-    # Store references to the Entity objects
-    def __init__(self, company_information, user_account):
+class ViewCompanyInformationController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, view_company_boundary, company_information):
+        self.boundary = view_company_boundary
         self.company_information = company_information
-        self.user_account = user_account
 
-    # Coordinate the retrieval of company information
-    def view_company_information(self, account_id):
+    # Coordinate displaying the View Company Information page
+    def get(self):
 
-        # Check whether the account exists
-        account = self.user_account.get_account_by_id(account_id)
+        # Retrieve the validated Account ID from the Boundary
+        account_id, error = self.boundary.get_account_id()
 
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
+        # Return Boundary validation errors
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        # Only Interior Designer accounts can view this company page
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can access company information."
-            }, 403
-
-        # Check whether the account is active
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Retrieve company information from the Entity
-        company = self.company_information.get_company_by_account_id(
+        # Request company information from the Entity
+        result, status_code = self.company_information.view_company(
             account_id
         )
 
-        # No company information has been created yet
-        if company is None:
-            return {
-                "success": True,
-                "message": "No company information has been created yet.",
-                "company": None
-            }, 200
-
-        # Return the existing company information
-        return {
-            "success": True,
-            "message": "Company information retrieved successfully.",
-            "company": company
-        }, 200
+        # Pass the result to the Boundary
+        return self.boundary.display_company(
+            result,
+            status_code
+        )

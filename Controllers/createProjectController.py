@@ -1,215 +1,64 @@
 
 '''
 What this code does?
-- Check whether the user account exists.
-- Verify that the account belongs to an Interior Designer.
-- Check whether the user account is active.
-- Verify that company information exists.
-- Validate the project name and description.
-- Validate the selected project progress.
-- Validate the start and end dates.
-- Link the project to the correct company.
-- Create the project through the Project Entity.
-- Return the result to the Boundary.
+- Coordinate communication between the Create Project Boundary and Entity.
+- Retrieve the validated Interior Designer Account ID from the Boundary.
+- Request company information through the Project Entity.
+- Display the Create Project page through the Boundary.
+- Retrieve validated project details from the Boundary.
+- Pass validated project details to the Project Entity.
+- Return project creation results through the Boundary.
+- Support both Current IDP and Past IDP projects.
+- Does not perform account checks, validation or database operations.
 '''
 
-from datetime import datetime
+from flask.views import MethodView
 
 
-class CreateProjectController:
+class CreateProjectController(MethodView):
 
-    def __init__(self, project, company_information, user_account):
+    # Store references to the Boundary and Entity
+    def __init__(self, create_project_boundary, project):
+        self.boundary = create_project_boundary
         self.project = project
-        self.company_information = company_information
-        self.user_account = user_account
 
-    # Create a new project
-    def create_project(
-        self,
-        account_id,
-        project_name,
-        project_description,
-        progress,
-        start_date,
-        end_date=None
-    ):
+    # Coordinate displaying the Create Project page
+    def get(self):
 
-        # Check whether the user account exists
-        account = self.user_account.get_account_by_id(account_id)
+        # Retrieve the validated Account ID from the Boundary
+        account_id, error = self.boundary.get_account_id()
 
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
+        # Return Account ID validation errors through the Boundary
+        if error:
+            return self.boundary.display_page_validation_error(error)
 
-        # Only Interior Designers can create projects
-        if account["role"] != "designer":
-            return {
-                "success": False,
-                "message": "Only Interior Designers can create projects."
-            }, 403
-
-        # Check whether the user account is active
-        if account["status"] != "active":
-            return {
-                "success": False,
-                "message": "This user account is suspended."
-            }, 403
-
-        # Check whether company information exists
-        company = self.company_information.get_company_by_account_id(
+        # Retrieve company information through the Project Entity
+        result, status_code = self.project.get_create_project_company(
             account_id
         )
 
-        if company is None:
-            return {
-                "success": False,
-                "message": (
-                    "Please create your company information "
-                    "before creating a project."
-                )
-            }, 400
-
-        # Validate the project name
-        if not isinstance(project_name, str) or not project_name.strip():
-            return {
-                "success": False,
-                "message": "Project name is required."
-            }, 400
-
-        project_name = project_name.strip()
-
-        if len(project_name) > 255:
-            return {
-                "success": False,
-                "message": "Project name cannot exceed 255 characters."
-            }, 400
-
-        # Validate the project description
-        if (
-            not isinstance(project_description, str)
-            or not project_description.strip()
-        ):
-            return {
-                "success": False,
-                "message": "Project description is required."
-            }, 400
-
-        project_description = project_description.strip()
-
-        if len(project_description) > 5000:
-            return {
-                "success": False,
-                "message": "Project description cannot exceed 5000 characters."
-            }, 400
-
-        # Validate project progress
-        if progress not in ["Ongoing", "Completed"]:
-            return {
-                "success": False,
-                "message": "Please select a valid project progress."
-            }, 400
-
-        # Validate start date
-        if not isinstance(start_date, str) or not start_date.strip():
-            return {
-                "success": False,
-                "message": "Start date is required."
-            }, 400
-
-        start_date = start_date.strip()
-
-        try:
-            parsed_start_date = datetime.strptime(
-                start_date,
-                "%Y-%m-%d"
-            ).date()
-
-            if parsed_start_date.isoformat() != start_date:
-                raise ValueError
-
-        except ValueError:
-            return {
-                "success": False,
-                "message": "Please enter a valid start date."
-            }, 400
-
-        # Start date cannot be in the future
-        if parsed_start_date > datetime.now().date():
-            return {
-                "success": False,
-                "message": "Start date cannot be in the future."
-            }, 400
-
-        # Validate dates based on project progress
-        if progress == "Ongoing":
-
-            # Ongoing projects do not require an end date
-            end_date = None
-
-        elif progress == "Completed":
-
-            # Completed projects must have an end date
-            if not isinstance(end_date, str) or not end_date.strip():
-                return {
-                    "success": False,
-                    "message": "End date is required for completed projects."
-                }, 400
-
-            end_date = end_date.strip()
-
-            try:
-                parsed_end_date = datetime.strptime(
-                    end_date,
-                    "%Y-%m-%d"
-                ).date()
-
-                if parsed_end_date.isoformat() != end_date:
-                    raise ValueError
-
-            except ValueError:
-                return {
-                    "success": False,
-                    "message": "Please enter a valid end date."
-                }, 400
-
-            # End date cannot be before start date
-            if parsed_end_date < parsed_start_date:
-                return {
-                    "success": False,
-                    "message": "End date cannot be earlier than start date."
-                }, 400
-
-            # Completed projects cannot have future end dates
-            if parsed_end_date > datetime.now().date():
-                return {
-                    "success": False,
-                    "message": "End date cannot be in the future."
-                }, 400
-
-        # Retrieve the company ID
-        company_id = company["company_id"]
-
-        # Create the project through the Entity
-        project_id = self.project.create_project(
-            company_id,
-            project_name,
-            project_description,
-            progress,
-            start_date,
-            end_date
+        # Pass the result to the Boundary to display the form
+        return self.boundary.display_create_project_page(
+            result,
+            status_code
         )
 
-        if project_id is None:
-            return {
-                "success": False,
-                "message": "Unable to create project."
-            }, 409
+    # Coordinate creating a new project
+    def post(self):
 
-        return {
-            "success": True,
-            "message": "Project created successfully.",
-            "project_id": project_id,
-            "progress": progress
-        }, 201
+        # Retrieve validated project details from the Boundary
+        project_details, error = self.boundary.get_project_details()
+
+        # Return validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(error)
+
+        # Pass validated project details to the Project Entity
+        result = self.project.create_new_project(
+            project_details
+        )
+
+        # Return the project creation result through the Boundary
+        return self.boundary.display_create_project_result(
+            result
+        )

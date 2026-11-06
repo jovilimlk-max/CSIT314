@@ -1,58 +1,75 @@
 
 '''
 What this code does?
-- Display the View Company Information HTML page.
-- Retrieve the account ID and username from the URL.
-- Validate the account ID.
-- Ask the Controller to retrieve the company's information.
+- Retrieve and validate the Interior Designer's Account ID from the URL.
+- Retrieve and prepare the Interior Designer's username.
+- Receive company information results from the Controller.
 - Display existing company information or an empty state.
-- Return an error if the account cannot access the page.
+- Return validation and company retrieval errors.
+- Does not directly communicate with the Controller or Entity.
 '''
 
 from flask import request, render_template
-from flask.views import MethodView
 
 
-class ViewCompanyInformationPage(MethodView):
+class ViewCompanyInformationPage:
 
-    # Receive and store a reference to the Controller object
-    def __init__(self, view_company_controller):
-        self.view_company_controller = view_company_controller
+    # Retrieve and validate the Interior Designer's Account ID
+    def get_account_id(self):
 
-    # Display the Company Information page
-    def get(self):
+        # Retrieve the Account ID from the URL
+        account_id = request.args.get(
+            "account_id",
+            type=int
+        )
 
-        # Retrieve the account ID from the URL
-        account_id = request.args.get("account_id", type=int)
-
-        # Validate the account ID
+        # Validate that the Account ID is a positive integer
         if account_id is None or account_id <= 0:
-            return "Invalid account ID.", 400
+            return None, {
+                "success": False,
+                "message": "Invalid account ID."
+            }
 
-        # Retrieve the username for display
+        # Return the validated Account ID
+        return account_id, None
+
+    # Retrieve and prepare the Interior Designer's username
+    def get_username(self):
+
+        # Retrieve username from the URL
         username = request.args.get(
             "username",
             "Interior Designer"
-        ).strip()
+        )
 
+        # Strip unnecessary whitespace
+        username = username.strip()
+
+        # Use a default username if empty
         if not username:
             username = "Interior Designer"
 
-        # Ask the Controller to retrieve company information
-        result, status_code = (
-            self.view_company_controller.view_company_information(
-                account_id
-            )
-        )
+        return username
 
-        # Return an error if the account is not permitted
+    # Display Account ID validation errors
+    def display_validation_error(self, error):
+        return error["message"], 400
+
+    # Display the View Company Information page
+    def display_company(self, result, status_code):
+
+        # Return an error if company information cannot be retrieved
         if not result["success"]:
             return result["message"], status_code
 
-        # Display the page with company information
+        # Retrieve the Account ID and username for the HTML page
+        account_id, error = self.get_account_id()
+        username = self.get_username()
+
+        # Display the existing company information or empty state
         return render_template(
             "viewCompanyInformation.html",
             account_id=account_id,
             username=username,
             company=result["company"]
-        ), 200
+        ), status_code
