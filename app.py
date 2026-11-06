@@ -4,7 +4,7 @@ What this code does?
 - Initialise Flask and the databases.
 - Connect Boundary, Controller and Entity classes.
 - Register routes for Login, User Admin, Company Information and Projects.
-- Use the revised BCE flow for Login and User Admin Dashboard.
+- Use the revised BCE flow for Login, User Admin Dashboard and Create User Profile.
 '''
 
 from flask import Flask
@@ -116,11 +116,15 @@ class RenovoApp:
             self.user_account
         )
 
-        # Initialise User Profile Controllers
+        # Initialise Create User Profile Boundary and Controller
+        self.create_profile_boundary = CreateUserProfilePage()
+
         self.create_profile_controller = CreateUserProfileController(
+            self.create_profile_boundary,
             self.user_profile
         )
 
+        # Initialise remaining User Profile Controllers
         self.view_profile_controller = ViewUserProfileController(
             self.user_profile
         )
@@ -317,16 +321,19 @@ class RenovoApp:
             methods=["GET"]
         )
 
-        # Create User Profile
-        create_profile_view = CreateUserProfilePage.as_view(
-            "create_user_profile",
-            self.create_profile_controller
-        )
-
+        # Display Create User Profile page through the Boundary
         self.app.add_url_rule(
             "/user-admin/profiles/create",
-            view_func=create_profile_view,
+            endpoint="create_user_profile_page",
+            view_func=self.create_profile_boundary.display_create_profile_page,
             methods=["GET"]
+        )
+
+        # Process Create User Profile through the Controller
+        create_profile_view = CreateUserProfileController.as_view(
+            "create_user_profile",
+            self.create_profile_boundary,
+            self.user_profile
         )
 
         self.app.add_url_rule(

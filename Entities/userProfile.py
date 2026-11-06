@@ -1,16 +1,13 @@
 
 '''
 What this code does?
-- Responsible for handling user profile data and interacting with the database.
-- Create new user profiles.
-- Check whether a user profile name already exists.
-- Retrieve all user profiles.
-- Retrieve a specific user profile using its ID.
-- Update an existing user profile.
+- Initialise the User Profile database.
+- Create new user profiles and check for duplicate names.
+- Retrieve all user profiles or a specific profile.
+- Update existing user profile information.
 - Suspend or reactivate existing user profiles.
-- Count the total number of user profiles for the dashboard.
-- Set newly created profiles to active by default.
-- Initialise the database.
+- Count the total number of user profiles.
+- Handle the complete Create User Profile database process.
 '''
 
 import sqlite3
@@ -19,6 +16,7 @@ from pathlib import Path
 
 class UserProfile:
 
+    # Set the database file location
     def __init__(self):
         self.db_path = (
             Path(__file__).resolve().parent.parent
@@ -33,31 +31,68 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Exclude the current profile when checking for duplicate names
+            # Exclude the current profile when checking for duplicates
             if exclude_id is not None:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id
                     FROM user_profiles
                     WHERE profile_name = ? COLLATE NOCASE
                     AND id != ?
-                    """,
-                    (profile_name, exclude_id)
-                )
+                """, (profile_name, exclude_id))
+
             else:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id
                     FROM user_profiles
                     WHERE profile_name = ? COLLATE NOCASE
-                    """,
-                    (profile_name,)
-                )
+                """, (profile_name,))
 
             return cursor.fetchone() is not None
 
         finally:
             connection.close()
+
+    # Handle the complete Create User Profile process
+    def create_profile(self, profile_details):
+
+        # Retrieve validated information from the Controller
+        profile_name = profile_details["profile_name"]
+        description = profile_details["description"]
+
+        # Check whether the profile name already exists
+        if self.profile_name_exists(profile_name):
+            return {
+                "data": {
+                    "success": False,
+                    "message": "A profile with this name already exists."
+                },
+                "status_code": 409
+            }
+
+        # Create the new profile in the database
+        created = self.create_user_profile(
+            profile_name,
+            description
+        )
+
+        # Return an error if profile creation was unsuccessful
+        if not created:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to create profile. Please try again."
+                },
+                "status_code": 409
+            }
+
+        # Return the successful creation result
+        return {
+            "data": {
+                "success": True,
+                "message": "User profile created successfully."
+            },
+            "status_code": 201
+        }
 
     # Create a new user profile in the database
     def create_user_profile(self, profile_name, description):
@@ -67,14 +102,11 @@ class UserProfile:
             cursor = connection.cursor()
 
             # New profiles are automatically assigned active status
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO user_profiles
                 (profile_name, description, status)
                 VALUES (?, ?, 'active')
-                """,
-                (profile_name, description)
-            )
+            """, (profile_name, description))
 
             connection.commit()
             return True
@@ -94,13 +126,11 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT id, profile_name, description, status
                 FROM user_profiles
                 ORDER BY profile_name ASC
-                """
-            )
+            """)
 
             profiles = cursor.fetchall()
 
@@ -118,15 +148,12 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT id, profile_name, description, status,
                        created_at, updated_at
                 FROM user_profiles
                 WHERE id = ?
-                """,
-                (profile_id,)
-            )
+            """, (profile_id,))
 
             profile = cursor.fetchone()
 
@@ -145,17 +172,14 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            # Update the profile details and last updated timestamp
-            cursor.execute(
-                """
+            # Update the profile information and timestamp
+            cursor.execute("""
                 UPDATE user_profiles
                 SET profile_name = ?,
                     description = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-                """,
-                (profile_name, description, profile_id)
-            )
+            """, (profile_name, description, profile_id))
 
             # Check whether an existing profile was updated
             if cursor.rowcount == 0:
@@ -184,16 +208,13 @@ class UserProfile:
             cursor = connection.cursor()
 
             # Update only if the profile has a different status
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE user_profiles
                 SET status = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                   AND status != ?
-                """,
-                (status, profile_id, status)
-            )
+            """, (status, profile_id, status))
 
             if cursor.rowcount == 0:
                 connection.rollback()
@@ -212,12 +233,10 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT COUNT(*)
                 FROM user_profiles
-                """
-            )
+            """)
 
             return cursor.fetchone()[0]
 
@@ -236,8 +255,7 @@ class UserProfile:
         try:
             cursor = connection.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS user_profiles (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     profile_name TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -246,8 +264,7 @@ class UserProfile:
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-                """
-            )
+            """)
 
             connection.commit()
 

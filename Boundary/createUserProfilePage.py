@@ -2,84 +2,87 @@
 '''
 What this code does?
 - Display the Create User Profile HTML page.
-- Retrieve the administrator's display name from the URL.
-- Receive new user profile details.
-- Clean the submitted inputs.
-- Validate that all required fields are filled in.
-- Pass valid profile details to the Controller.
-- Return the profile creation result.
+- Retrieve and prepare the administrator's display name.
+- Extract and strip submitted user profile information.
+- Validate required profile fields automatically.
+- Return validated profile details or a validation error.
+- Prepare profile creation results for the frontend.
 '''
 
 from flask import request, jsonify, render_template
-from flask.views import MethodView
 
 
-class CreateUserProfilePage(MethodView):
+class CreateUserProfilePage:
 
-    # Receive and store a reference to the Controller
-    def __init__(self, create_profile_controller):
-        self.create_profile_controller = create_profile_controller
+    # Retrieve and prepare the administrator's display name
+    def get_username(self):
 
-    # Retrieve and clean the submitted profile details
-    def get_profile_details(self):
-        data = request.get_json(silent=True)
-
-        if not isinstance(data, dict):
-            data = {}
-
-        profile_name = data.get("profile_name", "")
-        description = data.get("description", "")
-
-        return {
-            "profile_name": (
-                profile_name.strip()
-                if isinstance(profile_name, str) else ""
-            ),
-            "description": (
-                description.strip()
-                if isinstance(description, str) else ""
-            )
-        }
-
-    # Validate the submitted profile details
-    def validate_profile_details(self, profile_details):
-        profile_name = profile_details["profile_name"]
-        description = profile_details["description"]
-
-        if not profile_name or not description:
-            return "Please fill in all required fields."
-
-        return None
-
-    # Display the Create User Profile HTML page
-    def get(self):
-        # Retrieve the administrator's display name
         username = request.args.get(
-            "username", "User Admin"
-        ).strip()
+            "username",
+            default="User Admin"
+        )
+
+        # Strip whitespace and use the default if empty
+        username = username.strip()
 
         if not username:
             username = "User Admin"
+
+        return username
+
+    # Display the Create User Profile HTML page
+    def display_create_profile_page(self):
+
+        username = self.get_username()
 
         return render_template(
             "createUserProfile.html",
             username=username
         )
 
-    # Process the profile creation request
-    def post(self):
-        profile_details = self.get_profile_details()
+    # Retrieve, clean and validate submitted profile information
+    def get_profile_details(self):
 
-        error = self.validate_profile_details(profile_details)
+        # Retrieve JSON data from the frontend
+        data = request.get_json(silent=True)
 
-        if error:
-            return jsonify({
-                "success": False,
-                "message": error
-            }), 400
+        if not isinstance(data, dict):
+            data = {}
 
-        result, status_code = self.create_profile_controller.create_profile(
-            profile_details
+        # Extract profile information
+        profile_name = data.get("profile_name", "")
+        description = data.get("description", "")
+
+        # Strip whitespace from the submitted fields
+        profile_name = (
+            profile_name.strip()
+            if isinstance(profile_name, str) else ""
         )
 
-        return jsonify(result), status_code
+        description = (
+            description.strip()
+            if isinstance(description, str) else ""
+        )
+
+        # Validate required fields
+        if not profile_name or not description:
+            return None, {
+                "success": False,
+                "message": "Please fill in all required fields."
+            }
+
+        # Return the validated profile information
+        profile_details = {
+            "profile_name": profile_name,
+            "description": description
+        }
+
+        return profile_details, None
+
+    # Prepare validation errors for the frontend
+    def display_validation_error(self, error):
+        return jsonify(error), 400
+
+    # Prepare the Entity's creation result for the frontend
+    def display_create_profile_result(self, result):
+        return jsonify(result["data"]), result["status_code"]
