@@ -1,15 +1,14 @@
 
 '''
 What this code does?
-- Handle user account data and interact with the database.
-- Retrieve all user accounts or a specific account.
-- Verify passwords and authenticate users.
+- Initialise the User Account database.
+- Retrieve user accounts and account information.
+- Authenticate users, including role and suspension checks.
+- Check assigned User Profile status during login.
 - Create new user accounts without an assigned User Profile.
-- Update existing user account details and optional profile assignment.
+- Update existing account details and optional profile assignments.
 - Suspend or reactivate existing user accounts.
-- Retrieve total and suspended user account counts.
-- Store account status, optional profile assignment and last updated date.
-- Initialise the database.
+- Retrieve total and suspended account counts.
 '''
 
 import sqlite3
@@ -18,6 +17,8 @@ from werkzeug.security import check_password_hash
 
 
 class UserAccount:
+
+    # Set the database file location
     def __init__(self):
         self.db_path = (
             Path(__file__).resolve().parent.parent
@@ -32,6 +33,7 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT id, name, email, password_hash, role, status, profile_id
                 FROM user_accounts
@@ -39,7 +41,9 @@ class UserAccount:
             """, (email,))
 
             user = cursor.fetchone()
+
             return dict(user) if user else None
+
         finally:
             connection.close()
 
@@ -65,22 +69,116 @@ class UserAccount:
             "profile_id": user["profile_id"]
         }
 
+    # Handle the complete login authentication process
+    def authenticate_login(self, login_details):
+
+        # Retrieve the validated login details
+        email = login_details["email"]
+        password = login_details["password"]
+        selected_role = login_details["role"]
+
+        # Retrieve the registered account
+        user = self.get_user_by_email(email)
+
+        # Check whether the account exists and password matches
+        if user is None or not self.verify_password(
+            password,
+            user["password_hash"]
+        ):
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Invalid email or password."
+                },
+                "status_code": 401
+            }
+
+        # Check whether the selected role matches the registered role
+        if selected_role != user["role"]:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Invalid login credentials or user type."
+                },
+                "status_code": 401
+            }
+
+        # Check whether the individual account is active
+        if user["status"] != "active":
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Your account has been suspended. Please contact the administrator."
+                },
+                "status_code": 403
+            }
+
+        # Check the assigned User Profile, if one exists
+        profile_id = user["profile_id"]
+
+        if profile_id is not None:
+
+            # Retrieve profile information within the Entity layer
+            from Entities.userProfile import UserProfile
+
+            user_profile = UserProfile()
+            profile = user_profile.get_profile_by_id(profile_id)
+
+            # Block login if the assigned profile does not exist
+            if profile is None:
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Your assigned user profile is suspended or unavailable. Please contact the administrator."
+                    },
+                    "status_code": 403
+                }
+
+            # Block login if the assigned profile is suspended
+            if profile["status"] != "active":
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Your assigned user profile is suspended or unavailable. Please contact the administrator."
+                    },
+                    "status_code": 403
+                }
+
+        # Return the authenticated user's information
+        return {
+            "data": {
+                "success": True,
+                "message": "Login successful.",
+                "user": {
+                    "id": user["id"],
+                    "name": user["name"],
+                    "email": user["email"],
+                    "role": user["role"]
+                }
+            },
+            "status_code": 200
+        }
+
     # Create an account without an assigned User Profile
     def create_user_account(self, name, email, password_hash, role):
         connection = sqlite3.connect(self.db_path)
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 INSERT INTO user_accounts (name, email, password_hash, role)
                 VALUES (?, ?, ?, ?)
             """, (name, email, password_hash, role))
 
             connection.commit()
+
             return True
+
         except sqlite3.IntegrityError:
             connection.rollback()
             return False
+
         finally:
             connection.close()
 
@@ -91,13 +189,18 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT id, name, email, role, status, profile_id
                 FROM user_accounts
                 ORDER BY id DESC
             """)
 
-            return [dict(account) for account in cursor.fetchall()]
+            return [
+                dict(account)
+                for account in cursor.fetchall()
+            ]
+
         finally:
             connection.close()
 
@@ -108,6 +211,7 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT id, name, email, role, status, profile_id, updated_at
                 FROM user_accounts
@@ -115,7 +219,9 @@ class UserAccount:
             """, (account_id,))
 
             account = cursor.fetchone()
+
             return dict(account) if account else None
+
         finally:
             connection.close()
 
@@ -125,6 +231,7 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT 1
                 FROM user_accounts
@@ -134,12 +241,19 @@ class UserAccount:
             """, (email, exclude_id, exclude_id))
 
             return cursor.fetchone() is not None
+
         finally:
             connection.close()
 
     # Update an existing user account
     def update_user_account(
-        self, account_id, name, email, role, profile_id, password_hash=None
+        self,
+        account_id,
+        name,
+        email,
+        role,
+        profile_id,
+        password_hash=None
     ):
         connection = sqlite3.connect(self.db_path)
 
@@ -147,6 +261,7 @@ class UserAccount:
             cursor = connection.cursor()
 
             if password_hash is None:
+
                 # Keep the existing password
                 cursor.execute("""
                     UPDATE user_accounts
@@ -156,9 +271,16 @@ class UserAccount:
                         profile_id = ?,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
-                """, (name, email, role, profile_id, account_id))
+                """, (
+                    name,
+                    email,
+                    role,
+                    profile_id,
+                    account_id
+                ))
 
             else:
+
                 # Replace the password with its new hash
                 cursor.execute("""
                     UPDATE user_accounts
@@ -170,8 +292,12 @@ class UserAccount:
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                 """, (
-                    name, email, password_hash,
-                    role, profile_id, account_id
+                    name,
+                    email,
+                    password_hash,
+                    role,
+                    profile_id,
+                    account_id
                 ))
 
             if cursor.rowcount == 0:
@@ -191,7 +317,7 @@ class UserAccount:
     # Suspend or reactivate an existing user account
     def update_account_status(self, account_id, status):
 
-        # Only allow the two recognised account statuses
+        # Only allow recognised account statuses
         if status not in {"active", "suspended"}:
             return False
 
@@ -225,12 +351,14 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM user_accounts
             """)
 
             return cursor.fetchone()[0]
+
         finally:
             connection.close()
 
@@ -240,6 +368,7 @@ class UserAccount:
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 SELECT COUNT(*)
                 FROM user_accounts
@@ -247,16 +376,22 @@ class UserAccount:
             """, ("suspended",))
 
             return cursor.fetchone()[0]
+
         finally:
             connection.close()
 
-    # Initialise the user account database
+    # Initialise the User Account database
     def initialise_database(self):
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
         connection = sqlite3.connect(self.db_path)
 
         try:
             cursor = connection.cursor()
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS user_accounts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -271,5 +406,6 @@ class UserAccount:
             """)
 
             connection.commit()
+
         finally:
             connection.close()

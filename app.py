@@ -4,6 +4,8 @@ What this code does?
 - Entry point for Flask.
 - Initialise Flask and the databases.
 - Connect the BCE classes and register the HTTP routes.
+- Register Login page display through the Boundary.
+- Register Login authentication through the Controller.
 '''
 
 from flask import Flask
@@ -88,12 +90,16 @@ class RenovoApp:
         self.project = Project()
         self.project.initialise_database()
 
-        # Initialise User Account and Profile Controllers
+        # Initialise Login Boundary
+        self.login_boundary = UserLoginPage()
+
+        # Initialise Login Controller
         self.login_controller = UserLoginController(
-            self.user_account,
-            self.user_profile
+            self.login_boundary,
+            self.user_account
         )
 
+        # Initialise User Admin Controllers
         self.dashboard_controller = UserAdminDashboardController(
             self.user_account,
             self.user_profile
@@ -185,7 +191,6 @@ class RenovoApp:
             self.user_account
         )
 
-        # Initialise Search Project Controller
         self.search_project_controller = SearchProjectController(
             self.project,
             self.company_information,
@@ -195,19 +200,22 @@ class RenovoApp:
         # Register application routes
         self.register_routes()
 
-    # Connect URLs to their respective Boundary classes
+    # Connect URLs to their respective Boundary or Controller classes
     def register_routes(self):
 
-        # Login Boundary
-        login_view = UserLoginPage.as_view(
-            "user_login",
-            self.login_controller
-        )
-
+        # Display Login page through the Boundary
         self.app.add_url_rule(
             "/",
-            view_func=login_view,
+            endpoint="login_page",
+            view_func=self.login_boundary.display_login_page,
             methods=["GET"]
+        )
+
+        # Handle Login submission through the Controller
+        login_view = UserLoginController.as_view(
+            "user_login",
+            self.login_boundary,
+            self.user_account
         )
 
         self.app.add_url_rule(

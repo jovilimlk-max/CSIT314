@@ -1,91 +1,34 @@
 
 '''
 What this code does?
-- Ask the UserAccount Entity to authenticate the user.
-- Check whether the selected role matches the registered role.
-- Check whether the individual account is active.
-- Check whether the assigned User Profile is active.
-- Retrieve the authenticated user's name.
-- Return the login result to the Boundary.
+- Coordinate communication between the Login Boundary and UserAccount Entity.
+- Retrieve validated login details from the Boundary.
+- Pass the validated details to the Entity for authentication.
+- Pass the Entity result back to the Boundary for display.
 '''
 
+from flask.views import MethodView
 
-class UserLoginController:
 
-    # Store references to the UserAccount and UserProfile Entities
-    def __init__(self, user_account, user_profile):
+class UserLoginController(MethodView):
+
+    # Store references to the Boundary and Entity
+    def __init__(self, login_boundary, user_account):
+        self.boundary = login_boundary
         self.user_account = user_account
-        self.user_profile = user_profile
 
-    # Check whether the selected role matches the registered role
-    def validate_user_role(self, selected_role, user):
-        return selected_role == user.get("role")
+    # Coordinate the login request
+    def post(self):
 
-    # Check whether the assigned User Profile allows login
-    def validate_user_profile(self, profile_id):
+        # Retrieve validated login details from the Boundary
+        login_details, error = self.boundary.get_login_details()
 
-        # Accounts without an assigned profile can log in
-        if profile_id is None:
-            return True
+        # Return validation errors through the Boundary
+        if error:
+            return self.boundary.display_validation_error(error)
 
-        profile = self.user_profile.get_profile_by_id(profile_id)
+        # Pass validated login details to the Entity
+        result = self.user_account.authenticate_login(login_details)
 
-        # Do not allow login if the assigned profile does not exist
-        if profile is None:
-            return False
-
-        return profile["status"] == "active"
-
-    # Coordinate authentication and return the result
-    def login_user(self, login_details):
-        email = login_details["email"]
-        password = login_details["password"]
-        role = login_details["role"]
-
-        user = self.user_account.authenticate_user(email, password)
-
-        if user is None:
-            return {
-                "success": False,
-                "message": "Invalid email or password."
-            }, 401
-
-        if not self.validate_user_role(role, user):
-            return {
-                "success": False,
-                "message": "Invalid login credentials or user type."
-            }, 401
-
-        # Check the individual account status first
-        if user.get("status") != "active":
-            return {
-                "success": False,
-                "message": "Your account has been suspended. Please contact the administrator."
-            }, 403
-
-        # Check the assigned User Profile status
-        if not self.validate_user_profile(user.get("profile_id")):
-            return {
-                "success": False,
-                "message": "Your assigned user profile is suspended or unavailable. Please contact the administrator."
-            }, 403
-
-        # Retrieve the registered account name
-        account = self.user_account.get_user_by_email(user["email"])
-
-        if account is None:
-            return {
-                "success": False,
-                "message": "User account not found."
-            }, 404
-
-        return {
-            "success": True,
-            "message": "Login successful.",
-            "user": {
-                "id": user["id"],
-                "name": account["name"],
-                "email": user["email"],
-                "role": user["role"]
-            }
-        }, 200
+        # Pass the Entity result back to the Boundary
+        return self.boundary.display_login_result(result)
