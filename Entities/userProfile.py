@@ -9,6 +9,7 @@ What this code does?
 - Suspend or reactivate user profiles.
 - Prevent repeated suspension or reactivation.
 - Count the total number of profiles for the dashboard.
+- Combine create, update and status operations without duplicate SQL helper methods.
 '''
 
 import sqlite3
@@ -53,7 +54,7 @@ class UserProfile:
         finally:
             connection.close()
 
-    # Handle the complete Create User Profile process
+    # Create a new User Profile
     def create_profile(self, profile_details):
 
         # Retrieve validated information from the Controller
@@ -70,33 +71,7 @@ class UserProfile:
                 "status_code": 409
             }
 
-        # Create the new profile
-        created = self.create_user_profile(
-            profile_name,
-            description
-        )
-
-        # Return an error if creation was unsuccessful
-        if not created:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to create profile. Please try again."
-                },
-                "status_code": 409
-            }
-
-        # Return the successful creation result
-        return {
-            "data": {
-                "success": True,
-                "message": "User profile created successfully."
-            },
-            "status_code": 201
-        }
-
-    # Create a new user profile in the database
-    def create_user_profile(self, profile_name, description):
+        # Insert the new User Profile directly into the database
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -110,16 +85,32 @@ class UserProfile:
             """, (profile_name, description))
 
             connection.commit()
-            return True
 
+        # Handle duplicate names or other database constraints
         except sqlite3.IntegrityError:
             connection.rollback()
-            return False
+
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to create profile. Please try again."
+                },
+                "status_code": 409
+            }
 
         finally:
             connection.close()
 
-    # Retrieve all existing user profiles
+        # Return the successful creation result
+        return {
+            "data": {
+                "success": True,
+                "message": "User profile created successfully."
+            },
+            "status_code": 201
+        }
+
+    # Retrieve all existing User Profiles
     def get_all_profiles(self):
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
@@ -153,7 +144,7 @@ class UserProfile:
             "profiles": profiles
         }, 200
 
-    # Retrieve a specific user profile using its ID
+    # Retrieve a specific User Profile using its ID
     def get_profile_by_id(self, profile_id):
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
@@ -194,7 +185,7 @@ class UserProfile:
             "profile": profile
         }, 200
 
-    # Handle the complete Update User Profile process
+    # Update an existing User Profile
     def update_profile(self, profile_id, profile_details):
 
         # Retrieve validated information from the Controller
@@ -214,15 +205,39 @@ class UserProfile:
                 "status_code": 409
             }
 
-        # Update the selected profile
-        updated = self.update_user_profile(
-            profile_id,
-            profile_name,
-            description
-        )
+        # Update the User Profile directly in the database
+        connection = sqlite3.connect(self.db_path)
 
-        # Return an error if the update was unsuccessful
-        if not updated:
+        try:
+            cursor = connection.cursor()
+
+            # Update only the profile details, not its status
+            cursor.execute("""
+                UPDATE user_profiles
+                SET profile_name = ?,
+                    description = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (profile_name, description, profile_id))
+
+            # Handle a profile that could not be updated
+            if cursor.rowcount == 0:
+                connection.rollback()
+
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Unable to update profile. Please try again."
+                    },
+                    "status_code": 409
+                }
+
+            connection.commit()
+
+        # Handle database constraint errors
+        except sqlite3.IntegrityError:
+            connection.rollback()
+
             return {
                 "data": {
                     "success": False,
@@ -230,6 +245,9 @@ class UserProfile:
                 },
                 "status_code": 409
             }
+
+        finally:
+            connection.close()
 
         # Return the successful update result
         return {
@@ -240,36 +258,7 @@ class UserProfile:
             "status_code": 200
         }
 
-    # Update an existing user profile in the database
-    def update_user_profile(self, profile_id, profile_name, description):
-        connection = sqlite3.connect(self.db_path)
-
-        try:
-            cursor = connection.cursor()
-
-            cursor.execute("""
-                UPDATE user_profiles
-                SET profile_name = ?,
-                    description = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            """, (profile_name, description, profile_id))
-
-            if cursor.rowcount == 0:
-                connection.rollback()
-                return False
-
-            connection.commit()
-            return True
-
-        except sqlite3.IntegrityError:
-            connection.rollback()
-            return False
-
-        finally:
-            connection.close()
-
-    # Handle the complete Suspend / Reactivate User Profile process
+    # Suspend or reactivate a User Profile
     def change_profile_status(self, profile_id, action):
 
         # Retrieve the selected profile from the database
@@ -326,39 +315,7 @@ class UserProfile:
                 "status_code": 400
             }
 
-        # Update the profile status in the database
-        updated = self.update_profile_status(
-            profile_id,
-            new_status
-        )
-
-        # Return an error if the status could not be updated
-        if not updated:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to update profile status. Please try again."
-                },
-                "status_code": 409
-            }
-
-        # Return the successful status change result
-        return {
-            "data": {
-                "success": True,
-                "message": success_message,
-                "status": new_status
-            },
-            "status_code": 200
-        }
-
-    # Update the status of an existing user profile
-    def update_profile_status(self, profile_id, status):
-
-        # Only accept recognised profile statuses
-        if status not in {"active", "suspended"}:
-            return False
-
+        # Update the profile status directly in the database
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -371,17 +328,34 @@ class UserProfile:
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                   AND status != ?
-            """, (status, profile_id, status))
+            """, (new_status, profile_id, new_status))
 
+            # Handle an unsuccessful status change
             if cursor.rowcount == 0:
                 connection.rollback()
-                return False
+
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Unable to update profile status. Please try again."
+                    },
+                    "status_code": 409
+                }
 
             connection.commit()
-            return True
 
         finally:
             connection.close()
+
+        # Return the successful status change result
+        return {
+            "data": {
+                "success": True,
+                "message": success_message,
+                "status": new_status
+            },
+            "status_code": 200
+        }
 
     # Count all User Profiles for the User Admin Dashboard
     def get_total_profiles(self):

@@ -10,6 +10,7 @@ What this code does?
 - Update account details, passwords and profile assignments.
 - Suspend or reactivate accounts.
 - Retrieve User Admin Dashboard statistics.
+- Combine create, update and status operations without duplicate SQL helper methods.
 '''
 
 import sqlite3
@@ -148,33 +149,7 @@ class UserAccount:
         # Hash the password without stripping it
         password_hash = generate_password_hash(password)
 
-        # Create an account with no assigned profile
-        created = self.create_user_account(
-            name,
-            email,
-            password_hash,
-            role
-        )
-
-        if not created:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Email address is already registered."
-                },
-                "status_code": 409
-            }
-
-        return {
-            "data": {
-                "success": True,
-                "message": "User account created successfully."
-            },
-            "status_code": 201
-        }
-
-    # Insert a new account into SQLite
-    def create_user_account(self, name, email, password_hash, role):
+        # Insert the account directly with no assigned profile
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -186,14 +161,28 @@ class UserAccount:
             """, (name, email, password_hash, role))
 
             connection.commit()
-            return True
 
+        # Reject a duplicate email, including one inserted concurrently
         except sqlite3.IntegrityError:
             connection.rollback()
-            return False
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Email address is already registered."
+                },
+                "status_code": 409
+            }
 
         finally:
             connection.close()
+
+        return {
+            "data": {
+                "success": True,
+                "message": "User account created successfully."
+            },
+            "status_code": 201
+        }
 
     # Retrieve all accounts in ascending Account ID order
     def get_all_accounts(self):
@@ -358,43 +347,7 @@ class UserAccount:
         if password:
             password_hash = generate_password_hash(password)
 
-        # Save the updated account information
-        updated = self.update_user_account(
-            account_id,
-            name,
-            email,
-            role,
-            profile_id,
-            password_hash
-        )
-
-        if not updated:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to update account. Please try again."
-                },
-                "status_code": 409
-            }
-
-        return {
-            "data": {
-                "success": True,
-                "message": "User account updated successfully."
-            },
-            "status_code": 200
-        }
-
-    # Update account information in SQLite
-    def update_user_account(
-        self,
-        account_id,
-        name,
-        email,
-        role,
-        profile_id,
-        password_hash=None
-    ):
+        # Update the account directly in SQLite
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -421,7 +374,7 @@ class UserAccount:
 
             else:
 
-                # Save the newly hashed password
+                # Store the newly hashed password
                 cursor.execute("""
                     UPDATE user_accounts
                     SET name = ?,
@@ -442,17 +395,36 @@ class UserAccount:
 
             if cursor.rowcount == 0:
                 connection.rollback()
-                return False
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Unable to update account. Please try again."
+                    },
+                    "status_code": 409
+                }
 
             connection.commit()
-            return True
 
         except sqlite3.IntegrityError:
             connection.rollback()
-            return False
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update account. Please try again."
+                },
+                "status_code": 409
+            }
 
         finally:
             connection.close()
+
+        return {
+            "data": {
+                "success": True,
+                "message": "User account updated successfully."
+            },
+            "status_code": 200
+        }
 
     # Handle the complete Suspend / Reactivate process
     def change_account_status(self, account_id, action):
@@ -507,36 +479,7 @@ class UserAccount:
                 "status_code": 400
             }
 
-        # Update the account status in SQLite
-        updated = self.update_account_status(
-            account_id,
-            new_status
-        )
-
-        if not updated:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to update account status. Please try again."
-                },
-                "status_code": 409
-            }
-
-        return {
-            "data": {
-                "success": True,
-                "message": success_message,
-                "status": new_status
-            },
-            "status_code": 200
-        }
-
-    # Update an account's status in the database
-    def update_account_status(self, account_id, status):
-
-        if status not in {"active", "suspended"}:
-            return False
-
+        # Update account status directly without changing profile status
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -548,17 +491,31 @@ class UserAccount:
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                   AND status != ?
-            """, (status, account_id, status))
+            """, (new_status, account_id, new_status))
 
             if cursor.rowcount == 0:
                 connection.rollback()
-                return False
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Unable to update account status. Please try again."
+                    },
+                    "status_code": 409
+                }
 
             connection.commit()
-            return True
 
         finally:
             connection.close()
+
+        return {
+            "data": {
+                "success": True,
+                "message": success_message,
+                "status": new_status
+            },
+            "status_code": 200
+        }
 
     # Count all User Accounts
     def get_total_accounts(self):

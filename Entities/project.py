@@ -12,6 +12,7 @@ What this code does?
 - Store project types as 'current' or 'past'.
 - Store project statuses as 'active' or 'suspended'.
 - Keep company status independent of project status.
+- Combine create, update and status operations without duplicate SQL helper methods.
 '''
 
 import os
@@ -87,7 +88,7 @@ class Project:
             "company": company
         }, 200
 
-    # Handle the complete Create Project process
+    # Create a Current IDP or Past IDP in SQLite
     def create_new_project(self, project_details):
 
         # Retrieve the Interior Designer's company
@@ -95,7 +96,7 @@ class Project:
             project_details["account_id"]
         )
 
-        # Check whether company information exists
+        # Company information must exist before creating a project
         if company is None:
             return {
                 "data": {
@@ -105,56 +106,18 @@ class Project:
                 "status_code": 404
             }
 
-        # Create the project using the existing database method
-        project_id = self.create_project(
-            company["company_id"],
-            project_details["project_name"],
-            project_details["project_description"],
-            project_details["project_type"],
-            project_details["start_date"],
-            project_details["end_date"]
-        )
+        # Current IDPs do not have an End Date
+        end_date = project_details["end_date"]
 
-        # Return an error if project creation fails
-        if not project_id:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to create project."
-                },
-                "status_code": 500
-            }
-
-        # Return the successful creation result
-        return {
-            "data": {
-                "success": True,
-                "message": "Project created successfully.",
-                "project_id": project_id
-            },
-            "status_code": 201
-        }
-
-    # Create a new project in SQLite
-    def create_project(
-        self,
-        company_id,
-        project_name,
-        project_description,
-        project_type,
-        start_date,
-        end_date=None
-    ):
+        if project_details["project_type"] == "current":
+            end_date = None
 
         connection = sqlite3.connect(self.database_path)
 
         try:
             cursor = connection.cursor()
 
-            # Current IDP does not have an End Date
-            if project_type == "current":
-                end_date = None
-
+            # Insert the project with an active status
             cursor.execute('''
                 INSERT INTO projects (
                     company_id,
@@ -167,21 +130,40 @@ class Project:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
-                company_id,
-                project_name,
-                project_description,
-                start_date,
+                company["company_id"],
+                project_details["project_name"],
+                project_details["project_description"],
+                project_details["start_date"],
                 end_date,
-                project_type,
+                project_details["project_type"],
                 "active"
             ))
 
-            connection.commit()
+            project_id = cursor.lastrowid
 
-            return cursor.lastrowid
+            connection.commit()
 
         finally:
             connection.close()
+
+        # Return the same result format expected by the Controller
+        if not project_id:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to create project."
+                },
+                "status_code": 500
+            }
+
+        return {
+            "data": {
+                "success": True,
+                "message": "Project created successfully.",
+                "project_id": project_id
+            },
+            "status_code": 201
+        }
 
     # Retrieve one project using its Project ID
     def get_project_by_id(self, project_id):
@@ -350,7 +332,7 @@ class Project:
             "project": project
         }, 200
 
-    # Handle the complete Update Project process
+    # Update an existing Current IDP or Past IDP
     def update_project_details(self, project_details):
 
         # Retrieve the validated Account ID and Project ID
@@ -362,7 +344,6 @@ class Project:
             account_id
         )
 
-        # Check whether company information exists
         if company is None:
             return {
                 "data": {
@@ -375,7 +356,6 @@ class Project:
         # Retrieve the project being updated
         project = self.get_project_by_id(project_id)
 
-        # Check whether the project exists
         if project is None:
             return {
                 "data": {
@@ -385,7 +365,7 @@ class Project:
                 "status_code": 404
             }
 
-        # Verify that the project belongs to the company
+        # Check that this project belongs to the Interior Designer
         if project["company_id"] != company["company_id"]:
             return {
                 "data": {
@@ -395,57 +375,18 @@ class Project:
                 "status_code": 403
             }
 
-        # Update the project's information
-        updated = self.update_project(
-            project_id,
-            project_details["project_name"],
-            project_details["project_description"],
-            project_details["project_type"],
-            project_details["start_date"],
-            project_details["end_date"]
-        )
+        # Current IDPs must not have an End Date
+        end_date = project_details["end_date"]
 
-        # Return an error if updating fails
-        if not updated:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to update project."
-                },
-                "status_code": 500
-            }
-
-        # Return the successful update result
-        return {
-            "data": {
-                "success": True,
-                "message": "Project updated successfully.",
-                "project_id": project_id
-            },
-            "status_code": 200
-        }
-
-    # Update an existing project's information in SQLite
-    def update_project(
-        self,
-        project_id,
-        project_name,
-        project_description,
-        project_type,
-        start_date,
-        end_date=None
-    ):
+        if project_details["project_type"] == "current":
+            end_date = None
 
         connection = sqlite3.connect(self.database_path)
 
         try:
             cursor = connection.cursor()
 
-            # Current IDP must not have an End Date
-            if project_type == "current":
-                end_date = None
-
-            # Do not change the project's active/suspended status
+            # Update project details without changing its status
             cursor.execute('''
                 UPDATE projects
                 SET project_name = ?,
@@ -455,22 +396,40 @@ class Project:
                     end_date = ?
                 WHERE project_id = ?
             ''', (
-                project_name,
-                project_description,
-                project_type,
-                start_date,
+                project_details["project_name"],
+                project_details["project_description"],
+                project_details["project_type"],
+                project_details["start_date"],
                 end_date,
                 project_id
             ))
 
-            connection.commit()
+            updated = cursor.rowcount > 0
 
-            return cursor.rowcount > 0
+            connection.commit()
 
         finally:
             connection.close()
 
-    # Handle the complete Suspend/Reactivate Project process
+        if not updated:
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to update project."
+                },
+                "status_code": 500
+            }
+
+        return {
+            "data": {
+                "success": True,
+                "message": "Project updated successfully.",
+                "project_id": project_id
+            },
+            "status_code": 200
+        }
+
+    # Suspend or reactivate a Current IDP or Past IDP
     def change_project_status(self, status_details):
 
         # Retrieve the validated details
@@ -483,7 +442,6 @@ class Project:
             account_id
         )
 
-        # Check whether company information exists
         if company is None:
             return {
                 "success": False,
@@ -493,21 +451,20 @@ class Project:
         # Retrieve the selected project
         project = self.get_project_by_id(project_id)
 
-        # Check whether the project exists
         if project is None:
             return {
                 "success": False,
                 "message": "Project not found."
             }, 404
 
-        # Verify that the project belongs to the company
+        # Check that this project belongs to the Interior Designer
         if project["company_id"] != company["company_id"]:
             return {
                 "success": False,
                 "message": "Access denied. This project does not belong to your company."
             }, 403
 
-        # Prevent unnecessary status changes
+        # Prevent an unnecessary status change
         if project["status"] == requested_status:
 
             if requested_status == "suspended":
@@ -520,57 +477,46 @@ class Project:
                 "message": message
             }, 400
 
-        # Update only the project's status
-        updated = self.update_project_status(
-            project_id,
-            requested_status
-        )
+        connection = sqlite3.connect(self.database_path)
 
-        # Return an error if the status update fails
+        try:
+            cursor = connection.cursor()
+
+            # Only update project status; do not change company status
+            cursor.execute('''
+                UPDATE projects
+                SET status = ?
+                WHERE project_id = ?
+            ''', (
+                requested_status,
+                project_id
+            ))
+
+            updated = cursor.rowcount > 0
+
+            connection.commit()
+
+        finally:
+            connection.close()
+
         if not updated:
             return {
                 "success": False,
                 "message": "Unable to update project status."
             }, 500
 
-        # Prepare the appropriate success message
+        # Return the appropriate success message
         if requested_status == "suspended":
             message = "Project suspended successfully."
         else:
             message = "Project reactivated successfully."
 
-        # Return the successful status update result
         return {
             "success": True,
             "message": message,
             "project_id": project_id,
             "status": requested_status
         }, 200
-
-    # Update only the project's status in SQLite
-    def update_project_status(self, project_id, status):
-
-        connection = sqlite3.connect(self.database_path)
-
-        try:
-            cursor = connection.cursor()
-
-            # Update the project status without modifying other fields
-            cursor.execute('''
-                UPDATE projects
-                SET status = ?
-                WHERE project_id = ?
-            ''', (
-                status,
-                project_id
-            ))
-
-            connection.commit()
-
-            return cursor.rowcount > 0
-
-        finally:
-            connection.close()
 
     # Handle the complete Search Projects process
     def search_projects(self, search_details):

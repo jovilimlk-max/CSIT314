@@ -8,7 +8,8 @@ What this code does?
 - Suspend or reactivate company information.
 - Prevent unnecessary company status changes.
 - Keep company status independent of Interior Designer projects.
-- Rely on the UI precondition for creating only one company per account.
+- Handle database operations and domain checks within the Entity.
+- Avoid unnecessary methods that duplicate the same operation.
 '''
 
 import sqlite3
@@ -26,8 +27,8 @@ class CompanyInformation:
         )
 
     # Check whether an account already has company information
-    # Retained for other features that may need this information
     def company_exists(self, account_id):
+
         connection = sqlite3.connect(self.db_path)
 
         try:
@@ -45,58 +46,16 @@ class CompanyInformation:
         finally:
             connection.close()
 
-    # Handle the Create Company Information process
+    # Create company information in the database
     def create_company(self, company_details):
 
-        # The UI ensures this account has no company information yet
-        # Pass the validated details directly to the database method
-        created = self.create_company_information(
-            company_details["account_id"],
-            company_details["company_name"],
-            company_details["company_address"],
-            company_details["working_hours"],
-            company_details["company_email"],
-            company_details["company_phone"],
-            company_details["established_date"],
-            company_details["company_description"]
-        )
-
-        # Return an error if the database cannot create the record
-        if not created:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to create company information."
-                },
-                "status_code": 409
-            }
-
-        # Return the successful creation result
-        return {
-            "data": {
-                "success": True,
-                "message": "Company information created successfully."
-            },
-            "status_code": 201
-        }
-
-    # Create company information in SQLite
-    def create_company_information(
-        self,
-        account_id,
-        company_name,
-        company_address,
-        working_hours,
-        company_email,
-        company_phone,
-        established_date,
-        company_description
-    ):
+        # The UI ensures that the account has no company information yet
         connection = sqlite3.connect(self.db_path)
 
         try:
             cursor = connection.cursor()
 
+            # Insert the validated company details
             cursor.execute("""
                 INSERT INTO company_information (
                     account_id,
@@ -110,29 +69,45 @@ class CompanyInformation:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                account_id,
-                company_name,
-                company_address,
-                working_hours,
-                company_email,
-                company_phone,
-                established_date,
-                company_description
+                company_details["account_id"],
+                company_details["company_name"],
+                company_details["company_address"],
+                company_details["working_hours"],
+                company_details["company_email"],
+                company_details["company_phone"],
+                company_details["established_date"],
+                company_details["company_description"]
             ))
 
             connection.commit()
-            return True
+
+            # Return the successful creation result
+            return {
+                "data": {
+                    "success": True,
+                    "message": "Company information created successfully."
+                },
+                "status_code": 201
+            }
 
         # Handle database constraint failures
         except sqlite3.IntegrityError:
             connection.rollback()
-            return False
+
+            return {
+                "data": {
+                    "success": False,
+                    "message": "Unable to create company information."
+                },
+                "status_code": 409
+            }
 
         finally:
             connection.close()
 
     # Retrieve company information belonging to an account
     def get_company_by_account_id(self, account_id):
+
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = sqlite3.Row
 
@@ -165,23 +140,23 @@ class CompanyInformation:
     # Handle the View Company Information process
     def view_company(self, account_id):
 
-        # Retrieve the company information for the account
+        # Retrieve company information for the account
         company = self.get_company_by_account_id(account_id)
 
         # Return None when no company information exists
-        # The Boundary displays the existing empty state
+        # The Boundary handles the empty state
         return {
             "success": True,
             "company": company
         }, 200
 
-    # Handle the Update Company Information process
+    # Update existing company information
     def update_company(self, company_details):
 
         # Retrieve the Account ID
         account_id = company_details["account_id"]
 
-        # Check whether company information exists before updating
+        # Check whether company information exists
         if not self.company_exists(account_id):
             return {
                 "data": {
@@ -191,55 +166,12 @@ class CompanyInformation:
                 "status_code": 404
             }
 
-        # Update company information in SQLite
-        updated = self.update_company_information(
-            account_id,
-            company_details["company_name"],
-            company_details["company_address"],
-            company_details["working_hours"],
-            company_details["company_email"],
-            company_details["company_phone"],
-            company_details["established_date"],
-            company_details["company_description"]
-        )
-
-        # Return an error if no record was updated
-        if not updated:
-            return {
-                "data": {
-                    "success": False,
-                    "message": "Unable to update company information."
-                },
-                "status_code": 404
-            }
-
-        # Return the successful update result
-        return {
-            "data": {
-                "success": True,
-                "message": "Company information updated successfully."
-            },
-            "status_code": 200
-        }
-
-    # Update existing company information
-    def update_company_information(
-        self,
-        account_id,
-        company_name,
-        company_address,
-        working_hours,
-        company_email,
-        company_phone,
-        established_date,
-        company_description
-    ):
         connection = sqlite3.connect(self.db_path)
 
         try:
             cursor = connection.cursor()
 
-            # Update company details without changing its status
+            # Update company information without changing its status
             cursor.execute("""
                 UPDATE company_information
                 SET
@@ -252,25 +184,43 @@ class CompanyInformation:
                     company_description = ?
                 WHERE account_id = ?
             """, (
-                company_name,
-                company_address,
-                working_hours,
-                company_email,
-                company_phone,
-                established_date,
-                company_description,
+                company_details["company_name"],
+                company_details["company_address"],
+                company_details["working_hours"],
+                company_details["company_email"],
+                company_details["company_phone"],
+                company_details["established_date"],
+                company_details["company_description"],
                 account_id
             ))
 
             updated = cursor.rowcount > 0
 
             connection.commit()
-            return updated
+
+            # Return an error if no company record was updated
+            if not updated:
+                return {
+                    "data": {
+                        "success": False,
+                        "message": "Unable to update company information."
+                    },
+                    "status_code": 404
+                }
+
+            # Return the successful update result
+            return {
+                "data": {
+                    "success": True,
+                    "message": "Company information updated successfully."
+                },
+                "status_code": 200
+            }
 
         finally:
             connection.close()
 
-    # Handle the Suspend or Reactivate Company Information process
+    # Suspend or reactivate company information
     def change_company_status(self, status_details):
 
         # Retrieve the validated Account ID and requested status
@@ -280,7 +230,7 @@ class CompanyInformation:
         # Retrieve the existing company information
         company = self.get_company_by_account_id(account_id)
 
-        # Return an error if company information does not exist
+        # Return an error when company information does not exist
         if company is None:
             return {
                 "data": {
@@ -309,11 +259,27 @@ class CompanyInformation:
                 "status_code": 409
             }
 
-        # Update the company status
-        updated = self.update_company_status(
-            account_id,
-            new_status
-        )
+        # Update company status directly in the database
+        connection = sqlite3.connect(self.db_path)
+
+        try:
+            cursor = connection.cursor()
+
+            cursor.execute("""
+                UPDATE company_information
+                SET status = ?
+                WHERE account_id = ?
+            """, (
+                new_status,
+                account_id
+            ))
+
+            updated = cursor.rowcount > 0
+
+            connection.commit()
+
+        finally:
+            connection.close()
 
         # Return an error if the update was unsuccessful
         if not updated:
@@ -339,32 +305,10 @@ class CompanyInformation:
             "status_code": 200
         }
 
-    # Update company status in SQLite
-    def update_company_status(self, account_id, status):
-        connection = sqlite3.connect(self.db_path)
-
-        try:
-            cursor = connection.cursor()
-
-            cursor.execute("""
-                UPDATE company_information
-                SET status = ?
-                WHERE account_id = ?
-            """, (
-                status,
-                account_id
-            ))
-
-            updated = cursor.rowcount > 0
-
-            connection.commit()
-            return updated
-
-        finally:
-            connection.close()
-
     # Initialise the Company Information database
     def initialise_database(self):
+
+        # Create the Database folder if it does not exist
         self.db_path.parent.mkdir(
             parents=True,
             exist_ok=True
@@ -375,6 +319,7 @@ class CompanyInformation:
         try:
             cursor = connection.cursor()
 
+            # Create the company information table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS company_information (
                     company_id INTEGER PRIMARY KEY AUTOINCREMENT,
