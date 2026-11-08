@@ -1,4 +1,14 @@
 
+<!--
+What this code does?
+- Display an Interior Designer's Current or Past IDP details.
+- Show the project's assigned category and its suspension status.
+- Display "-" when no category is assigned.
+- Preserve existing project status and date information.
+- Allow Interior Designers to navigate to Edit Project.
+- Support suspension and reactivation with confirmation pop-ups.
+- Preserve existing navigation and success notifications.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -266,6 +276,20 @@
                             Past IDP
                         </span>
                     {% endif %}
+                </div>
+
+                <!-- Assigned Category -->
+                <div class="field">
+                    <label>Category</label>
+                    <div class="read-only-field">
+                        {% if project.category_id is none %}
+                            -
+                        {% elif project.category_status == "suspended" %}
+                            {{ project.category_name }} (Suspended)
+                        {% else %}
+                            {{ project.category_name or "-" }}
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Project Dates -->

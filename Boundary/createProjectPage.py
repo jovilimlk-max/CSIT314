@@ -1,18 +1,17 @@
 
 '''
 What this code does?
-- Handle GET and POST requests for Create Project.
+- Handle GET and POST requests for Create IDP.
 - Retrieve and validate the Interior Designer's Account ID.
-- Retrieve and prepare the Interior Designer's username.
-- Extract and strip submitted project details.
+- Retrieve the Interior Designer's username.
+- Retrieve active categories through the Controller.
+- Pass active categories to the Create IDP HTML page.
+- Extract and validate submitted project information.
+- Allow optional category assignment using a nullable category_id.
 - Validate project name, description, type and dates.
-- Support Current IDP and Past IDP project creation.
-- Use lowercase 'current' and 'past' project type values.
-- Call the Create Project Controller to retrieve company information.
-- Pass validated project details to the Create Project Controller.
-- Display the Create Project page when company information exists.
-- Return validation errors and project creation results.
-- Does not communicate directly with the Entity.
+- Pass validated project details to the Controller.
+- Display the Create IDP page and return creation results.
+- Does not communicate directly with the Entities.
 '''
 
 from datetime import date
@@ -26,43 +25,45 @@ class CreateProjectPage:
     def __init__(self, create_project_controller):
         self.controller = create_project_controller
 
-    # Handle the GET request to display the Create Project page
+    # Handle GET requests for the Create IDP page
     def get(self):
 
-        # Retrieve and validate the Account ID
+        # Retrieve and validate the Interior Designer's Account ID
         account_id, error = self.get_account_id()
 
-        # Return validation errors through the Boundary
         if error:
             return self.display_page_validation_error(error)
 
-        # Call the Controller to retrieve company information
+        # Retrieve the Interior Designer's company
         result, status_code = self.controller.get_create_project_company(
             account_id
         )
 
-        # Display the result returned by the Controller
+        # Retrieve active categories through the Controller
+        categories = self.controller.get_active_categories()
+
+        # Display the Create IDP form
         return self.display_create_project_page(
             result,
-            status_code
+            status_code,
+            categories
         )
 
-    # Handle the POST request to create a project
+    # Handle POST requests for creating an IDP
     def post(self):
 
-        # Retrieve and validate submitted project details
+        # Extract and validate submitted project details
         project_details, error = self.get_project_details()
 
-        # Return validation errors through the Boundary
         if error:
             return self.display_validation_error(error)
 
         # Pass validated project details to the Controller
-        result = self.controller.create_project(
+        result = self.controller.create_new_project(
             project_details
         )
 
-        # Return the project creation result through the Boundary
+        # Return the creation result to the frontend
         return self.display_create_project_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
@@ -89,6 +90,7 @@ class CreateProjectPage:
             "Interior Designer"
         )
 
+        # Remove unnecessary whitespace
         username = username.strip()
 
         if not username:
@@ -111,6 +113,9 @@ class CreateProjectPage:
         project_type = data.get("project_type", "")
         start_date = data.get("start_date", "")
         end_date = data.get("end_date", "")
+
+        # Retrieve the optional category assignment
+        category_id = data.get("category_id")
 
         # Strip unnecessary whitespace from string fields
         project_name = (
@@ -182,6 +187,45 @@ class CreateProjectPage:
                 "message": "Please select a valid project type."
             }
 
+        # Validate optional Category ID
+        # An empty selection is stored as NULL in SQLite
+        if category_id is None or category_id == "":
+            category_id = None
+
+        elif isinstance(category_id, bool):
+            return None, {
+                "success": False,
+                "message": "The selected category is unavailable."
+            }
+
+        elif isinstance(category_id, int):
+            if category_id <= 0:
+                return None, {
+                    "success": False,
+                    "message": "The selected category is unavailable."
+                }
+
+        elif isinstance(category_id, str):
+            category_id = category_id.strip()
+
+            if not category_id:
+                category_id = None
+
+            elif category_id.isdecimal() and int(category_id) > 0:
+                category_id = int(category_id)
+
+            else:
+                return None, {
+                    "success": False,
+                    "message": "The selected category is unavailable."
+                }
+
+        else:
+            return None, {
+                "success": False,
+                "message": "The selected category is unavailable."
+            }
+
         # Validate required start date
         if not start_date:
             return None, {
@@ -250,49 +294,53 @@ class CreateProjectPage:
                     "message": "End date cannot be in the future."
                 }
 
-        # Return validated project details
+        # Return validated project details including category_id
         project_details = {
             "account_id": account_id,
             "project_name": project_name,
             "project_description": project_description,
             "project_type": project_type,
             "start_date": start_date,
-            "end_date": end_date
+            "end_date": end_date,
+            "category_id": category_id
         }
 
         return project_details, None
 
-    # Display the Create Project page
-    def display_create_project_page(self, result, status_code):
+    # Display the Create IDP page
+    def display_create_project_page(
+        self,
+        result,
+        status_code,
+        categories
+    ):
 
-        # Return errors from the Entity through the Boundary
+        # Return errors if the company does not exist
         if not result["success"]:
             return result["message"], status_code
 
-        # Retrieve company information
+        # Retrieve the Interior Designer's company
         company = result["company"]
 
-        # Display the existing Create Project form
+        # Render the page with available categories
         return render_template(
             "createProject.html",
             account_id=self.get_account_id()[0],
             username=self.get_username(),
-            company=company
+            company=company,
+            categories=categories
         ), 200
 
     # Return Account ID validation errors for GET requests
     def display_page_validation_error(self, error):
-
         return error["message"], 400
 
     # Return validation errors for POST requests
     def display_validation_error(self, error):
-
         return jsonify(error), 400
 
     # Return the project creation result
     def display_create_project_result(self, result):
-
         return jsonify(
             result["data"]
         ), result["status_code"]

@@ -1,13 +1,11 @@
 
 '''
 What this code does?
-- Receive the validated Interior Designer Account ID from the Create Project Boundary.
-- Retrieve company information through the Project Entity.
-- Return company information to the Boundary for displaying the Create Project page.
-- Receive validated project details from the Boundary.
-- Pass validated project details to the Project Entity.
-- Return project creation results to the Boundary.
-- Support both Current IDP and Past IDP projects.
+- Receive validated information from the Create Project Boundary.
+- Retrieve the Interior Designer's company information through the Project Entity.
+- Retrieve active IDP categories for the Create Project dropdown.
+- Pass validated Current IDP or Past IDP details to the Project Entity.
+- Return Entity results to the Boundary.
 - Does not handle HTTP requests, validation, HTML or database operations.
 '''
 
@@ -21,21 +19,30 @@ class CreateProjectController:
     # Retrieve company information for the Create Project page
     def get_create_project_company(self, account_id):
 
-        # Pass the validated Account ID to the Project Entity
+        # Pass the validated Account ID to the Entity
         result, status_code = self.project.get_create_project_company(
             account_id
         )
 
-        # Return the result to the calling Boundary
+        # Return the result to the Boundary
         return result, status_code
 
-    # Coordinate creating a new Current IDP or Past IDP
-    def create_project(self, project_details):
+    # Retrieve active categories for the category dropdown
+    def get_active_categories(self):
 
-        # Pass validated project details to the Project Entity
+        # Retrieve categories through the Project Entity's Category Entity
+        categories = self.project.idp_category.get_active_categories()
+
+        # Return the available categories to the Boundary
+        return categories
+
+    # Create a Current IDP or Past IDP
+    def create_new_project(self, project_details):
+
+        # Pass validated project details to the Entity
         result = self.project.create_new_project(
             project_details
         )
 
-        # Return the Entity result to the calling Boundary
+        # Return the creation result to the Boundary
         return result

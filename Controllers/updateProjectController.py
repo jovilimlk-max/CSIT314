@@ -1,12 +1,12 @@
 
 '''
 What this code does?
-- Receive validated Account ID and Project ID from the Update Project Boundary.
+- Receive validated information from the Update Project Boundary.
 - Retrieve existing project information through the Project Entity.
-- Receive validated updated project information from the Boundary.
-- Pass updated project information to the Project Entity.
-- Return Entity results to the Boundary.
+- Retrieve active IDP categories for the Edit Project dropdown.
+- Pass validated project details to the Project Entity for updating.
 - Support updating both Current IDP and Past IDP projects.
+- Return Entity results to the Boundary.
 - Does not handle HTTP requests, validation, HTML or database operations.
 '''
 
@@ -17,7 +17,7 @@ class UpdateProjectController:
     def __init__(self, project):
         self.project = project
 
-    # Retrieve existing project information for the update form
+    # Retrieve existing project information for the Edit Project page
     def view_project(self, view_details):
 
         # Pass validated Account ID and Project ID to the Entity
@@ -25,16 +25,25 @@ class UpdateProjectController:
             view_details
         )
 
-        # Return the Entity result to the calling Boundary
+        # Return the Entity result to the Boundary
         return result, status_code
 
-    # Coordinate updating an existing project
-    def update_project(self, project_details):
+    # Retrieve active categories for the Edit Project dropdown
+    def get_active_categories(self):
 
-        # Pass validated project information to the Entity
+        # Retrieve available categories through the Project Entity
+        categories = self.project.idp_category.get_active_categories()
+
+        # Return the categories to the Boundary
+        return categories
+
+    # Update an existing Current IDP or Past IDP
+    def update_project_details(self, project_details):
+
+        # Pass validated project details to the Entity
         result = self.project.update_project_details(
             project_details
         )
 
-        # Return the Entity result to the calling Boundary
+        # Return the Entity result to the Boundary
         return result

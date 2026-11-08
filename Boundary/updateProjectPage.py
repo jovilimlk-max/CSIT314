@@ -1,19 +1,19 @@
 
 '''
 What this code does?
-- Handle GET and POST requests for Update Project.
+- Handle GET and POST requests for Update IDP.
 - Retrieve and validate the Interior Designer's Account ID.
 - Retrieve and validate the selected Project ID.
 - Retrieve and prepare the Interior Designer's username.
+- Retrieve active IDP categories through the Controller.
 - Extract and strip submitted project information.
 - Validate project name, description, type and dates.
+- Validate optional category selection.
+- Preserve existing category assignments when not changed.
 - Support updating both Current IDP and Past IDP.
-- Use lowercase 'current' and 'past' project type values.
-- Call the Update Project Controller to retrieve existing project information.
-- Pass validated updated project information to the Controller.
 - Display the Update Project form with existing information.
 - Return validation errors and update results to the frontend.
-- Does not communicate directly with the Entity.
+- Does not communicate directly with the Entities.
 '''
 
 from datetime import date
@@ -27,47 +27,57 @@ class UpdateProjectPage:
     def __init__(self, update_project_controller):
         self.controller = update_project_controller
 
-    # Handle the GET request to display the Update Project form
+    # Handle GET requests for the Edit IDP page
     def get(self, project_id):
 
-        # Retrieve and validate the Account ID and Project ID
+        # Retrieve and validate Account ID and Project ID
         view_details, error = self.get_view_details(
             project_id
         )
 
-        # Return validation errors through the Boundary
         if error:
             return self.display_page_validation_error(error)
 
-        # Call the Controller to retrieve existing project information
+        # Retrieve existing project information through the Controller
         result, status_code = self.controller.view_project(
             view_details
         )
 
-        # Display the existing project through the Boundary
+        # Return an error if the project could not be retrieved
+        if not result["success"]:
+            return self.display_update_project_page(
+                result,
+                status_code,
+                []
+            )
+
+        # Retrieve active categories for the dropdown
+        categories = self.controller.get_active_categories()
+
+        # Display the Edit IDP form
         return self.display_update_project_page(
             result,
-            status_code
+            status_code,
+            categories
         )
 
-    # Handle the POST request to update project information
+    # Handle POST requests for updating an IDP
     def post(self, project_id):
 
-        # Retrieve and validate submitted project information
+        # Extract and validate submitted project information
         project_details, error = self.get_project_details(
             project_id
         )
 
-        # Return validation errors through the Boundary
         if error:
             return self.display_validation_error(error)
 
-        # Pass validated updated project information to the Controller
-        result = self.controller.update_project(
+        # Pass validated project details to the Controller
+        result = self.controller.update_project_details(
             project_details
         )
 
-        # Return the update result through the Boundary
+        # Return the update result to the frontend
         return self.display_update_result(result)
 
     # Retrieve and validate the Interior Designer's Account ID
@@ -109,6 +119,7 @@ class UpdateProjectPage:
             "Interior Designer"
         )
 
+        # Strip whitespace from the username
         username = username.strip()
 
         if not username:
@@ -116,7 +127,7 @@ class UpdateProjectPage:
 
         return username
 
-    # Retrieve validated IDs for displaying the Update Project page
+    # Retrieve validated IDs for viewing or updating a project
     def get_view_details(self, project_id):
 
         # Validate Account ID
@@ -141,7 +152,7 @@ class UpdateProjectPage:
     # Retrieve and validate updated project information
     def get_project_details(self, project_id):
 
-        # Validate the Account ID and Project ID
+        # Validate Account ID and Project ID
         view_details, error = self.get_view_details(project_id)
 
         if error:
@@ -159,6 +170,11 @@ class UpdateProjectPage:
         project_type = data.get("project_type", "")
         start_date = data.get("start_date", "")
         end_date = data.get("end_date", "")
+
+        # Retrieve optional Category ID
+        # Missing field means the existing assignment is preserved
+        category_provided = "category_id" in data
+        category_id = data.get("category_id")
 
         # Strip whitespace from all string fields
         project_name = (
@@ -219,6 +235,46 @@ class UpdateProjectPage:
             errors["project_type"] = (
                 "Please select a valid project type."
             )
+
+        # Validate optional Category ID when submitted
+        if category_provided:
+
+            # No category selected means NULL
+            if category_id is None or category_id == "":
+                category_id = None
+
+            elif isinstance(category_id, bool):
+                errors["category_id"] = (
+                    "The selected category is unavailable."
+                )
+
+            elif isinstance(category_id, int):
+
+                if category_id <= 0:
+                    errors["category_id"] = (
+                        "The selected category is unavailable."
+                    )
+
+            elif isinstance(category_id, str):
+
+                # Strip whitespace from the submitted Category ID
+                category_id = category_id.strip()
+
+                if not category_id:
+                    category_id = None
+
+                elif category_id.isdecimal() and int(category_id) > 0:
+                    category_id = int(category_id)
+
+                else:
+                    errors["category_id"] = (
+                        "The selected category is unavailable."
+                    )
+
+            else:
+                errors["category_id"] = (
+                    "The selected category is unavailable."
+                )
 
         # Validate Start Date
         parsed_start_date = None
@@ -282,7 +338,7 @@ class UpdateProjectPage:
                     "End date cannot be in the future."
                 )
 
-            # Ensure the End Date is not earlier than the Start Date
+            # Ensure End Date is not earlier than Start Date
             elif (
                 parsed_end_date is not None
                 and parsed_start_date is not None
@@ -304,7 +360,7 @@ class UpdateProjectPage:
                 "errors": errors
             }
 
-        # Return validated project information
+        # Prepare validated project information
         project_details = {
             "account_id": view_details["account_id"],
             "project_id": view_details["project_id"],
@@ -314,6 +370,11 @@ class UpdateProjectPage:
             "start_date": start_date,
             "end_date": end_date
         }
+
+        # Include Category ID only when explicitly submitted
+        # If omitted, the Entity preserves the existing assignment
+        if category_provided:
+            project_details["category_id"] = category_id
 
         return project_details, None
 
@@ -328,13 +389,18 @@ class UpdateProjectPage:
         return jsonify(error), 400
 
     # Display the Update Project page with existing information
-    def display_update_project_page(self, result, status_code):
+    def display_update_project_page(
+        self,
+        result,
+        status_code,
+        categories
+    ):
 
         # Return an error if project retrieval was unsuccessful
         if not result["success"]:
             return result["message"], status_code
 
-        # Retrieve the company and existing project information
+        # Retrieve company and existing project information
         company = result["company"]
         project = result["project"]
 
@@ -342,13 +408,14 @@ class UpdateProjectPage:
         account_id, error = self.get_account_id()
         username = self.get_username()
 
-        # Display the existing Update Project form
+        # Render the Edit IDP form with available categories
         return render_template(
             "updateProject.html",
             account_id=account_id,
             username=username,
             company=company,
-            project=project
+            project=project,
+            categories=categories
         ), status_code
 
     # Return the project update result to the frontend

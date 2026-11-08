@@ -1,4 +1,14 @@
 
+<!--
+What this code does?
+- Display the Create IDP page for Interior Designers.
+- Allow creation of Current IDP and Past IDP projects.
+- Display relevant date fields immediately below Project Type.
+- Display the optional Category dropdown below the date fields.
+- Retrieve available categories supplied by the Boundary.
+- Validate project details and submit them to the Boundary.
+- Preserve existing navigation and project creation behaviour.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -263,7 +273,7 @@
                            hidden></p>
                     </div>
 
-                    <!-- Date Fields -->
+                    <!-- Date Fields: Directly Below Project Type -->
                     <div class="date-fields" id="dateFields" hidden>
 
                         <!-- Start Date -->
@@ -297,6 +307,25 @@
                                id="endDateError"
                                hidden></p>
                         </div>
+                    </div>
+
+                    <!-- Optional Category: Below Date Fields -->
+                    <div class="field">
+                        <label for="categoryId">Category (Optional)</label>
+
+                        <select class="form-select"
+                                id="categoryId"
+                                name="category_id">
+
+                            <option value="">No category</option>
+
+                            {% for category in categories %}
+                            <option value="{{ category.category_id }}">
+                                {{ category.category_name }}
+                            </option>
+                            {% endfor %}
+
+                        </select>
                     </div>
 
                     <!-- Form Buttons -->
@@ -333,6 +362,9 @@
                 this.projectName = document.getElementById("projectName");
                 this.projectDescription = document.getElementById("projectDescription");
                 this.projectType = document.getElementById("projectType");
+
+                // Retrieve the optional Category dropdown
+                this.categoryId = document.getElementById("categoryId");
 
                 this.dateFields = document.getElementById("dateFields");
                 this.startDateField = document.getElementById("startDateField");
@@ -386,12 +418,12 @@
                     this.projectsUrl;
             }
 
-            // Show date fields based on the selected project type
+            // Show date fields based on selected project type
             updateDateFields() {
 
                 const projectType = this.projectType.value;
 
-                // Hide both date fields when no project type is selected
+                // Hide both date fields when no type is selected
                 if (!projectType) {
 
                     this.dateFields.hidden = true;
@@ -410,12 +442,12 @@
                     return;
                 }
 
-                // Both project types require a Start Date
+                // Current and Past IDPs require Start Date
                 this.dateFields.hidden = false;
                 this.startDateField.hidden = false;
                 this.startDate.required = true;
 
-                // Past IDP also requires an End Date
+                // Past IDP also requires End Date
                 if (projectType === "past") {
 
                     this.endDateField.hidden = false;
@@ -423,7 +455,7 @@
 
                 } else {
 
-                    // Current IDP does not require an End Date
+                    // Current IDP has no End Date
                     this.endDateField.hidden = true;
                     this.endDate.required = false;
                     this.endDate.value = "";
@@ -434,7 +466,7 @@
                 this.clearFieldError("projectType");
             }
 
-            // Prevent future dates
+            // Prevent selection of future dates
             setDateLimits() {
 
                 const today = new Date();
@@ -448,7 +480,7 @@
                 this.endDate.max = localDate;
             }
 
-            // Ensure End Date cannot be earlier than Start Date
+            // Ensure End Date is not earlier than Start Date
             updateEndDateLimit() {
 
                 this.endDate.min = this.startDate.value;
@@ -464,7 +496,7 @@
                 this.clearFieldError("startDate");
             }
 
-            // Display a validation error beneath a field
+            // Display a field validation error
             showFieldError(fieldName, message) {
 
                 const field = document.getElementById(fieldName);
@@ -477,7 +509,7 @@
                 error.hidden = false;
             }
 
-            // Clear an individual field error
+            // Clear a field validation error
             clearFieldError(fieldName) {
 
                 const field = document.getElementById(fieldName);
@@ -646,12 +678,13 @@
 
                 const projectType = this.projectType.value;
 
-                // Prepare data using the new project_type field
+                // Include optional category assignment
                 const projectData = {
                     project_name: this.projectName.value.trim(),
                     project_description:
                         this.projectDescription.value.trim(),
                     project_type: projectType,
+                    category_id: this.categoryId.value || null,
                     start_date: this.startDate.value,
                     end_date: projectType === "past"
                         ? this.endDate.value
