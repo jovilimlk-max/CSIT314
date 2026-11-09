@@ -1,0 +1,257 @@
+
+<!--
+What this code does?
+- Display an individual generated report for Platform Manager.
+- Show Report ID, Date Generated and Report Type.
+- Display the saved Total User Accounts and Total Projects.
+- Identify simulated Weekly and Monthly Report figures.
+- Provide an underlined Close link back to the Report listing.
+- Keep report information read-only.
+- Maintain existing Renovo navigation and styling.
+- Log out directly without confirmation.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovo | View Report</title>
+
+<style>
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+button { font: inherit; cursor: pointer; }
+
+/* Top Bar */
+.topbar { height: 76px; padding: 0 36px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; }
+.brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+.brand span { color: #8dded4; }
+.topbar-right, .user-info { display: flex; align-items: center; gap: 16px; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2d5272; color: #8dded4; display: grid; place-items: center; font-size: 13px; font-weight: 750; }
+.user-details { display: flex; flex-direction: column; gap: 3px; }
+.user-details strong { font-size: 13px; }
+.user-details small { color: #d1deec; font-size: 11px; }
+.logout-button { padding: 10px 16px; border: 1px solid #ffffff55; border-radius: 8px; background: transparent; color: white; font-size: 13px; }
+.logout-button:hover { background: #ffffff18; }
+
+/* Layout */
+.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+.sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-link { display: block; padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link:hover { background: #f0f5f7; }
+.nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+.main-content { padding: 42px 50px; max-width: 1100px; min-width: 0; }
+
+/* Report Details */
+.report-panel { padding: 30px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; }
+.report-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 28px; }
+.page-title { margin: 0; color: #14253e; font-size: 27px; }
+.close-link { color: #28747f; font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.close-link:hover { color: #1c5062; }
+
+/* Report Information */
+.report-information { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 30px; }
+.field label { display: block; margin-bottom: 9px; color: #52647a; font-size: 13px; font-weight: 700; }
+.read-only-field { min-height: 45px; padding: 13px 14px; border: 1px solid #e1e7ef; border-radius: 8px; background: #f3f6fa; color: #26344a; font-size: 13px; overflow-wrap: anywhere; }
+.report-type { text-transform: capitalize; }
+
+/* Report Summary */
+.section-title { margin: 0 0 18px; color: #14253e; font-size: 18px; }
+.report-divider { height: 1px; background: #e4e9f2; margin: 30px 0; }
+.summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.summary-card { padding: 25px; border: 1px solid #e4e9f2; border-radius: 12px; background: #f8fafc; }
+.summary-label { margin: 0 0 13px; color: #52647a; font-size: 13px; font-weight: 700; }
+.summary-value { margin: 0; color: #14253e; font-size: 34px; font-weight: 800; }
+.report-note { margin: 20px 0 0; color: #738096; font-size: 12px; line-height: 1.6; }
+
+@media (max-width: 900px) {
+    .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+    .main-content { padding: 32px 25px; }
+}
+@media (max-width: 650px) {
+    .topbar { padding: 16px 20px; }
+    .user-details { display: none; }
+    .dashboard-layout { display: block; }
+    .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+    .sidebar-title { display: none; }
+    .sidebar-nav { flex-direction: row; }
+    .main-content { padding: 28px 18px; }
+    .report-panel { padding: 20px; }
+    .report-information, .summary-grid { grid-template-columns: 1fr; }
+    .summary-value { font-size: 29px; }
+}
+</style>
+</head>
+
+<body>
+{% set display_username = username | default("Platform Manager", true) %}
+
+<!-- Top Bar -->
+<header class="topbar">
+    <div class="brand">RENO<span>VO</span></div>
+
+    <div class="topbar-right">
+        <div class="user-info">
+            <div class="user-avatar">PM</div>
+            <div class="user-details">
+                <strong>Hi, {{ display_username }}</strong>
+                <small>Platform Manager</small>
+            </div>
+        </div>
+
+        <button class="logout-button" id="logoutButton" type="button">
+            Log out
+        </button>
+    </div>
+</header>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <p class="sidebar-title">Management</p>
+
+        <nav class="sidebar-nav">
+            <a class="nav-link" id="categoryLink" href="#">
+                IDP Category
+            </a>
+            <a class="nav-link active" id="reportLink" href="#">
+                Report
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <section class="report-panel">
+
+            <!-- Report Heading and Close Link -->
+            <div class="report-header">
+                <h1 class="page-title">View Report</h1>
+
+                <a class="close-link" id="closeReportLink" href="#">
+                    Close
+                </a>
+            </div>
+
+            <!-- Read-only Report Information -->
+            <div class="report-information">
+
+                <div class="field">
+                    <label>Report ID</label>
+                    <div class="read-only-field">
+                        {{ report.report_id }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Date Generated</label>
+                    <div class="read-only-field">
+                        {{ report.date_generated }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Report Type</label>
+                    <div class="read-only-field report-type">
+                        {{ report.report_type }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="report-divider"></div>
+
+            <!-- Report Summary -->
+            <h2 class="section-title">Report Summary</h2>
+
+            <div class="summary-grid">
+
+                <div class="summary-card">
+                    <p class="summary-label">Total User Accounts</p>
+                    <p class="summary-value">
+                        {{ report.total_user_accounts }}
+                    </p>
+                </div>
+
+                <div class="summary-card">
+                    <p class="summary-label">Total Projects</p>
+                    <p class="summary-value">
+                        {{ report.total_projects }}
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Explain simulated report values -->
+            {% if report.report_type == "weekly" %}
+                <p class="report-note">
+                    Simulated weekly figures, calculated using a 7% increase
+                    over the actual database totals at the time of generation.
+                    Values are rounded up to the nearest whole number.
+                </p>
+
+            {% elif report.report_type == "monthly" %}
+                <p class="report-note">
+                    Simulated monthly figures, calculated using a 30% increase
+                    over the actual database totals at the time of generation.
+                    Values are rounded up to the nearest whole number.
+                </p>
+
+            {% else %}
+                <p class="report-note">
+                    Daily figures reflect the actual User Account and Project
+                    totals at the time the report was generated.
+                </p>
+            {% endif %}
+
+        </section>
+    </main>
+</div>
+
+<script>
+class ViewReportPage {
+
+    constructor() {
+        this.accountId = {{ account_id | tojson }};
+        this.username = {{ display_username | tojson }};
+
+        this.setupNavigation();
+    }
+
+    // Set up sidebar navigation and Close link
+    setupNavigation() {
+
+        const params = new URLSearchParams({
+            account_id: String(this.accountId),
+            username: this.username
+        });
+
+        const categoryUrl =
+            "/platform-manager/categories?" + params.toString();
+
+        const reportsUrl =
+            "/platform-manager/reports?" + params.toString();
+
+        // Sidebar navigation
+        document.getElementById("categoryLink").href = categoryUrl;
+        document.getElementById("reportLink").href = reportsUrl;
+
+        // Close the report and return to Generated Reports
+        document.getElementById("closeReportLink").href = reportsUrl;
+
+        // Direct logout without confirmation
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+    }
+}
+
+new ViewReportPage();
+</script>
+</body>
+</html>

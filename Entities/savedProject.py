@@ -7,9 +7,11 @@ What this code does?
 - Check whether a Customer has saved an IDP.
 - Retrieve active IDPs saved by a Customer.
 - Search, filter and sort the Customer's Saved List.
-- Retrieve category and PIC information for saved projects.
+- Retrieve category information from the separate idpCategory.db.
+- Retrieve PIC information for saved projects.
 - Preserve saved records when projects are suspended.
 - Count how many Customers currently have an IDP saved.
+- Keep database operations in the Entity.
 '''
 
 import os
@@ -18,6 +20,7 @@ import sqlite3
 
 class SavedProject:
 
+    # Set up database paths
     def __init__(self):
 
         base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -26,6 +29,13 @@ class SavedProject:
             base_dir,
             "Database",
             "project.db"
+        )
+
+        # IDP categories are now stored separately
+        self.category_database_path = os.path.join(
+            base_dir,
+            "Database",
+            "idpCategory.db"
         )
 
         self.company_database_path = os.path.join(
@@ -38,6 +48,14 @@ class SavedProject:
             base_dir,
             "Database",
             "userAccount.db"
+        )
+
+    # Attach the category database for cross-database queries
+    def attach_category_database(self, connection):
+
+        connection.execute(
+            "ATTACH DATABASE ? AS category_db",
+            (self.category_database_path,)
         )
 
     # Initialise the saved projects table
@@ -134,6 +152,8 @@ class SavedProject:
             }, 201
 
         except sqlite3.IntegrityError:
+
+            connection.rollback()
 
             return {
                 "success": False,
@@ -355,6 +375,9 @@ class SavedProject:
         connection.row_factory = sqlite3.Row
 
         try:
+            # Read categories from the separate IDP Category database
+            self.attach_category_database(connection)
+
             cursor = connection.cursor()
 
             # Suspended IDPs remain saved but are hidden from Customers
@@ -371,7 +394,7 @@ class SavedProject:
                 FROM saved_projects AS s
                 JOIN projects AS p
                     ON s.project_id = p.project_id
-                LEFT JOIN idp_categories AS c
+                LEFT JOIN category_db.idp_categories AS c
                     ON p.category_id = c.category_id
                 WHERE s.account_id = ?
                   AND p.status = 'active'

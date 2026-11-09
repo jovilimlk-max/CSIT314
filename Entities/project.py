@@ -3,12 +3,15 @@
 What this code does?
 - Initialise and manage Interior Designer Projects.
 - Create, view, update, suspend and search Current and Past IDPs.
-- Manage optional project categories and retrieve active categories.
+- Store projects in Database/project.db.
+- Retrieve IDP categories from the separate Database/idpCategory.db.
+- Preserve optional category assignments when categories are suspended.
 - Retrieve active Customer IDPs with their category and PIC.
-- Record Customer views and retrieve project view and saved counts.
+- Record Customer views and retrieve view and saved counts.
 - Allow project details to be retrieved without recording another view.
 - Retrieve active company information associated with a Customer IDP.
 - Keep suspended projects hidden from Customers.
+- Keep database operations and domain checks in the Entity.
 '''
 
 import os
@@ -21,18 +24,45 @@ from Entities.savedProject import SavedProject
 
 class Project:
 
+    # Set up the database paths and related Entities
     def __init__(self):
         base_dir = os.path.dirname(os.path.dirname(__file__))
-        self.database_path = os.path.join(base_dir, "Database", "project.db")
-        self.company_database_path = os.path.join(base_dir, "Database", "companyInformation.db")
-        self.account_database_path = os.path.join(base_dir, "Database", "userAccount.db")
+
+        self.database_path = os.path.join(
+            base_dir, "Database", "project.db"
+        )
+
+        self.category_database_path = os.path.join(
+            base_dir, "Database", "idpCategory.db"
+        )
+
+        self.company_database_path = os.path.join(
+            base_dir, "Database", "companyInformation.db"
+        )
+
+        self.account_database_path = os.path.join(
+            base_dir, "Database", "userAccount.db"
+        )
+
         self.company_information = CompanyInformation()
         self.idp_category = IDPCategory()
         self.saved_project = SavedProject()
 
+    # Attach the separate category database to a project connection
+    def attach_category_database(self, connection):
+        connection.execute(
+            "ATTACH DATABASE ? AS category_db",
+            (self.category_database_path,)
+        )
+
     # Initialise project and view-count tables
     def initialise_database(self):
-        os.makedirs(os.path.dirname(self.database_path), exist_ok=True)
+        os.makedirs(
+            os.path.dirname(self.database_path),
+            exist_ok=True
+        )
+
+        # Categories are initialised in their own database
         self.idp_category.initialise_database()
 
         connection = sqlite3.connect(self.database_path)
@@ -50,8 +80,7 @@ class Project:
                     end_date TEXT,
                     project_type TEXT NOT NULL DEFAULT 'current',
                     category_id INTEGER DEFAULT NULL,
-                    status TEXT NOT NULL DEFAULT 'active',
-                    FOREIGN KEY (category_id) REFERENCES idp_categories(category_id)
+                    status TEXT NOT NULL DEFAULT 'active'
                 )
             ''')
 
@@ -59,7 +88,8 @@ class Project:
                 CREATE TABLE IF NOT EXISTS project_views (
                     project_id INTEGER PRIMARY KEY,
                     view_count INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (project_id) REFERENCES projects(project_id)
+                    FOREIGN KEY (project_id)
+                        REFERENCES projects(project_id)
                 )
             ''')
 
@@ -72,7 +102,9 @@ class Project:
 
     # Retrieve the Interior Designer's company before creating a project
     def get_create_project_company(self, account_id):
-        company = self.company_information.get_company_by_account_id(account_id)
+        company = self.company_information.get_company_by_account_id(
+            account_id
+        )
 
         if company is None:
             return {
@@ -80,7 +112,10 @@ class Project:
                 "message": "Please create company information before creating a project."
             }, 404
 
-        return {"success": True, "company": company}, 200
+        return {
+            "success": True,
+            "company": company
+        }, 200
 
     # Create a Current or Past IDP
     def create_new_project(self, project_details):
@@ -99,6 +134,7 @@ class Project:
 
         category_id = project_details.get("category_id")
 
+        # Check the category using the separate category Entity
         if not self.idp_category.is_active_category(category_id):
             return {
                 "data": {
@@ -120,8 +156,14 @@ class Project:
 
             cursor.execute('''
                 INSERT INTO projects (
-                    company_id, project_name, project_description,
-                    start_date, end_date, project_type, category_id, status
+                    company_id,
+                    project_name,
+                    project_description,
+                    start_date,
+                    end_date,
+                    project_type,
+                    category_id,
+                    status
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
             ''', (
@@ -149,12 +191,13 @@ class Project:
             "status_code": 201
         }
 
-    # Retrieve a project with category and engagement counts
+    # Retrieve a project with its category and engagement counts
     def get_project_by_id(self, project_id):
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
 
         try:
+            self.attach_category_database(connection)
             cursor = connection.cursor()
 
             cursor.execute('''
@@ -169,7 +212,7 @@ class Project:
                         WHERE s.project_id = p.project_id
                     ) AS save_count
                 FROM projects AS p
-                LEFT JOIN idp_categories AS c
+                LEFT JOIN category_db.idp_categories AS c
                     ON p.category_id = c.category_id
                 LEFT JOIN project_views AS v
                     ON p.project_id = v.project_id
@@ -182,12 +225,13 @@ class Project:
         finally:
             connection.close()
 
-    # Retrieve projects belonging to one Interior Designer company
+    # Retrieve projects belonging to an Interior Designer company
     def get_projects_by_company_id(self, company_id):
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
 
         try:
+            self.attach_category_database(connection)
             cursor = connection.cursor()
 
             cursor.execute('''
@@ -202,7 +246,7 @@ class Project:
                         WHERE s.project_id = p.project_id
                     ) AS save_count
                 FROM projects AS p
-                LEFT JOIN idp_categories AS c
+                LEFT JOIN category_db.idp_categories AS c
                     ON p.category_id = c.category_id
                 LEFT JOIN project_views AS v
                     ON p.project_id = v.project_id
@@ -210,7 +254,10 @@ class Project:
                 ORDER BY p.project_id DESC
             ''', (company_id,))
 
-            return [dict(row) for row in cursor.fetchall()]
+            return [
+                dict(row)
+                for row in cursor.fetchall()
+            ]
 
         finally:
             connection.close()
@@ -233,12 +280,20 @@ class Project:
 
     # Retrieve Interior Designer project listing
     def view_projects(self, account_id):
-        company = self.company_information.get_company_by_account_id(account_id)
+        company = self.company_information.get_company_by_account_id(
+            account_id
+        )
 
         if company is None:
-            return {"success": True, "company": None, "projects": []}, 200
+            return {
+                "success": True,
+                "company": None,
+                "projects": []
+            }, 200
 
-        projects = self.get_projects_by_company_id(company["company_id"])
+        projects = self.get_projects_by_company_id(
+            company["company_id"]
+        )
 
         return {
             "success": True,
@@ -246,7 +301,7 @@ class Project:
             "projects": projects
         }, 200
 
-    # View a project as an Interior Designer without increasing its view count
+    # View an Interior Designer project without increasing its view count
     def view_project(self, view_details):
         company = self.company_information.get_company_by_account_id(
             view_details["account_id"]
@@ -258,10 +313,15 @@ class Project:
                 "message": "Company information not found."
             }, 404
 
-        project = self.get_project_by_id(view_details["project_id"])
+        project = self.get_project_by_id(
+            view_details["project_id"]
+        )
 
         if project is None:
-            return {"success": False, "message": "Project not found."}, 404
+            return {
+                "success": False,
+                "message": "Project not found."
+            }, 404
 
         if project["company_id"] != company["company_id"]:
             return {
@@ -316,6 +376,8 @@ class Project:
             project["category_id"]
         )
 
+        # Existing assignments may remain even if a category is suspended.
+        # New assignments must use active categories.
         if (
             category_id != project["category_id"]
             and not self.idp_category.is_active_category(category_id)
@@ -340,7 +402,8 @@ class Project:
 
             cursor.execute('''
                 UPDATE projects
-                SET project_name = ?,
+                SET
+                    project_name = ?,
                     project_description = ?,
                     project_type = ?,
                     start_date = ?,
@@ -368,7 +431,8 @@ class Project:
                 "success": updated,
                 "message": (
                     "Project updated successfully."
-                    if updated else "Unable to update project."
+                    if updated
+                    else "Unable to update project."
                 ),
                 "project_id": project_id
             },
@@ -399,10 +463,16 @@ class Project:
         project = self.get_project_by_id(project_id)
 
         if project is None:
-            return {"success": False, "message": "Project not found."}, 404
+            return {
+                "success": False,
+                "message": "Project not found."
+            }, 404
 
         if project["company_id"] != company["company_id"]:
-            return {"success": False, "message": "Access denied."}, 403
+            return {
+                "success": False,
+                "message": "Access denied."
+            }, 403
 
         if project["status"] == requested_status:
             return {
@@ -419,7 +489,10 @@ class Project:
                 UPDATE projects
                 SET status = ?
                 WHERE project_id = ?
-            ''', (requested_status, project_id))
+            ''', (
+                requested_status,
+                project_id
+            ))
 
             connection.commit()
 
@@ -440,9 +513,15 @@ class Project:
         )
 
         if company is None:
-            return {"success": True, "projects": []}, 200
+            return {
+                "success": True,
+                "projects": []
+            }, 200
 
-        projects = self.get_projects_by_company_id(company["company_id"])
+        projects = self.get_projects_by_company_id(
+            company["company_id"]
+        )
+
         query = search_details["search_query"].lower()
 
         matching_projects = [
@@ -458,25 +537,11 @@ class Project:
 
     # Retrieve active categories for the Customer category dropdown
     def get_customer_categories(self):
-        connection = sqlite3.connect(self.database_path)
-        connection.row_factory = sqlite3.Row
 
-        try:
-            cursor = connection.cursor()
+        # IDPCategory handles access to idpCategory.db
+        return self.idp_category.get_active_categories()
 
-            cursor.execute('''
-                SELECT category_id, category_name
-                FROM idp_categories
-                WHERE status = 'active'
-                ORDER BY category_name COLLATE NOCASE
-            ''')
-
-            return [dict(row) for row in cursor.fetchall()]
-
-        finally:
-            connection.close()
-
-    # Attach Interior Designer names and company status to project records
+    # Attach PIC names and company status to project records
     def get_customer_project_pics(self, projects):
         if not projects:
             return projects
@@ -486,16 +551,23 @@ class Project:
             for project in projects
         }
 
-        placeholders = ",".join("?" for _ in company_ids)
+        placeholders = ",".join(
+            "?" for _ in company_ids
+        )
 
-        connection = sqlite3.connect(self.company_database_path)
+        connection = sqlite3.connect(
+            self.company_database_path
+        )
         connection.row_factory = sqlite3.Row
 
         try:
             cursor = connection.cursor()
 
             cursor.execute(f'''
-                SELECT company_id, account_id, status AS company_status
+                SELECT
+                    company_id,
+                    account_id,
+                    status AS company_status
                 FROM company_information
                 WHERE company_id IN ({placeholders})
             ''', tuple(company_ids))
@@ -516,9 +588,13 @@ class Project:
         account_names = {}
 
         if account_ids:
-            placeholders = ",".join("?" for _ in account_ids)
+            placeholders = ",".join(
+                "?" for _ in account_ids
+            )
 
-            connection = sqlite3.connect(self.account_database_path)
+            connection = sqlite3.connect(
+                self.account_database_path
+            )
             connection.row_factory = sqlite3.Row
 
             try:
@@ -539,7 +615,9 @@ class Project:
                 connection.close()
 
         for project in projects:
-            company = companies.get(project["company_id"])
+            company = companies.get(
+                project["company_id"]
+            )
 
             if company is None:
                 project["pic_name"] = "-"
@@ -551,17 +629,19 @@ class Project:
                     company["account_id"],
                     "-"
                 )
+
                 project["pic_account_id"] = company["account_id"]
                 project["company_status"] = company["company_status"]
 
         return projects
 
-    # Retrieve active Customer IDPs; JavaScript handles UI filtering
+    # Retrieve active Customer IDPs
     def search_customer_projects(self, search_details=None):
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
 
         try:
+            self.attach_category_database(connection)
             cursor = connection.cursor()
 
             cursor.execute('''
@@ -570,11 +650,12 @@ class Project:
                     c.category_name,
                     c.status AS category_status,
                     CASE
-                        WHEN c.status = 'active' THEN c.category_name
+                        WHEN c.status = 'active'
+                        THEN c.category_name
                         ELSE '-'
                     END AS category_display
                 FROM projects AS p
-                LEFT JOIN idp_categories AS c
+                LEFT JOIN category_db.idp_categories AS c
                     ON p.category_id = c.category_id
                 WHERE p.status = 'active'
                 ORDER BY p.project_id DESC
@@ -588,7 +669,11 @@ class Project:
         finally:
             connection.close()
 
-        projects = self.get_customer_project_pics(projects)
+        # Add Interior Designer PIC and company status
+        projects = self.get_customer_project_pics(
+            projects
+        )
+
         categories = self.get_customer_categories()
 
         return {
@@ -603,16 +688,18 @@ class Project:
         connection.row_factory = sqlite3.Row
 
         try:
+            self.attach_category_database(connection)
             cursor = connection.cursor()
 
-            # Customers can only open active IDPs
+            # Customers can open active IDPs only
             cursor.execute('''
                 SELECT
                     p.*,
                     c.category_name,
                     c.status AS category_status,
                     CASE
-                        WHEN c.status = 'active' THEN c.category_name
+                        WHEN c.status = 'active'
+                        THEN c.category_name
                         ELSE '-'
                     END AS category_display,
                     (
@@ -621,7 +708,7 @@ class Project:
                         WHERE s.project_id = p.project_id
                     ) AS save_count
                 FROM projects AS p
-                LEFT JOIN idp_categories AS c
+                LEFT JOIN category_db.idp_categories AS c
                     ON p.category_id = c.category_id
                 WHERE p.project_id = ?
                   AND p.status = 'active'
@@ -637,18 +724,22 @@ class Project:
 
             project_details = dict(project)
 
-            # Record a view only when the Customer opens the IDP normally
+            # Increase view count only for a normal Customer view
             if count_view:
                 cursor.execute('''
-                    INSERT INTO project_views (project_id, view_count)
+                    INSERT INTO project_views (
+                        project_id,
+                        view_count
+                    )
                     VALUES (?, 1)
                     ON CONFLICT(project_id)
-                    DO UPDATE SET view_count = view_count + 1
+                    DO UPDATE SET
+                        view_count = view_count + 1
                 ''', (project_id,))
 
                 connection.commit()
 
-            # Retrieve the latest count without increasing it again
+            # Retrieve the latest view count
             cursor.execute('''
                 SELECT view_count
                 FROM project_views
@@ -658,13 +749,15 @@ class Project:
             view_record = cursor.fetchone()
 
             project_details["view_count"] = (
-                view_record["view_count"] if view_record else 0
+                view_record["view_count"]
+                if view_record
+                else 0
             )
 
         finally:
             connection.close()
 
-        # Include PIC and company status
+        # Attach Interior Designer PIC and company status
         project_details = self.get_customer_project_pics(
             [project_details]
         )[0]
@@ -677,7 +770,7 @@ class Project:
     # Retrieve active company information linked to an active Customer IDP
     def get_customer_project_company_information(self, project_id):
 
-        # Check the project without recording another Customer view
+        # Retrieve the project without recording another view
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
 
@@ -685,7 +778,9 @@ class Project:
             cursor = connection.cursor()
 
             cursor.execute('''
-                SELECT project_id, company_id
+                SELECT
+                    project_id,
+                    company_id
                 FROM projects
                 WHERE project_id = ?
                   AND status = 'active'
@@ -702,7 +797,7 @@ class Project:
                 "message": "Project not found or unavailable."
             }, 404
 
-        # Suspended company information must not be shown to Customers
+        # Suspended company information is hidden from Customers
         company = self.company_information.get_active_company_by_company_id(
             project["company_id"]
         )

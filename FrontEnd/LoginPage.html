@@ -2,11 +2,12 @@
 <!--
 What this code does?
 - Display the login form for all four user roles.
-- Validate login inputs and send them to Flask.
+- Validate login inputs and send them to the Flask Boundary.
 - Redirect User Admin to the User Admin Dashboard.
 - Redirect Interior Designer to Company Information.
-- Redirect Customer to Browse IDPs with their account ID.
-- Keep the temporary message for Platform Manager.
+- Redirect Customer to Browse IDPs.
+- Redirect Platform Manager to the IDP Category landing page.
+- Preserve the existing Renovo login design and password visibility toggle.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -261,7 +262,7 @@ What this code does?
 
                 try {
 
-                    // Submit login credentials to Flask
+                    // Submit login credentials to the Flask Boundary
                     const response = await fetch("/login", {
                         method: "POST",
                         headers: {
@@ -276,6 +277,7 @@ What this code does?
 
                     const result = await response.json();
 
+                    // Display authentication errors
                     if (!response.ok || !result.success) {
 
                         this.showMessage(
@@ -340,13 +342,23 @@ What this code does?
                             "/customer/projects?" +
                             params.toString();
 
-                    // Platform Manager: retain temporary placeholder
-                    } else {
+                    // Platform Manager: redirect to IDP Category
+                    } else if (user.role === "manager") {
 
-                        this.showMessage(
-                            "Dashboard for this user type is not available yet.",
-                            false
-                        );
+                        if (!user.id) {
+
+                            this.showMessage("Invalid account ID.");
+                            return;
+                        }
+
+                        const params = new URLSearchParams({
+                            account_id: String(user.id),
+                            username: user.name
+                        });
+
+                        window.location.href =
+                            "/platform-manager/categories?" +
+                            params.toString();
                     }
 
                 } catch (error) {
