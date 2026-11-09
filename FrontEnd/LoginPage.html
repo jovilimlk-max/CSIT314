@@ -1,4 +1,13 @@
 
+<!--
+What this code does?
+- Display the login form for all four user roles.
+- Validate login inputs and send them to Flask.
+- Redirect User Admin to the User Admin Dashboard.
+- Redirect Interior Designer to Company Information.
+- Redirect Customer to Browse IDPs with their account ID.
+- Keep the temporary message for Platform Manager.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +48,7 @@
         .status.error { background: #fff0f0; color: #a22735; }
         .status.ok { background: #e6f6f0; color: #186b4d; }
 
+        /* Mobile layout */
         @media (max-width: 720px) {
             .shell { display: block; width: min(480px, 100%); }
             .visual { min-height: 125px; padding: 24px; }
@@ -51,6 +61,8 @@
 
 <body>
     <div class="shell">
+
+        <!-- Brand panel -->
         <aside class="visual">
             <div class="brand">RENO<span>VO</span></div>
 
@@ -65,6 +77,7 @@
             <p>One secure portal to connect clients, designers, and the Renovo team.</p>
         </aside>
 
+        <!-- Login form -->
         <main class="main">
             <div class="eyebrow">Welcome to Renovo</div>
             <h1>Log in</h1>
@@ -78,6 +91,7 @@
                 <!-- User Type Dropdown -->
                 <div class="field">
                     <label for="role">Log in as</label>
+
                     <select class="control" id="role" required>
                         <option value="customer">Customer</option>
                         <option value="designer">Interior Designer</option>
@@ -89,9 +103,13 @@
                 <!-- Email Field -->
                 <div class="field">
                     <label for="email">Email address</label>
-                    <input class="control" id="email" type="email"
+
+                    <input class="control"
+                           id="email"
+                           type="email"
                            autocomplete="username"
-                           placeholder="you@example.com" required>
+                           placeholder="you@example.com"
+                           required>
                 </div>
 
                 <!-- Password Field -->
@@ -99,16 +117,28 @@
                     <label for="password">Password</label>
 
                     <div class="password-box">
-                        <input class="control" id="password" type="password"
+                        <input class="control"
+                               id="password"
+                               type="password"
                                autocomplete="current-password"
-                               placeholder="Enter your password" required>
+                               placeholder="Enter your password"
+                               required>
 
-                        <button class="eye" id="togglePassword" type="button"
-                                aria-label="Show password" aria-pressed="false">
-                            <svg id="eyeIcon" width="20" height="20"
-                                 viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.8"
-                                 stroke-linecap="round" stroke-linejoin="round">
+                        <button class="eye"
+                                id="togglePassword"
+                                type="button"
+                                aria-label="Show password"
+                                aria-pressed="false">
+
+                            <svg id="eyeIcon"
+                                 width="20"
+                                 height="20"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.8"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
                                 <path d="M2 12 C4.5 8 8 6 12 6 C16 6 19.5 8 22 12 C19.5 16 16 18 12 18 C8 18 4.5 16 2 12 Z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
@@ -117,163 +147,222 @@
                 </div>
 
                 <!-- Login Button -->
-                <button class="submit" type="submit">Log in</button>
+                <button class="submit" type="submit">
+                    Log in
+                </button>
 
-                <div id="message" class="status"
-                     role="status" aria-live="polite"></div>
+                <!-- Login Feedback -->
+                <div id="message"
+                     class="status"
+                     role="status"
+                     aria-live="polite"></div>
             </form>
         </main>
     </div>
 
     <script>
         class LoginPage {
+
             constructor() {
-                this.form = document.getElementById('loginForm');
-                this.role = document.getElementById('role');
-                this.email = document.getElementById('email');
-                this.password = document.getElementById('password');
-                this.message = document.getElementById('message');
+
+                this.form = document.getElementById("loginForm");
+                this.role = document.getElementById("role");
+                this.email = document.getElementById("email");
+                this.password = document.getElementById("password");
+                this.message = document.getElementById("message");
 
                 this.submitButton = this.form.querySelector(
                     'button[type="submit"]'
                 );
 
-                this.eyeButton = document.getElementById('togglePassword');
-                this.eyeIcon = document.getElementById('eyeIcon');
+                this.eyeButton = document.getElementById("togglePassword");
+                this.eyeIcon = document.getElementById("eyeIcon");
 
                 this.setupEvents();
             }
 
-            // Set up event listeners
+            // Set up form and password visibility events
             setupEvents() {
+
                 this.form.addEventListener(
-                    'submit', event => this.handleLogin(event)
+                    "submit",
+                    event => this.handleLogin(event)
                 );
 
                 this.eyeButton.addEventListener(
-                    'click', () => this.togglePassword()
+                    "click",
+                    () => this.togglePassword()
                 );
 
-                this.role.addEventListener('change', () => {
-                    this.message.className = 'status';
+                this.role.addEventListener("change", () => {
+                    this.message.className = "status";
                 });
             }
 
-            // Display error or information message
+            // Display login feedback
             showMessage(text, isError = true) {
+
                 this.message.textContent = text;
-                this.message.className = 'status show ' +
-                    (isError ? 'error' : 'ok');
+
+                this.message.className = "status show " +
+                    (isError ? "error" : "ok");
             }
 
-            // Show or hide password
+            // Show or hide the password
             togglePassword() {
-                const reveal = this.password.type === 'password';
 
-                this.password.type = reveal ? 'text' : 'password';
+                const reveal = this.password.type === "password";
+
+                this.password.type = reveal ? "text" : "password";
 
                 this.eyeButton.setAttribute(
-                    'aria-label',
-                    reveal ? 'Hide password' : 'Show password'
+                    "aria-label",
+                    reveal ? "Hide password" : "Show password"
                 );
 
                 this.eyeButton.setAttribute(
-                    'aria-pressed', String(reveal)
+                    "aria-pressed",
+                    String(reveal)
                 );
 
-                this.eyeIcon.style.opacity = reveal ? '.45' : '1';
+                this.eyeIcon.style.opacity = reveal ? ".45" : "1";
             }
 
             // Handle login submission
             async handleLogin(event) {
+
                 event.preventDefault();
 
                 const role = this.role.value;
                 const email = this.email.value.trim();
                 const password = this.password.value;
 
-                // Front-end validation
+                // Validate required fields
                 if (!email || !password) {
+
                     this.showMessage(
-                        'Please enter your email address and password.'
+                        "Please enter your email address and password."
                     );
+
                     return;
                 }
 
+                // Validate email format
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    this.showMessage('Please enter a valid email address.');
+
+                    this.showMessage(
+                        "Please enter a valid email address."
+                    );
+
                     return;
                 }
 
                 this.submitButton.disabled = true;
 
                 try {
-                    // Send login details to Flask Boundary
-                    const response = await fetch('/login', {
-                        method: 'POST',
+
+                    // Submit login credentials to Flask
+                    const response = await fetch("/login", {
+                        method: "POST",
                         headers: {
-                            'Content-Type': 'application/json'
+                            "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ role, email, password })
+                        body: JSON.stringify({
+                            role,
+                            email,
+                            password
+                        })
                     });
 
                     const result = await response.json();
 
-                    // Authentication failed
                     if (!response.ok || !result.success) {
+
                         this.showMessage(
-                            result.message || 'Login failed.'
+                            result.message || "Login failed."
                         );
+
                         return;
                     }
 
-                    // Verify returned account information
+                    // Retrieve authenticated account information
                     const user = result.user;
 
                     if (!user || user.role !== role || !user.name) {
-                        this.showMessage('Invalid account information.');
+
+                        this.showMessage(
+                            "Invalid account information."
+                        );
+
                         return;
                     }
 
-                    // Redirect User Admin to dashboard
-                    if (user.role === 'admin') {
+                    // User Admin: redirect to dashboard
+                    if (user.role === "admin") {
+
                         window.location.href =
-                            '/user-admin/dashboard?username=' +
+                            "/user-admin/dashboard?username=" +
                             encodeURIComponent(user.name);
 
-                    // Redirect Interior Designer to View Company Information
-                    } else if (user.role === 'designer') {
+                    // Interior Designer: redirect to Company Information
+                    } else if (user.role === "designer") {
 
                         if (!user.id) {
-                            this.showMessage('Invalid account ID.');
+
+                            this.showMessage("Invalid account ID.");
                             return;
                         }
 
-                        window.location.href =
-                            '/interior-designer/company?account_id=' +
-                            encodeURIComponent(user.id) +
-                            '&username=' +
-                            encodeURIComponent(user.name);
+                        const params = new URLSearchParams({
+                            account_id: String(user.id),
+                            username: user.name
+                        });
 
-                    // Other roles retain their temporary message
+                        window.location.href =
+                            "/interior-designer/company?" +
+                            params.toString();
+
+                    // Customer: redirect to Browse IDPs
+                    } else if (user.role === "customer") {
+
+                        if (!user.id) {
+
+                            this.showMessage("Invalid account ID.");
+                            return;
+                        }
+
+                        const params = new URLSearchParams({
+                            account_id: String(user.id),
+                            username: user.name
+                        });
+
+                        window.location.href =
+                            "/customer/projects?" +
+                            params.toString();
+
+                    // Platform Manager: retain temporary placeholder
                     } else {
+
                         this.showMessage(
-                            'Dashboard for this user type is not available yet.',
+                            "Dashboard for this user type is not available yet.",
                             false
                         );
                     }
 
                 } catch (error) {
+
                     this.showMessage(
-                        'Unable to complete login. Please try again.'
+                        "Unable to complete login. Please try again."
                     );
+
                 } finally {
+
                     this.submitButton.disabled = false;
                 }
             }
         }
 
-        // Initialise login page
+        // Initialise the Login Page
         new LoginPage();
     </script>
 </body>

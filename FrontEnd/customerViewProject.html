@@ -1,0 +1,417 @@
+
+<!--
+What this code does?
+- Display active IDP details in read-only form for Customers.
+- Return to IDPs or Saved List based on the source page.
+- Show PIC, description, progress, dates, view count and saved count.
+- Show Company Information only when company information is active.
+- Allow Customers to save and unsave IDPs with confirmation.
+- Update the saved count immediately after successful Save/Unsave.
+- Preserve Customer navigation and log out without confirmation.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovo | View IDP</title>
+<style>
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+button { font: inherit; cursor: pointer; }
+
+/* Top Bar */
+.topbar { height: 76px; padding: 0 36px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; }
+.brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+.brand span { color: #8dded4; }
+.topbar-right, .user-info { display: flex; align-items: center; gap: 16px; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2d5272; color: #8dded4; display: grid; place-items: center; font-size: 13px; font-weight: 750; }
+.user-details { display: flex; flex-direction: column; gap: 3px; }
+.user-details strong { font-size: 13px; }
+.user-details small { color: #d1deec; font-size: 11px; }
+.logout-button { padding: 10px 16px; border: 1px solid #ffffff55; border-radius: 8px; background: transparent; color: white; font-size: 13px; }
+.logout-button:hover { background: #ffffff18; }
+
+/* Layout */
+.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+.sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-link { display: block; padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link:hover { background: #f0f5f7; }
+.nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+.main-content { padding: 42px 50px; min-width: 0; max-width: 1150px; }
+.back-link { display: inline-block; margin-bottom: 22px; color: #28747f; font-size: 13px; font-weight: 700; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+.page-title { margin: 0 0 25px; color: #14253e; font-size: 30px; }
+
+/* Read-only Project Details */
+.details-panel { padding: 30px; border: 1px solid #e4e9f2; border-radius: 14px; background: white; }
+.field { margin-bottom: 20px; }
+.field label { display: block; margin-bottom: 8px; color: #52647a; font-size: 13px; font-weight: 700; }
+.read-only-field { min-height: 44px; padding: 12px 14px; border: 1px solid #e1e7ef; border-radius: 8px; background: #f3f6fa; color: #26344a; font-size: 13px; overflow-wrap: anywhere; }
+.description-field { min-height: 95px; line-height: 1.6; white-space: pre-wrap; }
+.company-button { display: inline-block; margin: 0 0 20px; padding: 10px 16px; border-radius: 8px; background: #1c5062; color: white; font-size: 12px; font-weight: 700; text-decoration: none; }
+.company-button:hover { background: #256d7f; }
+.project-meta { margin-top: 8px; color: #738096; font-size: 12px; line-height: 1.9; }
+.form-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+.primary-button { min-width: 100px; padding: 12px 20px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; }
+.primary-button:hover { background: #256d7f; }
+.primary-button:disabled { opacity: .55; cursor: not-allowed; }
+.secondary-button { background: white; border: 1px solid #cdd7e4; color: #52647a; }
+.message { margin-top: 16px; font-size: 13px; }
+.message.success { color: #186b4d; }
+.message.error { color: #b43232; }
+
+/* Save and Unsave Confirmation */
+.modal-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: #101c30a8; }
+.modal { width: 100%; max-width: 420px; padding: 25px; border-radius: 12px; background: white; box-shadow: 0 20px 60px #14253e33; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.modal-title { margin: 0; color: #14253e; font-size: 19px; }
+.modal-close { border: none; background: none; color: #8290a3; font-size: 24px; }
+.modal-description { margin: 18px 0 24px; color: #52647a; font-size: 13px; line-height: 1.6; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-button { padding: 10px 18px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; font-size: 12px; font-weight: 700; }
+.modal-button.confirm { border-color: #1c5062; background: #1c5062; color: white; }
+.modal-button:disabled { opacity: .55; cursor: not-allowed; }
+[hidden] { display: none !important; }
+
+/* Responsive Layout */
+@media (max-width: 900px) {
+    .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+    .main-content { padding: 32px 25px; }
+}
+@media (max-width: 650px) {
+    .topbar { padding: 16px 20px; }
+    .user-details { display: none; }
+    .dashboard-layout { display: block; }
+    .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+    .sidebar-title { display: none; }
+    .sidebar-nav { display: flex; }
+    .main-content { padding: 28px 18px; }
+    .details-panel { padding: 20px; }
+}
+</style>
+</head>
+<body>
+{% set display_username = username | default("Customer", true) %}
+{% set from_saved = source | default("idps") == "saved" %}
+{% set project_progress = "Ongoing" if project.project_type == "current" else "Completed" %}
+
+<!-- Top Bar -->
+<header class="topbar">
+    <div class="brand">RENO<span>VO</span></div>
+    <div class="topbar-right">
+        <div class="user-info">
+            <div class="user-avatar">CU</div>
+            <div class="user-details">
+                <strong>Hi, {{ display_username }}</strong>
+                <small>Customer</small>
+            </div>
+        </div>
+        <button class="logout-button" id="logoutButton" type="button">Log out</button>
+    </div>
+</header>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <p class="sidebar-title">Browse</p>
+        <nav class="sidebar-nav">
+            <a class="nav-link {{ '' if from_saved else 'active' }}" id="projectsLink" href="#">IDPs</a>
+            <a class="nav-link {{ 'active' if from_saved else '' }}" id="savedListLink" href="#">Saved List</a>
+        </nav>
+    </aside>
+
+    <!-- Project Details -->
+    <main class="main-content">
+        <a class="back-link" href="{{ back_url | default('#') }}">
+            ← {{ back_label | default("Back to IDPs") }}
+        </a>
+
+        <h1 class="page-title">{{ project.project_name }}</h1>
+
+        <section class="details-panel">
+
+            <div class="field">
+                <label>Project Name</label>
+                <div class="read-only-field">{{ project.project_name }}</div>
+            </div>
+
+            <div class="field">
+                <label>PIC (Person in charge)</label>
+                <div class="read-only-field">{{ project.pic_name | default("-", true) }}</div>
+            </div>
+
+            <!-- Company Information is hidden when the company is suspended -->
+            {% if project.company_status == "active" %}
+                <a class="company-button" id="companyInformationLink" href="#">
+                    Company Information
+                </a>
+            {% endif %}
+
+            <div class="field">
+                <label>Project Description</label>
+                <div class="read-only-field description-field">{{ project.project_description }}</div>
+            </div>
+
+            <div class="field">
+                <label>Project Progress</label>
+                <div class="read-only-field">{{ project_progress }}</div>
+            </div>
+
+            <div class="field">
+                <label>Start Date</label>
+                <div class="read-only-field">{{ project.start_date }}</div>
+            </div>
+
+            {% if project.project_type == "past" and project.end_date %}
+                <div class="field">
+                    <label>End Date</label>
+                    <div class="read-only-field">{{ project.end_date }}</div>
+                </div>
+            {% endif %}
+
+            <!-- Existing View and Saved Counts -->
+            <div class="project-meta">
+                {% if project.last_updated is defined and project.last_updated %}
+                    <div>Last updated: {{ project.last_updated }}</div>
+                {% endif %}
+
+                <div>View count: {{ project.view_count | default(0) }}</div>
+
+                <div>
+                    Saved count:
+                    <span id="savedCount">{{ project.save_count | default(0) }}</span>
+                </div>
+            </div>
+
+            <!-- Success and Error Messages -->
+            <p class="message" id="actionMessage" role="status" aria-live="polite" hidden></p>
+
+            <div class="form-actions">
+                <button class="primary-button" id="saveButton" type="button" disabled>
+                    Loading...
+                </button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Save and Unsave Confirmation -->
+<div class="modal-overlay" id="saveModal" role="dialog" aria-modal="true"
+     aria-labelledby="modalTitle" hidden>
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalTitle">Save project?</h2>
+            <button class="modal-close" id="closeModalButton" type="button" aria-label="Close">&times;</button>
+        </div>
+        <p class="modal-description" id="modalDescription"></p>
+        <div class="modal-actions">
+            <button class="modal-button" id="cancelModalButton" type="button">No</button>
+            <button class="modal-button confirm" id="confirmModalButton" type="button">Yes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+class CustomerViewProjectPage {
+
+    constructor() {
+        this.accountId = {{ account_id | tojson }};
+        this.username = {{ display_username | tojson }};
+        this.projectId = {{ project.project_id | tojson }};
+        this.fromSaved = {{ from_saved | tojson }};
+
+        // Project saving information
+        this.saved = false;
+        this.savedCount = {{ project.save_count | default(0) | int | tojson }};
+        this.isProcessing = false;
+
+        // Page elements
+        this.saveButton = document.getElementById("saveButton");
+        this.savedCountElement = document.getElementById("savedCount");
+        this.message = document.getElementById("actionMessage");
+        this.modal = document.getElementById("saveModal");
+        this.confirmButton = document.getElementById("confirmModalButton");
+
+        // Existing Customer Save/Unsave endpoint
+        this.saveUrl = `/customer/projects/${this.projectId}/save?account_id=${this.accountId}`;
+
+        this.setupEvents();
+        this.loadSavedStatus();
+    }
+
+    // Set up navigation and confirmation events
+    setupEvents() {
+        const params = new URLSearchParams({
+            account_id: String(this.accountId),
+            username: this.username
+        });
+
+        this.projectsUrl = "/customer/projects?" + params.toString();
+        this.savedListUrl = "/customer/saved-projects?" + params.toString();
+
+        document.getElementById("projectsLink").href = this.projectsUrl;
+        document.getElementById("savedListLink").href = this.savedListUrl;
+
+        // Logout directly without confirmation
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+
+        // Save and Unsave confirmation
+        this.saveButton.addEventListener("click", () => this.openModal());
+        document.getElementById("closeModalButton").addEventListener("click", () => this.closeModal());
+        document.getElementById("cancelModalButton").addEventListener("click", () => this.closeModal());
+        this.confirmButton.addEventListener("click", () => this.confirmAction());
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape" && !this.modal.hidden) {
+                this.closeModal();
+            }
+        });
+
+        // Company Information navigation
+        const companyLink = document.getElementById("companyInformationLink");
+
+        if (companyLink) {
+            const companyParams = new URLSearchParams({
+                account_id: String(this.accountId),
+                username: this.username,
+                source: this.fromSaved ? "saved" : "idps"
+            });
+
+            companyLink.href =
+                `/customer/projects/${this.projectId}/company?${companyParams.toString()}`;
+        }
+    }
+
+    // Check whether this Customer has already saved the project
+    async loadSavedStatus() {
+        try {
+            const response = await fetch(this.saveUrl);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to check saved status.");
+            }
+
+            this.saved = Boolean(result.saved);
+            this.updateButton();
+
+        } catch (error) {
+            this.saveButton.textContent = "Unavailable";
+            this.saveButton.disabled = true;
+            this.showMessage(error.message, false);
+        }
+    }
+
+    // Display the correct Save or Unsave button
+    updateButton() {
+        this.saveButton.textContent = this.saved ? "Unsave" : "Save";
+        this.saveButton.disabled = this.isProcessing;
+        this.saveButton.classList.toggle("secondary-button", this.saved);
+    }
+
+    // Display the latest saved count
+    updateSavedCount() {
+        this.savedCountElement.textContent = this.savedCount;
+    }
+
+    // Open the confirmation pop-up
+    openModal() {
+        if (this.isProcessing || this.saveButton.disabled) {
+            return;
+        }
+
+        document.getElementById("modalTitle").textContent =
+            this.saved ? "Unsave project?" : "Save project?";
+
+        document.getElementById("modalDescription").textContent = this.saved
+            ? "Are you sure you want to unsave this project from your saved list?"
+            : "Do you want to save this project to your saved list?";
+
+        this.modal.hidden = false;
+        this.confirmButton.focus();
+    }
+
+    // Close the confirmation pop-up
+    closeModal() {
+        if (this.isProcessing) {
+            return;
+        }
+
+        this.modal.hidden = true;
+        this.saveButton.focus();
+    }
+
+    // Save or Unsave after the Customer confirms
+    async confirmAction() {
+        if (this.isProcessing || this.modal.hidden) {
+            return;
+        }
+
+        const wasSaved = this.saved;
+
+        this.isProcessing = true;
+        this.saveButton.disabled = true;
+        this.confirmButton.disabled = true;
+
+        try {
+            const response = await fetch(this.saveUrl, {
+                method: wasSaved ? "DELETE" : "POST"
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || "Unable to update saved project.");
+            }
+
+            // Update the current saved state
+            this.saved = Boolean(result.saved);
+
+            // Update the saved count only after a successful database operation
+            if (this.saved && !wasSaved) {
+                this.savedCount += 1;
+            } else if (!this.saved && wasSaved) {
+                this.savedCount = Math.max(0, this.savedCount - 1);
+            }
+
+            this.updateSavedCount();
+            this.modal.hidden = true;
+
+            // Return to Saved List after unsaving from that page
+            if (wasSaved && this.fromSaved) {
+                window.location.href = this.savedListUrl;
+                return;
+            }
+
+            this.showMessage(result.message, true);
+
+        } catch (error) {
+            this.modal.hidden = true;
+            this.showMessage(error.message, false);
+
+        } finally {
+            this.isProcessing = false;
+            this.confirmButton.disabled = false;
+            this.updateButton();
+        }
+    }
+
+    // Display success or error feedback
+    showMessage(text, success) {
+        this.message.hidden = false;
+        this.message.textContent = text;
+        this.message.className = "message " + (success ? "success" : "error");
+    }
+}
+
+new CustomerViewProjectPage();
+</script>
+</body>
+</html>

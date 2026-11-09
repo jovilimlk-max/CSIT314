@@ -1,0 +1,222 @@
+
+<!--
+What this code does?
+- Display active company information to Customers in read-only form.
+- Show the company name, address, working hours, email, phone, established date and description.
+- Return to the selected IDP while preserving the original navigation source.
+- Allow navigation to IDPs and Saved List.
+- Log out directly without confirmation.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovo | Company Information</title>
+<style>
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+button { font: inherit; cursor: pointer; }
+
+/* Top Bar */
+.topbar { height: 76px; padding: 0 36px; background: #14253e; color: white; display: flex; align-items: center; justify-content: space-between; }
+.brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+.brand span { color: #8dded4; }
+.topbar-right, .user-info { display: flex; align-items: center; gap: 16px; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2d5272; color: #8dded4; display: grid; place-items: center; font-size: 13px; font-weight: 750; }
+.user-details { display: flex; flex-direction: column; gap: 3px; }
+.user-details strong { font-size: 13px; }
+.user-details small { color: #d1deec; font-size: 11px; }
+.logout-button { padding: 10px 16px; border: 1px solid #ffffff55; border-radius: 8px; background: transparent; color: white; font-size: 13px; }
+.logout-button:hover { background: #ffffff18; }
+
+/* Layout */
+.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+.sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-link { display: block; padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link:hover { background: #f0f5f7; }
+.nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+.main-content { padding: 42px 50px; min-width: 0; width: 100%; max-width: 1150px; }
+.back-link { display: inline-block; margin-bottom: 22px; color: #28747f; font-size: 13px; font-weight: 700; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+.page-title { margin: 0 0 25px; color: #14253e; font-size: 30px; }
+
+/* Company Information */
+.details-panel { padding: 30px; border: 1px solid #e4e9f2; border-radius: 14px; background: white; }
+.section-title { margin: 0 0 25px; color: #14253e; font-size: 19px; font-weight: 750; }
+.field { margin-bottom: 20px; }
+.field:last-child { margin-bottom: 0; }
+.field-label { display: block; margin-bottom: 8px; color: #52647a; font-size: 13px; font-weight: 700; }
+.read-only-field { min-height: 44px; padding: 12px 14px; border: 1px solid #e1e7ef; border-radius: 8px; background: #f3f6fa; color: #26344a; font-size: 13px; overflow-wrap: anywhere; }
+.description-field { min-height: 110px; line-height: 1.6; white-space: pre-wrap; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.field-row .field { min-width: 0; }
+
+/* Responsive Layout */
+@media (max-width: 900px) {
+    .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+    .main-content { padding: 32px 25px; }
+}
+@media (max-width: 650px) {
+    .topbar { padding: 16px 20px; }
+    .user-details { display: none; }
+    .dashboard-layout { display: block; }
+    .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+    .sidebar-title { display: none; }
+    .sidebar-nav { display: flex; }
+    .main-content { padding: 28px 18px; }
+    .details-panel { padding: 20px; }
+    .field-row { grid-template-columns: 1fr; gap: 0; }
+}
+</style>
+</head>
+<body>
+{% set display_username = username | default("Customer", true) %}
+{% set from_saved = source | default("idps") == "saved" %}
+
+<!-- Top Bar -->
+<header class="topbar">
+    <div class="brand">RENO<span>VO</span></div>
+
+    <div class="topbar-right">
+        <div class="user-info">
+            <div class="user-avatar">CU</div>
+            <div class="user-details">
+                <strong>Hi, {{ display_username }}</strong>
+                <small>Customer</small>
+            </div>
+        </div>
+        <button class="logout-button" id="logoutButton" type="button">Log out</button>
+    </div>
+</header>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <p class="sidebar-title">Browse</p>
+
+        <nav class="sidebar-nav">
+            <a class="nav-link {{ '' if from_saved else 'active' }}"
+               id="projectsLink" href="#">
+                IDPs
+            </a>
+
+            <a class="nav-link {{ 'active' if from_saved else '' }}"
+               id="savedListLink" href="#">
+                Saved List
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Read-only Company Information -->
+    <main class="main-content">
+
+        <a class="back-link" href="{{ back_url }}">
+            ← Back to IDP
+        </a>
+
+        <h1 class="page-title">Company Information</h1>
+
+        <section class="details-panel">
+
+            <h2 class="section-title">{{ company.company_name }}</h2>
+
+            <!-- Company Name -->
+            <div class="field">
+                <span class="field-label">Company Name</span>
+                <div class="read-only-field">
+                    {{ company.company_name }}
+                </div>
+            </div>
+
+            <!-- Company Address -->
+            <div class="field">
+                <span class="field-label">Company Address</span>
+                <div class="read-only-field">
+                    {{ company.company_address }}
+                </div>
+            </div>
+
+            <!-- Working Hours -->
+            <div class="field">
+                <span class="field-label">Working Hours</span>
+                <div class="read-only-field">
+                    {{ company.working_hours }}
+                </div>
+            </div>
+
+            <!-- Company Email and Phone -->
+            <div class="field-row">
+
+                <div class="field">
+                    <span class="field-label">Company Email</span>
+                    <div class="read-only-field">
+                        {{ company.company_email }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="field-label">Company Phone</span>
+                    <div class="read-only-field">
+                        {{ company.company_phone }}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Established Date -->
+            <div class="field">
+                <span class="field-label">Established Date</span>
+                <div class="read-only-field">
+                    {{ company.established_date }}
+                </div>
+            </div>
+
+            <!-- Company Description -->
+            <div class="field">
+                <span class="field-label">Company Description</span>
+                <div class="read-only-field description-field">{{ company.company_description }}</div>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<script>
+class CustomerViewCompanyPage {
+
+    constructor() {
+        this.accountId = {{ account_id | tojson }};
+        this.username = {{ display_username | tojson }};
+        this.setupNavigation();
+    }
+
+    // Configure navigation while preserving Customer information
+    setupNavigation() {
+        const params = new URLSearchParams({
+            account_id: String(this.accountId),
+            username: this.username
+        });
+
+        document.getElementById("projectsLink").href =
+            "/customer/projects?" + params.toString();
+
+        document.getElementById("savedListLink").href =
+            "/customer/saved-projects?" + params.toString();
+
+        // Logout immediately without confirmation
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+    }
+}
+
+new CustomerViewCompanyPage();
+</script>
+</body>
+</html>

@@ -1,13 +1,11 @@
 
 <!--
 What this code does?
-- Display an Interior Designer's Current or Past IDP details.
-- Show the project's assigned category and its suspension status.
-- Display "-" when no category is assigned.
-- Preserve existing project status and date information.
-- Allow Interior Designers to navigate to Edit Project.
-- Support suspension and reactivation with confirmation pop-ups.
-- Preserve existing navigation and success notifications.
+- Display an Interior Designer's project information.
+- Show the project name, description, type, dates, category and status.
+- Display the total Customer views and current saves.
+- Allow the Interior Designer to edit, suspend or reactivate the project.
+- Preserve existing navigation and confirmation messages.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -155,7 +153,9 @@ What this code does?
                 </div>
             </div>
 
-            <button class="logout-button" id="logoutButton" type="button">
+            <button class="logout-button"
+                    id="logoutButton"
+                    type="button">
                 Log out
             </button>
         </div>
@@ -250,6 +250,7 @@ What this code does?
                 <!-- Project Name -->
                 <div class="field">
                     <label>Project Name</label>
+
                     <div class="read-only-field">
                         {{ project.project_name }}
                     </div>
@@ -258,6 +259,7 @@ What this code does?
                 <!-- Project Description -->
                 <div class="field">
                     <label>Project Description</label>
+
                     <div class="read-only-field description">{{ project.project_description }}</div>
                 </div>
 
@@ -278,9 +280,32 @@ What this code does?
                     {% endif %}
                 </div>
 
-                <!-- Assigned Category -->
+                <!-- Project Dates -->
+                <div class="date-fields">
+
+                    <div class="field">
+                        <label>Start Date</label>
+
+                        <div class="read-only-field">
+                            {{ project.start_date }}
+                        </div>
+                    </div>
+
+                    {% if project.project_type == "past" %}
+                        <div class="field">
+                            <label>End Date</label>
+
+                            <div class="read-only-field">
+                                {{ project.end_date or "Not provided" }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Category -->
                 <div class="field">
                     <label>Category</label>
+
                     <div class="read-only-field">
                         {% if project.category_id is none %}
                             -
@@ -292,26 +317,21 @@ What this code does?
                     </div>
                 </div>
 
-                <!-- Project Dates -->
-                <div class="date-fields">
+                <!-- Customer Engagement Counts -->
+                <div class="field">
+                    <label>Total Views</label>
 
-                    <!-- Start Date -->
-                    <div class="field">
-                        <label>Start Date</label>
-                        <div class="read-only-field">
-                            {{ project.start_date }}
-                        </div>
+                    <div class="read-only-field">
+                        {{ project.view_count | default(0, true) }}
                     </div>
+                </div>
 
-                    <!-- End Date for Past IDP -->
-                    {% if project.project_type == "past" %}
-                        <div class="field">
-                            <label>End Date</label>
-                            <div class="read-only-field">
-                                {{ project.end_date or "Not provided" }}
-                            </div>
-                        </div>
-                    {% endif %}
+                <div class="field">
+                    <label>Total Saves</label>
+
+                    <div class="read-only-field">
+                        {{ project.save_count | default(0, true) }}
+                    </div>
                 </div>
 
                 <!-- Project Status -->
@@ -333,7 +353,6 @@ What this code does?
 
                 <hr class="section-divider">
 
-                <!-- Project ID -->
                 <p class="project-id">
                     Project ID: {{ project.project_id }}
                 </p>
@@ -368,6 +387,7 @@ What this code does?
 
     <!-- Suspend / Reactivate Confirmation Pop-up -->
     <div class="modal-overlay" id="statusModal" hidden>
+
         <div class="modal-box"
              role="dialog"
              aria-modal="true"
@@ -416,7 +436,9 @@ What this code does?
 
     <script>
         class ViewProjectPage {
+
             constructor() {
+
                 this.accountId = {{ account_id | tojson }};
                 this.projectId = {{ project.project_id | tojson }};
                 this.projectName = {{ project.project_name | tojson }};
@@ -441,6 +463,7 @@ What this code does?
 
             // Set up navigation and confirmation events
             setupEvents() {
+
                 document.getElementById("logoutButton").addEventListener(
                     "click", () => window.location.href = "/"
                 );
@@ -461,14 +484,12 @@ What this code does?
                     "click", () => this.confirmStatusChange()
                 );
 
-                // Close when clicking outside the pop-up
                 this.modal.addEventListener("click", event => {
                     if (event.target === this.modal && !this.submitting) {
                         this.closeModalWindow();
                     }
                 });
 
-                // Close with Escape
                 document.addEventListener("keydown", event => {
                     if (
                         event.key === "Escape" &&
@@ -482,6 +503,7 @@ What this code does?
 
             // Display success notifications
             checkSuccessMessage() {
+
                 const params = new URLSearchParams(
                     window.location.search
                 );
@@ -523,6 +545,7 @@ What this code does?
 
             // Open the suspension or reactivation confirmation
             openModal() {
+
                 if (this.submitting) {
                     return;
                 }
@@ -564,6 +587,7 @@ What this code does?
 
             // Close the confirmation pop-up
             closeModalWindow() {
+
                 if (this.submitting) {
                     return;
                 }
@@ -574,6 +598,7 @@ What this code does?
 
             // Submit the requested status change to Flask
             async confirmStatusChange() {
+
                 if (this.submitting) {
                     return;
                 }
@@ -594,6 +619,7 @@ What this code does?
                     encodeURIComponent(this.accountId);
 
                 try {
+
                     const response = await fetch(statusUrl, {
                         method: "POST",
                         headers: {
@@ -607,6 +633,7 @@ What this code does?
                     const result = await response.json();
 
                     if (response.ok && result.success) {
+
                         const params = new URLSearchParams(
                             window.location.search
                         );
@@ -622,6 +649,7 @@ What this code does?
                             "?" + params.toString();
 
                     } else {
+
                         this.modalError.textContent =
                             result.message ||
                             "Unable to update project status.";
@@ -630,19 +658,21 @@ What this code does?
                     }
 
                 } catch (error) {
+
                     this.modalError.textContent =
                         "Unable to connect to the server.";
 
                     this.modalError.hidden = false;
 
                 } finally {
+
                     this.submitting = false;
                     this.confirmButton.disabled = false;
                 }
             }
         }
 
-        // Initialise View Project page
+        // Initialise the View Project page
         new ViewProjectPage();
     </script>
 </body>

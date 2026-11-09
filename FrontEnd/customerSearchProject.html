@@ -1,0 +1,409 @@
+
+<!--
+What this code does?
+- Display active Customer IDPs in a table.
+- Search and filter projects using JavaScript.
+- Filter by progress and active categories.
+- Sort project names and display five projects per page.
+- Show project category, progress and PIC.
+- Open IDPs and navigate to the Saved List.
+- Log out directly without confirmation.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovo | IDPs</title>
+<style>
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+button, input, select { font: inherit; }
+
+/* Top Bar */
+.topbar { height: 76px; background: #14253e; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 36px; }
+.brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+.brand span { color: #8dded4; }
+.topbar-right, .user-info { display: flex; align-items: center; gap: 16px; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2d5272; color: #8dded4; display: grid; place-items: center; font-size: 13px; font-weight: 750; }
+.user-details { display: flex; flex-direction: column; gap: 3px; }
+.user-details strong { font-size: 13px; }
+.user-details small { color: #d1deec; font-size: 11px; }
+.logout-button { padding: 10px 16px; border: 1px solid #ffffff55; border-radius: 8px; background: transparent; color: white; font-size: 13px; cursor: pointer; }
+.logout-button:hover { background: #ffffff18; }
+
+/* Layout */
+.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+.sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+.nav-link { padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link:hover { background: #f0f5f7; }
+.nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
+.main-content { padding: 46px 50px; min-width: 0; }
+.page-title { margin: 0 0 28px; color: #14253e; font-size: 32px; }
+.list-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 28px; }
+
+/* Search and Filters */
+.filter-bar { display: grid; grid-template-columns: minmax(200px, 1fr) 170px 190px; gap: 12px; margin-bottom: 22px; }
+.search-input, .filter-select { width: 100%; height: 44px; padding: 0 14px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #26344a; font-size: 13px; }
+.search-input:focus, .filter-select:focus { outline: 2px solid #8dded4; }
+.search-feedback { margin: 0 0 18px; color: #738096; font-size: 12px; }
+.clear-button { border: none; background: none; color: #28747f; font-size: 12px; font-weight: 700; cursor: pointer; }
+.clear-button:hover { text-decoration: underline; }
+
+/* Project Table */
+.table-container { overflow-x: auto; }
+.project-table { width: 100%; border-collapse: collapse; text-align: left; }
+.project-table thead { background: #f0f4f8; }
+.project-table th { padding: 16px 12px; color: #52647a; font-size: 12px; font-weight: 750; white-space: nowrap; border-bottom: 1px solid #dfe6ee; }
+.project-table td { padding: 18px 12px; font-size: 13px; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
+.project-table tbody tr:hover { background: #fafcfd; }
+.id-cell { color: #738096; font-weight: 650; white-space: nowrap; }
+.project-name { display: block; color: #14253e; font-weight: 750; }
+.project-date { display: block; margin-top: 5px; color: #8290a3; font-size: 11px; }
+.sort-button { padding: 0; border: none; background: none; color: #52647a; font-size: 12px; font-weight: 750; cursor: pointer; }
+.sort-button:hover { color: #1c5062; }
+.progress-badge { display: inline-block; padding: 7px 11px; border-radius: 20px; font-size: 11px; font-weight: 750; }
+.progress-badge.ongoing { background: #e8f0ff; color: #315b9a; }
+.progress-badge.completed { background: #e6f6f0; color: #186b4d; }
+.actions-cell { text-align: right; }
+.view-button { display: inline-block; padding: 10px 18px; border-radius: 8px; background: #1c5062; color: white; font-size: 12px; font-weight: 700; text-decoration: none; }
+.view-button:hover { background: #256d7f; }
+
+/* Empty State and Pagination */
+.empty-state { padding: 50px 20px; text-align: center; }
+.empty-title { color: #14253e; font-size: 16px; }
+.empty-description { color: #8290a3; font-size: 13px; }
+.pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 20px; margin-top: 8px; border-top: 1px solid #edf0f5; }
+.pagination-info { color: #8290a3; font-size: 12px; }
+.pagination-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.page-button { min-width: 35px; height: 35px; border: 1px solid #cdd7e4; border-radius: 7px; background: white; color: #52647a; font-size: 12px; cursor: pointer; }
+.page-button.active { background: #1c5062; border-color: #1c5062; color: white; }
+.page-button:disabled { opacity: .4; cursor: not-allowed; }
+[hidden] { display: none !important; }
+
+/* Responsive Layout */
+@media (max-width: 1050px) {
+    .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+    .main-content { padding: 36px 28px; }
+    .project-table { min-width: 700px; }
+}
+@media (max-width: 720px) {
+    .topbar { padding: 16px 20px; }
+    .user-details { display: none; }
+    .dashboard-layout { display: block; }
+    .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+    .sidebar-title { display: none; }
+    .sidebar-nav { flex-direction: row; }
+    .main-content { padding: 28px 18px; }
+    .list-panel { padding: 16px; }
+    .filter-bar { grid-template-columns: 1fr; }
+    .pagination { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+{% set display_username = username | default("Customer", true) %}
+
+<!-- Top Bar -->
+<header class="topbar">
+    <div class="brand">RENO<span>VO</span></div>
+    <div class="topbar-right">
+        <div class="user-info">
+            <div class="user-avatar">CU</div>
+            <div class="user-details">
+                <strong>Hi, {{ display_username }}</strong>
+                <small>Customer</small>
+            </div>
+        </div>
+        <button class="logout-button" id="logoutButton" type="button">Log out</button>
+    </div>
+</header>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <p class="sidebar-title">Browse</p>
+        <nav class="sidebar-nav">
+            <a class="nav-link active" id="projectsLink" href="#" aria-current="page">IDPs</a>
+            <a class="nav-link" id="savedListLink" href="#">Saved List</a>
+        </nav>
+    </aside>
+
+    <!-- IDPs Page -->
+    <main class="main-content">
+        <h1 class="page-title">IDPs</h1>
+
+        <section class="list-panel">
+
+            <!-- Search, Progress and Category Filters -->
+            <div class="filter-bar">
+                <input class="search-input" id="searchInput" type="search"
+                       placeholder="Search project name" aria-label="Search projects">
+
+                <select class="filter-select" id="progressFilter" aria-label="Filter by progress">
+                    <option value="all">All progress</option>
+                    <option value="current">Ongoing</option>
+                    <option value="past">Completed</option>
+                </select>
+
+                <select class="filter-select" id="categoryFilter" aria-label="Filter by category">
+                    <option value="all">All categories</option>
+                    {% for category in categories | default([]) %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <p class="search-feedback" id="searchFeedback" hidden>
+                <span id="searchMessage"></span>
+                <button class="clear-button" id="clearFiltersButton" type="button">Clear search</button>
+            </p>
+
+            <!-- IDPs Table -->
+            <div class="table-container">
+                <table class="project-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">
+                                <button class="sort-button" id="sortNameButton" type="button">
+                                    Project Name <span id="sortIndicator">↕</span>
+                                </button>
+                            </th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Project Progress</th>
+                            <th scope="col">PIC</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="projectTableBody">
+                        {% for project in projects %}
+                        <tr class="project-row"
+                            data-name="{{ project.project_name | lower }}"
+                            data-progress="{{ project.project_type }}"
+                            data-category="{{ project.category_id if project.category_status == 'active' and project.category_id is not none else '' }}"
+                            data-index="{{ loop.index0 }}">
+
+                            <td class="id-cell">P{{ project.project_id }}</td>
+
+                            <td>
+                                <span class="project-name">{{ project.project_name }}</span>
+                                <span class="project-date">
+                                    {% if project.project_type == "past" and project.end_date %}
+                                        {{ project.start_date }} to {{ project.end_date }}
+                                    {% else %}
+                                        Started {{ project.start_date }}
+                                    {% endif %}
+                                </span>
+                            </td>
+
+                            <!-- Category: '-' for missing or suspended categories -->
+                            <td>
+                                {% if project.category_status == "active" and project.category_name %}
+                                    {{ project.category_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if project.project_type == "current" %}
+                                    <span class="progress-badge ongoing">Ongoing</span>
+                                {% else %}
+                                    <span class="progress-badge completed">Completed</span>
+                                {% endif %}
+                            </td>
+
+                            <td>{{ project.pic_name | default("-", true) }}</td>
+
+                            <td class="actions-cell">
+                                <a class="view-button"
+                                   href="/customer/projects/{{ project.project_id }}?account_id={{ account_id }}&username={{ display_username | urlencode }}">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty Results -->
+            <div class="empty-state" id="emptyState" hidden>
+                <h2 class="empty-title" id="emptyTitle">No projects found</h2>
+                <p class="empty-description" id="emptyDescription"></p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <span class="pagination-info" id="paginationInfo">Showing 0 of 0</span>
+                <div class="pagination-buttons" id="paginationButtons"></div>
+            </div>
+
+        </section>
+    </main>
+</div>
+
+<script>
+class CustomerSearchProjectPage {
+
+    constructor() {
+        this.accountId = {{ account_id | tojson }};
+        this.username = {{ display_username | tojson }};
+        this.searchInput = document.getElementById("searchInput");
+        this.progressFilter = document.getElementById("progressFilter");
+        this.categoryFilter = document.getElementById("categoryFilter");
+        this.tableBody = document.getElementById("projectTableBody");
+        this.rows = Array.from(document.querySelectorAll(".project-row"));
+        this.filteredRows = [];
+        this.pageSize = 5;
+        this.currentPage = 1;
+        this.sortOrder = "newest";
+
+        this.setupEvents();
+        this.applyFilters();
+    }
+
+    // Navigation and Filter Events
+    setupEvents() {
+        const params = new URLSearchParams({
+            account_id: String(this.accountId),
+            username: this.username
+        });
+
+        document.getElementById("projectsLink").href = "/customer/projects?" + params;
+        document.getElementById("savedListLink").href = "/customer/saved-projects?" + params;
+
+        // Logout directly without confirmation
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            window.location.href = "/";
+        });
+
+        this.searchInput.addEventListener("input", () => this.applyFilters());
+        this.progressFilter.addEventListener("change", () => this.applyFilters());
+        this.categoryFilter.addEventListener("change", () => this.applyFilters());
+
+        document.getElementById("sortNameButton").addEventListener("click", () => {
+            this.sortOrder = this.sortOrder === "name_asc" ? "name_desc" : "name_asc";
+            document.getElementById("sortIndicator").textContent =
+                this.sortOrder === "name_asc" ? "↑" : "↓";
+            this.applyFilters();
+        });
+
+        document.getElementById("clearFiltersButton").addEventListener("click", () => {
+            this.searchInput.value = "";
+            this.progressFilter.value = "all";
+            this.categoryFilter.value = "all";
+            this.sortOrder = "newest";
+            document.getElementById("sortIndicator").textContent = "↕";
+            this.applyFilters();
+        });
+    }
+
+    // Search, Filter and Sort Projects in the Browser
+    applyFilters() {
+        const search = this.searchInput.value.trim().toLowerCase();
+        const progress = this.progressFilter.value;
+        const category = this.categoryFilter.value;
+
+        this.filteredRows = this.rows.filter(row =>
+            row.dataset.name.includes(search) &&
+            (progress === "all" || row.dataset.progress === progress) &&
+            (category === "all" || row.dataset.category === category)
+        );
+
+        if (this.sortOrder === "name_asc") {
+            this.filteredRows.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+        } else if (this.sortOrder === "name_desc") {
+            this.filteredRows.sort((a, b) => b.dataset.name.localeCompare(a.dataset.name));
+        } else {
+            this.filteredRows.sort((a, b) => Number(a.dataset.index) - Number(b.dataset.index));
+        }
+
+        const feedback = document.getElementById("searchFeedback");
+        feedback.hidden = !search && progress === "all" && category === "all";
+
+        document.getElementById("searchMessage").textContent = search
+            ? 'Search results for "' + this.searchInput.value.trim() + '".'
+            : "Showing projects matching your selected filters.";
+
+        const emptyDescription = document.getElementById("emptyDescription");
+
+        if (this.rows.length === 0) {
+            emptyDescription.textContent = "There are no active projects available.";
+        } else if (search) {
+            emptyDescription.textContent =
+                'No projects match "' + this.searchInput.value.trim() + '".';
+        } else {
+            emptyDescription.textContent = "No projects match your selected filters.";
+        }
+
+        this.showPage(1);
+    }
+
+    // Display Five Projects Per Page
+    showPage(page) {
+        const total = this.filteredRows.length;
+        const totalPages = Math.ceil(total / this.pageSize);
+        this.currentPage = totalPages ? Math.max(1, Math.min(page, totalPages)) : 1;
+
+        const start = (this.currentPage - 1) * this.pageSize;
+        const visibleRows = this.filteredRows.slice(start, start + this.pageSize);
+
+        this.rows.forEach(row => row.hidden = true);
+
+        visibleRows.forEach(row => {
+            row.hidden = false;
+            this.tableBody.appendChild(row);
+        });
+
+        document.getElementById("emptyState").hidden = total !== 0;
+        document.getElementById("paginationInfo").textContent = total
+            ? `Showing ${start + 1}–${Math.min(start + this.pageSize, total)} of ${total}`
+            : "Showing 0 of 0";
+
+        this.updatePagination(totalPages);
+    }
+
+    // Build Pagination Controls
+    updatePagination(totalPages) {
+        const container = document.getElementById("paginationButtons");
+        container.replaceChildren();
+
+        if (totalPages <= 1) return;
+
+        const addButton = (label, page, disabled = false) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = label;
+            button.className = "page-button";
+            button.disabled = disabled;
+
+            if (label === String(page) && page === this.currentPage) {
+                button.classList.add("active");
+                button.setAttribute("aria-current", "page");
+            }
+
+            button.addEventListener("click", () => this.showPage(page));
+            container.appendChild(button);
+        };
+
+        addButton("‹", this.currentPage - 1, this.currentPage === 1);
+
+        for (let page = 1; page <= totalPages; page++) {
+            addButton(String(page), page);
+        }
+
+        addButton("›", this.currentPage + 1, this.currentPage === totalPages);
+    }
+}
+
+new CustomerSearchProjectPage();
+</script>
+</body>
+</html>
