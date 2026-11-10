@@ -2,14 +2,16 @@
 <!--
 What this code does?
 - Display the Platform Manager Report landing page.
-- Provide Generate buttons for Daily, Weekly and Monthly Reports.
-- Confirm report generation before sending a request.
-- Send generation requests to their respective Flask Boundaries.
-- Display previously generated reports in a table.
+- Preserve the existing Renovo design and sidebar icons.
+- Generate Daily, Weekly and Monthly Reports.
+- Confirm report generation before sending a POST request.
+- Display previously generated reports.
 - Show Report ID, Date Generated, Report Type and View.
-- Display five reports per page using JavaScript pagination.
-- Show an empty state when no reports have been generated.
-- Navigate between IDP Category and Report.
+- Style the View button to match User Accounts.
+- Display five reports per page.
+- Show up to five consecutive page numbers.
+- Include first and last page shortcuts, ellipses and arrow navigation.
+- Preserve report generation, viewing and navigation functionality.
 - Log out directly without confirmation.
 -->
 <!DOCTYPE html>
@@ -20,101 +22,117 @@ What this code does?
 <title>Renovo | Reports</title>
 
 <style>
-:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
-* { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; }
-button { font: inherit; cursor: pointer; }
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#26344a;background:#f4f6fb}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh}
+button{font:inherit;cursor:pointer}
 
 /* Top Bar */
-.topbar { height: 76px; padding: 0 36px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; }
-.brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
-.brand span { color: #8dded4; }
-.topbar-right, .user-info { display: flex; align-items: center; gap: 16px; }
-.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: #2d5272; color: #8dded4; display: grid; place-items: center; font-size: 13px; font-weight: 750; }
-.user-details { display: flex; flex-direction: column; gap: 3px; }
-.user-details strong { font-size: 13px; }
-.user-details small { color: #d1deec; font-size: 11px; }
-.logout-button { padding: 10px 16px; border: 1px solid #ffffff55; border-radius: 8px; background: transparent; color: white; font-size: 13px; }
-.logout-button:hover { background: #ffffff18; }
+.topbar{height:76px;padding:0 36px;background:#14253e;color:white;display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:24px;font-weight:850;letter-spacing:.07em}
+.brand span{color:#8dded4}
+.topbar-right,.user-info{display:flex;align-items:center;gap:16px}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:#2d5272;color:#8dded4;display:grid;place-items:center;font-size:13px;font-weight:750}
+.user-details{display:flex;flex-direction:column;gap:3px}
+.user-details strong{font-size:13px}
+.user-details small{color:#d1deec;font-size:11px}
+.logout-button{padding:10px 16px;border:1px solid #ffffff55;border-radius:8px;background:transparent;color:white;font-size:13px}
+.logout-button:hover{background:#ffffff18}
 
-/* Layout */
-.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
-.sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
-.sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
-.nav-link { display: block; padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
-.nav-link:hover { background: #f0f5f7; }
-.nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
-.main-content { padding: 42px 50px; min-width: 0; width: 100%; max-width: 1300px; }
-.page-title { margin: 0 0 28px; color: #14253e; font-size: 30px; }
+/* Dashboard Layout */
+.dashboard-layout{display:grid;grid-template-columns:245px minmax(0,1fr);min-height:calc(100vh - 76px)}
+.sidebar{background:white;border-right:1px solid #e4e9f2;padding:32px 16px}
+.sidebar-title{margin:0 14px 18px;color:#8290a3;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.sidebar-nav{display:flex;flex-direction:column;gap:8px}
+.nav-link{display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:9px;color:#52647a;font-size:14px;font-weight:550;text-decoration:none}
+.nav-link svg{width:20px;height:20px;flex-shrink:0}
+.nav-link:hover{background:#f0f5f7;color:#1c5062}
+.nav-link.active{background:#e6f3f3;color:#1c5062;font-weight:750}
+
+/* Main Content */
+.main-content{padding:46px 50px;min-width:0;width:100%;max-width:1450px}
+.page-label{color:#387c83;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.page-title{margin:0 0 10px;color:#14253e;font-size:32px;font-weight:750;letter-spacing:-.03em}
+.page-description{margin:0;color:#738096;font-size:14px;line-height:1.6}
+.page-header{margin-bottom:32px}
 
 /* Report Generation */
-.generation-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 12px 26px; margin-bottom: 34px; }
-.report-option { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 23px 0; border-bottom: 1px solid #edf0f5; }
-.report-option:last-child { border-bottom: none; }
-.report-option h2 { margin: 0; font-size: 16px; color: #14253e; }
-.generate-button { min-width: 110px; padding: 11px 20px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; }
-.generate-button:hover { background: #256d7f; }
-.generate-button:disabled { opacity: .55; cursor: not-allowed; }
+.generation-panel{background:white;border:1px solid #e4e9f2;border-radius:14px;padding:12px 26px;margin-bottom:34px;box-shadow:0 8px 28px #1c34500a}
+.report-option{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:23px 0;border-bottom:1px solid #edf0f5}
+.report-option:last-child{border-bottom:none}
+.report-option h2{margin:0;font-size:16px;color:#14253e}
+.generate-button{min-width:110px;padding:11px 20px;border:none;border-radius:8px;background:#1c5062;color:white;font-size:13px;font-weight:700}
+.generate-button:hover{background:#256d7f}
+.generate-button:disabled{opacity:.55;cursor:not-allowed}
 
 /* Messages */
-.message { margin-bottom: 20px; padding: 13px 16px; border-radius: 8px; font-size: 13px; }
-.message.success { background: #e6f6f0; color: #186b4d; }
-.message.error { background: #fff0f0; color: #a22735; }
+.message{margin-bottom:20px;padding:13px 16px;border-radius:8px;font-size:13px}
+.message.success{background:#e6f6f0;color:#186b4d}
+.message.error{background:#fff0f0;color:#a22735}
 
 /* Generated Reports */
-.section-title { margin: 0 0 18px; font-size: 22px; color: #14253e; }
-.table-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; overflow: hidden; }
-.table-wrapper { overflow-x: auto; }
-.report-table { width: 100%; border-collapse: collapse; text-align: left; }
-.report-table th { padding: 17px 20px; background: #f7f9fc; color: #52647a; font-size: 12px; font-weight: 750; border-bottom: 1px solid #e4e9f2; }
-.report-table td { padding: 18px 20px; border-bottom: 1px solid #edf0f5; font-size: 13px; color: #26344a; }
-.report-table tbody tr:last-child td { border-bottom: none; }
-.report-table tbody tr:hover { background: #fafcfe; }
-.report-type { text-transform: capitalize; }
-.view-link { color: #28747f; font-size: 13px; font-weight: 700; text-decoration: none; }
-.view-link:hover { text-decoration: underline; }
+.section-title{margin:0 0 18px;font-size:22px;color:#14253e}
+.table-panel{background:white;border:1px solid #e4e9f2;border-radius:14px;overflow:hidden;box-shadow:0 8px 28px #1c34500a}
+.table-wrapper{overflow-x:auto}
+.report-table{width:100%;border-collapse:collapse;text-align:left}
+.report-table th{padding:17px 20px;background:#f7f9fc;color:#52647a;font-size:12px;font-weight:750;border-bottom:1px solid #e4e9f2}
+.report-table td{padding:18px 20px;border-bottom:1px solid #edf0f5;font-size:13px;color:#26344a}
+.report-table tbody tr:last-child td{border-bottom:none}
+.report-table tbody tr:hover{background:#fafcfe}
+.report-type{text-transform:capitalize}
+
+/* View Button: Same Design as User Accounts */
+.view-link{display:inline-block;border:1px solid #cdd7e4;border-radius:7px;background:white;padding:8px 16px;color:#1c5062;font-size:12px;font-weight:700;text-decoration:none}
+.view-link:hover{background:#e6f3f3;border-color:#8fc8ce}
 
 /* Empty State */
-.empty-state { padding: 55px 20px; text-align: center; color: #738096; font-size: 13px; }
+.empty-state{padding:55px 20px;text-align:center;color:#738096;font-size:13px}
 
-/* Pagination */
-.pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 22px; border-top: 1px solid #e4e9f2; }
-.pagination-info { color: #738096; font-size: 12px; }
-.pagination-controls { display: flex; align-items: center; gap: 12px; }
-.pagination-button { padding: 8px 14px; border: 1px solid #cdd7e4; border-radius: 7px; background: white; color: #52647a; font-size: 12px; }
-.pagination-button:disabled { opacity: .45; cursor: not-allowed; }
-.page-number { color: #52647a; font-size: 12px; }
+/* Standard Renovo Pagination */
+.pagination{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;border-top:1px solid #e4e9f2}
+.pagination-info{color:#738096;font-size:12px}
+.pagination-controls{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px}
+.pagination-button{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 10px;border:1px solid #e4e9f2;border-radius:7px;background:white;color:#52647a;font-size:12px;font-weight:700;cursor:pointer}
+.pagination-button:hover:not(:disabled){background:#e6f3f3;border-color:#b7d4da}
+.pagination-button.current{background:#1c5062;border-color:#1c5062;color:white}
+.pagination-button:disabled{opacity:.4;cursor:not-allowed}
+.pagination-ellipsis{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:34px;color:#8290a3;font-size:13px}
 
 /* Confirmation Modal */
-.modal-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: #101c30a8; }
-.modal { width: 100%; max-width: 420px; padding: 25px; border-radius: 12px; background: white; box-shadow: 0 20px 60px #14253e33; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.modal-title { margin: 0; color: #14253e; font-size: 19px; }
-.modal-close { border: none; background: none; color: #8290a3; font-size: 24px; }
-.modal-description { margin: 18px 0 24px; color: #52647a; font-size: 13px; line-height: 1.6; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.modal-button { padding: 10px 18px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; font-size: 12px; font-weight: 700; }
-.modal-button.confirm { border-color: #1c5062; background: #1c5062; color: white; }
-.modal-button:disabled { opacity: .55; cursor: not-allowed; }
+.modal-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:#101c30a8}
+.modal{width:100%;max-width:420px;padding:25px;border-radius:12px;background:white;box-shadow:0 20px 60px #14253e33}
+.modal-header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.modal-title{margin:0;color:#14253e;font-size:19px}
+.modal-close{border:none;background:none;color:#8290a3;font-size:24px;cursor:pointer}
+.modal-description{margin:18px 0 24px;color:#52647a;font-size:13px;line-height:1.6}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+.modal-button{padding:10px 18px;border:1px solid #cdd7e4;border-radius:8px;background:white;font-size:12px;font-weight:700}
+.modal-button.confirm{border-color:#1c5062;background:#1c5062;color:white}
+.modal-button:disabled{opacity:.55;cursor:not-allowed}
 
-[hidden] { display: none !important; }
+[hidden]{display:none!important}
+a:focus-visible,button:focus-visible{outline:3px solid #8dded4;outline-offset:3px}
 
-@media (max-width: 900px) {
-    .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
-    .main-content { padding: 32px 25px; }
+/* Responsive */
+@media(max-width:900px){
+.dashboard-layout{grid-template-columns:200px minmax(0,1fr)}
+.main-content{padding:36px 28px}
 }
-@media (max-width: 650px) {
-    .topbar { padding: 16px 20px; }
-    .user-details { display: none; }
-    .dashboard-layout { display: block; }
-    .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
-    .sidebar-title { display: none; }
-    .sidebar-nav { flex-direction: row; }
-    .main-content { padding: 28px 18px; }
-    .generation-panel { padding: 10px 18px; }
-    .report-option h2 { font-size: 14px; }
-    .pagination { flex-direction: column; align-items: stretch; }
+@media(max-width:650px){
+.topbar{padding:16px 20px}
+.user-details{display:none}
+.dashboard-layout{display:block}
+.sidebar{padding:12px;border-right:none;border-bottom:1px solid #e4e9f2}
+.sidebar-title{display:none}
+.sidebar-nav{flex-direction:row;gap:6px;overflow-x:auto}
+.nav-link{padding:11px 13px;white-space:nowrap;font-size:12px}
+.nav-link svg{width:17px;height:17px}
+.main-content{padding:30px 20px}
+.page-title{font-size:26px}
+.generation-panel{padding:10px 18px}
+.report-option h2{font-size:14px}
+.pagination{flex-direction:column;align-items:flex-start}
+.pagination-controls{justify-content:flex-start}
 }
 </style>
 </head>
@@ -145,44 +163,112 @@ button { font: inherit; cursor: pointer; }
 
     <!-- Sidebar -->
     <aside class="sidebar">
+
         <p class="sidebar-title">Management</p>
 
         <nav class="sidebar-nav">
-            <a class="nav-link" id="categoryLink" href="#">IDP Category</a>
-            <a class="nav-link active" id="reportLink" href="#">Report</a>
+
+            <!-- IDP Category -->
+            <a class="nav-link" id="categoryLink" href="#">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+
+                IDP Category
+            </a>
+
+            <!-- Report -->
+            <a class="nav-link active"
+               id="reportLink"
+               href="#"
+               aria-current="page">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9l-6-6H8z"/>
+                    <path d="M14 3v6h7"/>
+                    <path d="M8 17v-4"/>
+                    <path d="M12 17v-6"/>
+                    <path d="M16 17v-3"/>
+                </svg>
+
+                Report
+            </a>
+
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
 
-        <h1 class="page-title">Report</h1>
+        <!-- Page Heading -->
+        <div class="page-header">
+
+            <div class="page-label">
+                Report Management
+            </div>
+
+            <h1 class="page-title">Report</h1>
+
+            <p class="page-description">
+                Generate and view Daily, Weekly and Monthly Reports for the Renovo platform.
+            </p>
+
+        </div>
 
         <!-- Generation Feedback -->
-        <div class="message" id="actionMessage" role="status" aria-live="polite" hidden></div>
+        <div class="message"
+             id="actionMessage"
+             role="status"
+             aria-live="polite"
+             hidden></div>
 
         <!-- Generate Reports -->
         <section class="generation-panel">
+
             <div class="report-option">
                 <h2>Daily Report</h2>
-                <button class="generate-button" type="button" data-report-type="daily">
+
+                <button class="generate-button"
+                        type="button"
+                        data-report-type="daily">
                     Generate
                 </button>
             </div>
 
             <div class="report-option">
                 <h2>Weekly Report</h2>
-                <button class="generate-button" type="button" data-report-type="weekly">
+
+                <button class="generate-button"
+                        type="button"
+                        data-report-type="weekly">
                     Generate
                 </button>
             </div>
 
             <div class="report-option">
                 <h2>Monthly Report</h2>
-                <button class="generate-button" type="button" data-report-type="monthly">
+
+                <button class="generate-button"
+                        type="button"
+                        data-report-type="monthly">
                     Generate
                 </button>
             </div>
+
         </section>
 
         <!-- Generated Reports Listing -->
@@ -191,8 +277,10 @@ button { font: inherit; cursor: pointer; }
         <section class="table-panel">
 
             {% if reports %}
+
                 <div class="table-wrapper">
                     <table class="report-table">
+
                         <thead>
                             <tr>
                                 <th>Report ID</th>
@@ -203,30 +291,29 @@ button { font: inherit; cursor: pointer; }
                         </thead>
 
                         <tbody id="reportTableBody"></tbody>
+
                     </table>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Standard Renovo Pagination -->
                 <div class="pagination" id="paginationSection">
-                    <span class="pagination-info" id="paginationInfo"></span>
 
-                    <div class="pagination-controls">
-                        <button class="pagination-button" id="previousButton" type="button">
-                            Previous
-                        </button>
+                    <span class="pagination-info"
+                          id="paginationInfo"></span>
 
-                        <span class="page-number" id="pageNumber"></span>
+                    <nav class="pagination-controls"
+                         id="paginationControls"
+                         aria-label="Generated Report list pages">
+                    </nav>
 
-                        <button class="pagination-button" id="nextButton" type="button">
-                            Next
-                        </button>
-                    </div>
                 </div>
 
             {% else %}
+
                 <div class="empty-state">
                     No reports generated yet.
                 </div>
+
             {% endif %}
 
         </section>
@@ -234,24 +321,47 @@ button { font: inherit; cursor: pointer; }
 </div>
 
 <!-- Generate Report Confirmation -->
-<div class="modal-overlay" id="generateModal" role="dialog" aria-modal="true"
-     aria-labelledby="modalTitle" hidden>
+<div class="modal-overlay"
+     id="generateModal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modalTitle"
+     hidden>
+
     <div class="modal">
+
         <div class="modal-header">
-            <h2 class="modal-title" id="modalTitle">Generate report?</h2>
-            <button class="modal-close" id="closeModalButton" type="button" aria-label="Close">&times;</button>
+
+            <h2 class="modal-title" id="modalTitle">
+                Generate report?
+            </h2>
+
+            <button class="modal-close"
+                    id="closeModalButton"
+                    type="button"
+                    aria-label="Close">
+                &times;
+            </button>
+
         </div>
 
-        <p class="modal-description" id="modalDescription"></p>
+        <p class="modal-description"
+           id="modalDescription"></p>
 
         <div class="modal-actions">
-            <button class="modal-button" id="cancelModalButton" type="button">
+
+            <button class="modal-button"
+                    id="cancelModalButton"
+                    type="button">
                 No
             </button>
 
-            <button class="modal-button confirm" id="confirmModalButton" type="button">
+            <button class="modal-button confirm"
+                    id="confirmModalButton"
+                    type="button">
                 Yes
             </button>
+
         </div>
     </div>
 </div>
@@ -260,12 +370,20 @@ button { font: inherit; cursor: pointer; }
 class ViewReportsPage {
 
     constructor() {
+
+        // Navigation information supplied by Boundary
         this.accountId = {{ account_id | tojson }};
         this.username = {{ display_username | tojson }};
+
+        // Generated reports retrieved through the Entity
         this.reports = {{ reports | tojson }};
 
+        // Standard Renovo pagination
         this.currentPage = 1;
         this.pageSize = 5;
+        this.maxVisiblePages = 5;
+
+        // Report generation state
         this.selectedReportType = null;
         this.isProcessing = false;
 
@@ -274,17 +392,27 @@ class ViewReportsPage {
         this.modal = document.getElementById("generateModal");
         this.confirmButton = document.getElementById("confirmModalButton");
 
+        // Pagination elements
+        this.paginationSection =
+            document.getElementById("paginationSection");
+
+        this.paginationInfo =
+            document.getElementById("paginationInfo");
+
+        this.paginationControls =
+            document.getElementById("paginationControls");
+
         this.setupNavigation();
         this.setupGenerationEvents();
 
         if (this.reports.length > 0) {
-            this.setupPaginationEvents();
             this.renderReports();
         }
     }
 
-    // Set up navigation and direct logout
+    // Set up sidebar and direct logout
     setupNavigation() {
+
         const params = new URLSearchParams({
             account_id: String(this.accountId),
             username: this.username
@@ -296,44 +424,64 @@ class ViewReportsPage {
         document.getElementById("categoryLink").href =
             "/platform-manager/categories?" + params.toString();
 
-        document.getElementById("reportLink").href = this.reportsUrl;
+        document.getElementById("reportLink").href =
+            this.reportsUrl;
 
-        document.getElementById("logoutButton").addEventListener("click", () => {
-            window.location.href = "/";
-        });
+        document.getElementById("logoutButton").addEventListener(
+            "click",
+            () => {
+                window.location.href = "/";
+            }
+        );
     }
 
-    // Set up Generate buttons and confirmation modal
+    // Set up Generate buttons and confirmation
     setupGenerationEvents() {
-        const generateButtons = document.querySelectorAll(".generate-button");
+
+        const generateButtons =
+            document.querySelectorAll(".generate-button");
 
         generateButtons.forEach(button => {
+
             button.addEventListener("click", () => {
-                this.openGenerateModal(button.dataset.reportType);
+                this.openGenerateModal(
+                    button.dataset.reportType
+                );
             });
         });
 
-        document.getElementById("closeModalButton").addEventListener("click", () => {
-            this.closeGenerateModal();
-        });
+        document.getElementById("closeModalButton").addEventListener(
+            "click",
+            () => {
+                this.closeGenerateModal();
+            }
+        );
 
-        document.getElementById("cancelModalButton").addEventListener("click", () => {
-            this.closeGenerateModal();
-        });
+        document.getElementById("cancelModalButton").addEventListener(
+            "click",
+            () => {
+                this.closeGenerateModal();
+            }
+        );
 
-        this.confirmButton.addEventListener("click", () => {
-            this.confirmGeneration();
-        });
+        this.confirmButton.addEventListener(
+            "click",
+            () => {
+                this.confirmGeneration();
+            }
+        );
 
         document.addEventListener("keydown", event => {
+
             if (event.key === "Escape" && !this.modal.hidden) {
                 this.closeGenerateModal();
             }
         });
     }
 
-    // Open the confirmation pop-up for the selected report type
+    // Open confirmation for selected Report Type
     openGenerateModal(reportType) {
+
         if (this.isProcessing) {
             return;
         }
@@ -341,7 +489,8 @@ class ViewReportsPage {
         this.selectedReportType = reportType;
 
         const label =
-            reportType.charAt(0).toUpperCase() + reportType.slice(1);
+            reportType.charAt(0).toUpperCase() +
+            reportType.slice(1);
 
         document.getElementById("modalTitle").textContent =
             `Generate ${label} Report?`;
@@ -353,8 +502,9 @@ class ViewReportsPage {
         this.confirmButton.focus();
     }
 
-    // Close the Generate confirmation pop-up
+    // Close report confirmation
     closeGenerateModal() {
+
         if (this.isProcessing) {
             return;
         }
@@ -363,9 +513,14 @@ class ViewReportsPage {
         this.selectedReportType = null;
     }
 
-    // Generate the report after confirmation
+    // Generate report through the existing Flask Boundary
     async confirmGeneration() {
-        if (this.isProcessing || this.modal.hidden || !this.selectedReportType) {
+
+        if (
+            this.isProcessing ||
+            this.modal.hidden ||
+            !this.selectedReportType
+        ) {
             return;
         }
 
@@ -375,6 +530,7 @@ class ViewReportsPage {
         const reportType = this.selectedReportType;
 
         try {
+
             const params = new URLSearchParams({
                 account_id: String(this.accountId),
                 username: this.username
@@ -390,72 +546,81 @@ class ViewReportsPage {
             const result = await response.json();
 
             if (!response.ok || !result.success) {
+
                 throw new Error(
-                    result.message || "Unable to generate report."
+                    result.message ||
+                    "Unable to generate report."
                 );
             }
 
-            // Show the newly generated report in the listing
-            // by refreshing the current Report page
+            // Reload the Report listing to display the new report
             window.location.href = this.reportsUrl;
 
         } catch (error) {
+
             this.modal.hidden = true;
             this.showMessage(error.message, false);
 
         } finally {
+
             this.isProcessing = false;
             this.confirmButton.disabled = false;
             this.selectedReportType = null;
         }
     }
 
-    // Set up Previous and Next buttons
-    setupPaginationEvents() {
-        document.getElementById("previousButton").addEventListener("click", () => {
-            if (this.currentPage > 1) {
-                this.currentPage--;
-                this.renderReports();
-            }
-        });
-
-        document.getElementById("nextButton").addEventListener("click", () => {
-            const totalPages = Math.ceil(
-                this.reports.length / this.pageSize
-            );
-
-            if (this.currentPage < totalPages) {
-                this.currentPage++;
-                this.renderReports();
-            }
-        });
-    }
-
-    // Display five generated reports per page
+    // Display five generated reports on the current page
     renderReports() {
-        const startIndex = (this.currentPage - 1) * this.pageSize;
+
+        const totalRecords = this.reports.length;
+
+        const totalPages = Math.ceil(
+            totalRecords / this.pageSize
+        );
+
+        // Keep the current page within valid boundaries
+        this.currentPage = Math.max(
+            1,
+            Math.min(this.currentPage, totalPages)
+        );
+
+        const startIndex =
+            (this.currentPage - 1) * this.pageSize;
+
+        const endIndex = Math.min(
+            startIndex + this.pageSize,
+            totalRecords
+        );
 
         const pageReports = this.reports.slice(
             startIndex,
-            startIndex + this.pageSize
+            endIndex
         );
 
-        const tableBody = document.getElementById("reportTableBody");
+        const tableBody =
+            document.getElementById("reportTableBody");
+
         tableBody.replaceChildren();
 
+        // Display only reports on the current page
         pageReports.forEach(report => {
+
             const row = document.createElement("tr");
 
+            // Report ID
             const idCell = document.createElement("td");
             idCell.textContent = report.report_id;
 
+            // Date Generated
             const dateCell = document.createElement("td");
             dateCell.textContent = report.date_generated;
 
+            // Report Type
             const typeCell = document.createElement("td");
             typeCell.textContent = report.report_type;
             typeCell.className = "report-type";
 
+            // View Report
             const actionCell = document.createElement("td");
             const viewLink = document.createElement("a");
 
@@ -467,10 +632,12 @@ class ViewReportsPage {
             viewLink.href =
                 `/platform-manager/reports/${report.report_id}?${params.toString()}`;
 
+            // Uses the updated boxed View button styling
             viewLink.className = "view-link";
             viewLink.textContent = "View";
 
             actionCell.appendChild(viewLink);
+
             row.append(
                 idCell,
                 dateCell,
@@ -481,40 +648,194 @@ class ViewReportsPage {
             tableBody.appendChild(row);
         });
 
-        // Update pagination information
-        const totalPages = Math.ceil(
-            this.reports.length / this.pageSize
+        // Update the displayed record count
+        this.paginationInfo.textContent =
+            `Showing ${startIndex + 1}–${endIndex} of ${totalRecords} reports`;
+
+        // Generate standard Renovo pagination
+        this.renderPagination(totalPages);
+    }
+
+    // Display a maximum of five consecutive numbered pages
+    renderPagination(totalPages) {
+
+        this.paginationControls.replaceChildren();
+
+        // Previous page arrow
+        this.addPageButton(
+            "‹",
+            this.currentPage - 1,
+            this.currentPage === 1
         );
 
-        const first = startIndex + 1;
-        const last = Math.min(
-            startIndex + this.pageSize,
-            this.reports.length
+        const visibleCount = Math.min(
+            this.maxVisiblePages,
+            totalPages
         );
 
-        document.getElementById("paginationInfo").textContent =
-            `Showing ${first}–${last} of ${this.reports.length} reports`;
+        const halfWindow = Math.floor(
+            visibleCount / 2
+        );
 
-        document.getElementById("pageNumber").textContent =
-            `Page ${this.currentPage} of ${totalPages}`;
+        // Centre the visible page numbers around the current page
+        let startPage =
+            this.currentPage - halfWindow;
 
-        document.getElementById("previousButton").disabled =
-            this.currentPage === 1;
+        // Prevent the window from exceeding the first or last page
+        startPage = Math.max(
+            1,
+            Math.min(
+                startPage,
+                totalPages - visibleCount + 1
+            )
+        );
 
-        document.getElementById("nextButton").disabled =
-            this.currentPage === totalPages;
+        const endPage =
+            startPage + visibleCount - 1;
+
+        // First page shortcut
+        if (startPage > 1) {
+
+            this.addPageButton(
+                "1",
+                1,
+                false,
+                this.currentPage === 1
+            );
+
+            // Ellipsis when pages are skipped
+            if (startPage > 2) {
+                this.addEllipsis();
+            }
+        }
+
+        // Up to five consecutive numbered pages
+        for (
+            let page = startPage;
+            page <= endPage;
+            page++
+        ) {
+
+            this.addPageButton(
+                String(page),
+                page,
+                false,
+                page === this.currentPage
+            );
+        }
+
+        // Last page shortcut
+        if (endPage < totalPages) {
+
+            if (endPage < totalPages - 1) {
+                this.addEllipsis();
+            }
+
+            this.addPageButton(
+                String(totalPages),
+                totalPages,
+                false,
+                this.currentPage === totalPages
+            );
+        }
+
+        // Next page arrow
+        this.addPageButton(
+            "›",
+            this.currentPage + 1,
+            this.currentPage === totalPages
+        );
+    }
+
+    // Create a page number or navigation arrow
+    addPageButton(label, targetPage, disabled, active = false) {
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "pagination-button";
+        button.textContent = label;
+        button.disabled = disabled;
+
+        // Accessible labels
+        if (label === "‹") {
+
+            button.setAttribute(
+                "aria-label",
+                "Previous page"
+            );
+
+        } else if (label === "›") {
+
+            button.setAttribute(
+                "aria-label",
+                "Next page"
+            );
+
+        } else {
+
+            button.setAttribute(
+                "aria-label",
+                `Page ${targetPage}`
+            );
+        }
+
+        // Highlight the currently selected page
+        if (active) {
+
+            button.classList.add("current");
+
+            button.setAttribute(
+                "aria-current",
+                "page"
+            );
+        }
+
+        // Navigate to selected page
+        button.addEventListener("click", () => {
+
+            if (disabled || targetPage === this.currentPage) {
+                return;
+            }
+
+            this.currentPage = targetPage;
+
+            this.renderReports();
+        });
+
+        this.paginationControls.appendChild(button);
+    }
+
+    // Display ellipsis between skipped page numbers
+    addEllipsis() {
+
+        const ellipsis = document.createElement("span");
+
+        ellipsis.className = "pagination-ellipsis";
+        ellipsis.textContent = "…";
+
+        ellipsis.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        this.paginationControls.appendChild(ellipsis);
     }
 
     // Display success or error messages
     showMessage(text, success) {
+
         this.message.hidden = false;
         this.message.textContent = text;
+
         this.message.className =
             "message " + (success ? "success" : "error");
     }
 }
 
+// Initialise the Platform Manager Report page
 new ViewReportsPage();
 </script>
+
 </body>
 </html>

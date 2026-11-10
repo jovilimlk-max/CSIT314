@@ -1,4 +1,17 @@
 
+<!--
+What this code does?
+- Display the User Admin's User Accounts list.
+- Preserve searching by name or email.
+- Preserve filtering by account status.
+- Preserve ascending and descending name sorting.
+- Display five accounts per page.
+- Show a maximum of five consecutive page numbers.
+- Use arrow buttons, first/last shortcuts and ellipses for pagination.
+- Recalculate pagination after searching, filtering or sorting.
+- Preserve Create Account, View Account and sidebar navigation.
+- Log out directly without confirmation.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,14 +87,15 @@
         .view-button:hover { background: #e6f3f3; border-color: #8fc8ce; }
         .empty-message { padding: 36px 20px; text-align: center; color: #738096; font-size: 14px; }
 
-        /* Pagination */
+        /* Standard Renovo Pagination */
         .pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 18px 20px; border-top: 1px solid #edf0f5; }
         .results-count { color: #738096; font-size: 12px; }
-        .page-buttons { display: flex; align-items: center; gap: 6px; }
-        .page-button { min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid #e4e9f2; border-radius: 7px; background: white; color: #52647a; font-size: 12px; cursor: pointer; }
-        .page-button:hover:not(:disabled) { background: #e6f3f3; }
+        .page-buttons { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+        .page-button { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid #e4e9f2; border-radius: 7px; background: white; color: #52647a; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .page-button:hover:not(:disabled) { background: #e6f3f3; border-color: #b7d4da; }
         .page-button.current { background: #1c5062; border-color: #1c5062; color: white; font-weight: 700; }
         .page-button:disabled { opacity: .4; cursor: not-allowed; }
+        .page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 34px; color: #8290a3; font-size: 13px; }
 
         /* Success notification */
         .success-message { padding: 14px 18px; margin-bottom: 24px; border: 1px solid #c7e4d7; border-radius: 9px; background: #eaf7f0; color: #23684c; font-size: 13px; }
@@ -117,6 +131,7 @@
             .status-filter { flex: 1; }
             .table-panel { overflow: hidden; }
             .pagination { padding: 15px; }
+            .page-buttons { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -326,7 +341,10 @@
 
     <script>
         class UserAccountsPage {
+
             constructor() {
+
+                // Store all account rows for searching and filtering
                 this.rows = Array.from(
                     document.querySelectorAll("#accountTableBody tr")
                 );
@@ -341,10 +359,14 @@
                 this.resultsCount = document.getElementById("resultsCount");
                 this.pageButtons = document.getElementById("pageButtons");
 
+                // Existing search and sorting settings
                 this.searchQuery = "";
                 this.sortAscending = true;
+
+                // Standard Renovo pagination settings
                 this.currentPage = 1;
                 this.pageSize = 5;
+                this.maxVisiblePages = 5;
 
                 this.setupEvents();
                 this.checkSuccessMessage();
@@ -353,20 +375,31 @@
 
             // Set up search, filter and sorting events
             setupEvents() {
+
                 this.searchForm.addEventListener("submit", event => {
+
                     event.preventDefault();
-                    this.searchQuery = this.searchInput.value.trim().toLowerCase();
+
+                    this.searchQuery =
+                        this.searchInput.value.trim().toLowerCase();
+
+                    // Return to Page 1 after searching
                     this.currentPage = 1;
                     this.render();
                 });
 
                 this.statusFilter.addEventListener("change", () => {
+
+                    // Return to Page 1 after filtering
                     this.currentPage = 1;
                     this.render();
                 });
 
                 this.sortButton.addEventListener("click", () => {
+
                     this.sortAscending = !this.sortAscending;
+
+                    // Return to Page 1 after sorting
                     this.currentPage = 1;
                     this.render();
                 });
@@ -374,27 +407,37 @@
 
             // Show the success message after account creation
             checkSuccessMessage() {
-                const params = new URLSearchParams(window.location.search);
+
+                const params = new URLSearchParams(
+                    window.location.search
+                );
 
                 if (params.get("created") === "1") {
-                    document.getElementById("successMessage").hidden = false;
+
+                    document.getElementById(
+                        "successMessage"
+                    ).hidden = false;
 
                     params.delete("created");
+
                     const query = params.toString();
 
                     window.history.replaceState(
                         {},
                         "",
-                        window.location.pathname + (query ? "?" + query : "")
+                        window.location.pathname +
+                        (query ? "?" + query : "")
                     );
                 }
             }
 
-            // Retrieve accounts matching the selected search and filter
+            // Retrieve accounts matching the search and status filter
             getFilteredAccounts() {
+
                 const status = this.statusFilter.value;
 
                 const filtered = this.rows.filter(row => {
+
                     const name = row.dataset.name;
                     const email = row.dataset.email;
                     const accountStatus = row.dataset.status;
@@ -409,13 +452,17 @@
                     return matchesSearch && matchesStatus;
                 });
 
-                // Sort accounts alphabetically by name
+                // Preserve existing alphabetical sorting by name
                 filtered.sort((first, second) => {
-                    const comparison = first.dataset.name.localeCompare(
-                        second.dataset.name
-                    );
 
-                    return this.sortAscending ? comparison : -comparison;
+                    const comparison =
+                        first.dataset.name.localeCompare(
+                            second.dataset.name
+                        );
+
+                    return this.sortAscending
+                        ? comparison
+                        : -comparison;
                 });
 
                 return filtered;
@@ -423,87 +470,162 @@
 
             // Display five accounts per page
             render() {
+
                 const filtered = this.getFilteredAccounts();
                 const totalAccounts = filtered.length;
+
                 const totalPages = Math.max(
                     1,
                     Math.ceil(totalAccounts / this.pageSize)
                 );
 
-                this.currentPage = Math.min(this.currentPage, totalPages);
+                // Keep the selected page within the available pages
+                this.currentPage = Math.max(
+                    1,
+                    Math.min(this.currentPage, totalPages)
+                );
 
-                const start = (this.currentPage - 1) * this.pageSize;
+                const start =
+                    (this.currentPage - 1) * this.pageSize;
+
                 const end = start + this.pageSize;
+
                 const visibleRows = filtered.slice(start, end);
 
-                // Keep all retrieved account rows available for filtering
+                // Hide all account rows before displaying the current page
                 this.rows.forEach(row => {
                     row.hidden = true;
                     row.style.display = "none";
                 });
 
-                // Reorder the table and show only the current page
+                // Display only the five accounts on the selected page
                 visibleRows.forEach(row => {
+
                     this.tableBody.appendChild(row);
+
                     row.hidden = false;
                     row.style.display = "";
                 });
 
                 // Update the sorting indicator
-                this.sortIcon.textContent = this.sortAscending ? "↑" : "↓";
+                this.sortIcon.textContent =
+                    this.sortAscending ? "↑" : "↓";
 
-                // Display an empty-state message if nothing matches
-                this.emptyMessage.hidden = totalAccounts !== 0;
+                // Show an empty state when no accounts match
+                this.emptyMessage.hidden =
+                    totalAccounts !== 0;
 
-                // Update the result counter
-                const firstResult = totalAccounts === 0 ? 0 : start + 1;
-                const lastResult = Math.min(end, totalAccounts);
+                // Update the displayed account count
+                const firstResult =
+                    totalAccounts === 0 ? 0 : start + 1;
+
+                const lastResult =
+                    Math.min(end, totalAccounts);
 
                 this.resultsCount.textContent =
                     `Showing ${firstResult}–${lastResult} of ${totalAccounts} accounts`;
 
-                // Generate pagination buttons
+                // Update pagination
                 this.renderPagination(totalPages);
             }
 
-            // Generate pagination navigation
+            // Generate the standard Renovo pagination design
             renderPagination(totalPages) {
-                this.pageButtons.innerHTML = "";
 
-                const previous = this.createPageButton(
+                // Clear existing pagination controls
+                this.pageButtons.replaceChildren();
+
+                // Previous page arrow
+                this.addPageButton(
                     "‹",
                     this.currentPage - 1,
                     this.currentPage === 1
                 );
 
-                this.pageButtons.appendChild(previous);
+                // Calculate how many numbered buttons to display
+                const visibleCount = Math.min(
+                    this.maxVisiblePages,
+                    totalPages
+                );
 
-                for (let page = 1; page <= totalPages; page++) {
-                    const button = this.createPageButton(
-                        String(page),
-                        page,
-                        false
+                const halfWindow = Math.floor(
+                    visibleCount / 2
+                );
+
+                // Centre the visible page numbers around current page
+                let startPage =
+                    this.currentPage - halfWindow;
+
+                // Keep the page number window within valid boundaries
+                startPage = Math.max(
+                    1,
+                    Math.min(
+                        startPage,
+                        totalPages - visibleCount + 1
+                    )
+                );
+
+                const endPage =
+                    startPage + visibleCount - 1;
+
+                // Show first page shortcut when needed
+                if (startPage > 1) {
+
+                    this.addPageButton(
+                        "1",
+                        1,
+                        false,
+                        this.currentPage === 1
                     );
 
-                    if (page === this.currentPage) {
-                        button.classList.add("current");
-                        button.setAttribute("aria-current", "page");
+                    // Add ellipsis if pages are skipped
+                    if (startPage > 2) {
+                        this.addEllipsis();
                     }
-
-                    this.pageButtons.appendChild(button);
                 }
 
-                const next = this.createPageButton(
+                // Show a maximum of five consecutive numbered pages
+                for (
+                    let page = startPage;
+                    page <= endPage;
+                    page++
+                ) {
+
+                    this.addPageButton(
+                        String(page),
+                        page,
+                        false,
+                        page === this.currentPage
+                    );
+                }
+
+                // Show last page shortcut when needed
+                if (endPage < totalPages) {
+
+                    // Add ellipsis if pages are skipped
+                    if (endPage < totalPages - 1) {
+                        this.addEllipsis();
+                    }
+
+                    this.addPageButton(
+                        String(totalPages),
+                        totalPages,
+                        false,
+                        this.currentPage === totalPages
+                    );
+                }
+
+                // Next page arrow
+                this.addPageButton(
                     "›",
                     this.currentPage + 1,
                     this.currentPage === totalPages
                 );
-
-                this.pageButtons.appendChild(next);
             }
 
-            // Create a pagination button
-            createPageButton(label, page, disabled) {
+            // Add a numbered page button or navigation arrow
+            addPageButton(label, page, disabled, active = false) {
+
                 const button = document.createElement("button");
 
                 button.type = "button";
@@ -511,12 +633,64 @@
                 button.textContent = label;
                 button.disabled = disabled;
 
+                // Identify Previous and Next buttons for accessibility
+                if (label === "‹") {
+                    button.setAttribute(
+                        "aria-label",
+                        "Previous page"
+                    );
+                } else if (label === "›") {
+                    button.setAttribute(
+                        "aria-label",
+                        "Next page"
+                    );
+                } else {
+                    button.setAttribute(
+                        "aria-label",
+                        `Page ${page}`
+                    );
+                }
+
+                // Highlight the current page
+                if (active) {
+
+                    button.classList.add("current");
+
+                    button.setAttribute(
+                        "aria-current",
+                        "page"
+                    );
+                }
+
+                // Navigate to the selected page
                 button.addEventListener("click", () => {
+
+                    if (disabled || page === this.currentPage) {
+                        return;
+                    }
+
                     this.currentPage = page;
+
                     this.render();
                 });
 
-                return button;
+                this.pageButtons.appendChild(button);
+            }
+
+            // Add an ellipsis between skipped page numbers
+            addEllipsis() {
+
+                const ellipsis = document.createElement("span");
+
+                ellipsis.className = "page-ellipsis";
+                ellipsis.textContent = "…";
+
+                ellipsis.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+                this.pageButtons.appendChild(ellipsis);
             }
         }
 

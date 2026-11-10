@@ -1,464 +1,598 @@
 
 <!--
 What this code does?
-- Display the Update IDP Category page for Platform Manager.
-- Show the existing Category ID, Category Name and Status.
-- Allow editing of the Category Name only.
-- Validate that Category Name is not empty.
-- Submit the updated name to the Update IDP Category Boundary.
-- Display validation and backend error messages.
-- Handle duplicate category names returned by the backend.
-- Return to View IDP Category after a successful update.
-- Provide a Cancel button without saving changes.
-- Connect IDP Category and Report sidebar navigation.
-- Preserve account_id and username across pages.
+- Display the Update IDP Category page using the existing Update Project design.
+- Retrieve existing category information from the Flask Boundary.
+- Allow editing Category Name and Category Description.
+- Display Category ID and Status as read-only information.
+- Validate required fields before submitting.
+- Submit form data to the existing Update IDP Category Boundary.
+- Display validation and duplicate-category errors.
+- Preserve entered values when the Boundary returns an error.
+- Confirm before discarding unsaved changes.
+- Return to View IDP Category after successfully saving.
+- Preserve IDP Category and Report navigation.
 - Log out directly without confirmation.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Renovo | Update IDP Category</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renovo | Update IDP Category</title>
 
-<style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#26344a;background:#f4f6fb}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh}
-button,input{font:inherit}
-button{cursor:pointer}
+    <style>
+        :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #26344a; background: #f4f6fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; }
+        button, input, select, textarea { font: inherit; }
 
-/* Top Bar */
-.topbar{height:76px;padding:0 36px;background:#14253e;color:white;display:flex;justify-content:space-between;align-items:center}
-.brand{font-size:24px;font-weight:850;letter-spacing:.07em}
-.brand span{color:#8dded4}
-.topbar-right,.user-info{display:flex;align-items:center;gap:16px}
-.user-avatar{width:38px;height:38px;border-radius:50%;background:#2d5272;color:#8dded4;display:grid;place-items:center;font-size:13px;font-weight:750}
-.user-details{display:flex;flex-direction:column;gap:3px}
-.user-details strong{font-size:13px}
-.user-details small{color:#d1deec;font-size:11px}
-.logout-button{padding:10px 16px;border:1px solid #ffffff55;border-radius:8px;background:transparent;color:white;font-size:13px}
-.logout-button:hover{background:#ffffff18}
+        /* Top navigation bar */
+        .topbar { height: 76px; background: #14253e; color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 36px; border-bottom: 1px solid #ffffff20; }
+        .brand { font-size: 24px; font-weight: 850; letter-spacing: .07em; }
+        .brand span { color: #8dded4; }
+        .topbar-right { display: flex; align-items: center; gap: 24px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { height: 38px; width: 38px; border-radius: 50%; background: #2d5272; display: flex; justify-content: center; align-items: center; color: #8dded4; font-weight: 700; font-size: 15px; }
+        .user-details { display: flex; flex-direction: column; gap: 3px; }
+        .user-details strong { font-size: 13px; font-weight: 650; }
+        .user-details small { font-size: 11px; color: #d1deec; }
+        .logout-button { background: transparent; border: 1px solid #ffffff55; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; padding: 10px 16px; cursor: pointer; }
+        .logout-button:hover { background: #ffffff18; }
 
-/* Layout */
-.dashboard-layout{display:grid;grid-template-columns:245px minmax(0,1fr);min-height:calc(100vh - 76px)}
-.sidebar{background:white;border-right:1px solid #e4e9f2;padding:32px 16px}
-.sidebar-title{margin:0 14px 18px;color:#8290a3;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-.sidebar-nav{display:flex;flex-direction:column;gap:8px}
-.nav-link{display:block;padding:14px 16px;border-radius:9px;color:#52647a;font-size:14px;text-decoration:none}
-.nav-link:hover{background:#f0f5f7}
-.nav-link.active{background:#e6f3f3;color:#1c5062;font-weight:750}
-.main-content{padding:42px 50px;min-width:0;width:100%;max-width:1100px}
+        /* Main layout and sidebar */
+        .dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+        .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
+        .sidebar-title { color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 14px 18px; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+        .nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; text-decoration: none; color: #52647a; font-size: 14px; font-weight: 550; }
+        .nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-link:hover { background: #f0f5f7; color: #1c5062; }
+        .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
 
-/* Update Category Panel */
-.category-panel{background:white;border:1px solid #e4e9f2;border-radius:14px;padding:30px}
-.panel-header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:30px}
-.page-title{margin:0;color:#14253e;font-size:27px}
-.close-link{color:#28747f;font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.close-link:hover{color:#1c5062}
-.section-title{margin:0 0 26px;color:#14253e;font-size:19px}
+        /* Main content */
+        .main-content { padding: 46px 50px; width: 100%; max-width: 1450px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; margin-bottom: 28px; color: #387c83; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .back-link:hover { color: #1c5062; text-decoration: underline; }
+        .page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+        .page-title { color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; margin: 0 0 10px; }
+        .page-description { color: #738096; font-size: 14px; line-height: 1.6; margin: 0 0 32px; }
 
-/* Form Fields */
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-.form-group{min-width:0}
-.form-label{display:block;margin-bottom:10px;color:#52647a;font-size:13px;font-weight:700}
-.required{color:#c43b4a}
-.form-input{width:100%;height:45px;padding:0 14px;border:1px solid #dbe2ec;border-radius:8px;background:white;color:#26344a;font-size:13px;outline:none}
-.form-input:focus{border-color:#28747f}
-.form-input:disabled{background:#f3f6fa;color:#738096;cursor:not-allowed}
-.form-input.invalid{border-color:#c43b4a}
-.field-error{margin:8px 0 0;color:#b42335;font-size:12px}
-.status-badge{display:inline-block;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:750;text-transform:capitalize}
-.status-badge.active{background:#e6f6f0;color:#186b4d}
-.status-badge.suspended{background:#fff1ed;color:#b45335}
-.read-only-field{min-height:45px;padding:12px 14px;border:1px solid #e1e7ef;border-radius:8px;background:#f3f6fa;display:flex;align-items:center}
+        /* Update Category form */
+        .form-panel { width: 100%; max-width: 790px; background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 34px; box-shadow: 0 8px 28px #1c34500a; }
+        .form-heading { color: #14253e; font-size: 17px; font-weight: 750; margin: 0 0 27px; }
+        .field { margin-bottom: 24px; }
+        .field label { display: block; margin-bottom: 9px; font-size: 13px; font-weight: 700; color: #26344a; }
+        .required { color: #b9434e; margin-left: 3px; }
+        .control { width: 100%; min-height: 46px; padding: 12px 14px; border: 1px solid #cdd7e4; border-radius: 8px; outline: none; background: white; color: #26344a; font-size: 14px; }
+        .control:focus { border-color: #2b7b85; box-shadow: 0 0 0 3px #2b7b8522; }
+        textarea.control { min-height: 145px; resize: vertical; line-height: 1.6; }
+        .control.invalid { border-color: #b9434e; }
+        .control:disabled { background: #f5f7fa; color: #738096; cursor: not-allowed; }
+        .field-error { display: none; margin: 7px 0 0; color: #a22735; font-size: 12px; }
+        .field-error.show { display: block; }
 
-/* Action Buttons */
-.form-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid #edf0f5}
-.action-button{min-width:115px;padding:11px 20px;border:1px solid #dbe2ec;border-radius:8px;background:white;color:#52647a;font-size:13px;font-weight:700}
-.action-button:hover{background:#f4f6fb}
-.action-button.primary{border-color:#1c5062;background:#1c5062;color:white}
-.action-button.primary:hover{background:#256d7f}
-.action-button:disabled{opacity:.55;cursor:not-allowed}
+        /* Read-only information */
+        .read-only-field { width: 100%; min-height: 46px; display: flex; align-items: center; padding: 12px 14px; border: 1px solid #e0e7ef; border-radius: 8px; background: #f5f7fa; color: #26344a; font-size: 14px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 20px; font-size: 12px; font-weight: 750; }
+        .status-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+        .status-badge.active { background: #e6f6f0; color: #186b4d; }
+        .status-badge.suspended { background: #fff0f0; color: #a22735; }
 
-/* Messages */
-.message{margin-bottom:20px;padding:13px 16px;border-radius:8px;font-size:13px}
-.message.success{background:#e6f6f0;color:#186b4d}
-.message.error{background:#fff0f0;color:#a22735}
-[hidden]{display:none!important}
+        /* Form buttons */
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 22px; border-top: 1px solid #edf0f5; }
+        .cancel-button { min-width: 105px; height: 44px; border: 1px solid #cdd7e4; border-radius: 8px; background: white; color: #52647a; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .cancel-button:hover { background: #f0f4f8; }
+        .submit-button { min-width: 175px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: #1c5062; color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .submit-button:hover { background: #256d7f; }
+        .submit-button:disabled { opacity: .6; cursor: not-allowed; }
 
-/* Responsive */
-@media(max-width:900px){
-.dashboard-layout{grid-template-columns:200px minmax(0,1fr)}
-.main-content{padding:32px 25px}
-}
-@media(max-width:650px){
-.topbar{padding:16px 20px}
-.user-details{display:none}
-.dashboard-layout{display:block}
-.sidebar{padding:12px;border-right:none;border-bottom:1px solid #e4e9f2}
-.sidebar-title{display:none}
-.sidebar-nav{flex-direction:row}
-.main-content{padding:28px 18px}
-.category-panel{padding:20px}
-.form-grid{grid-template-columns:1fr}
-.form-actions{flex-wrap:wrap}
-}
-</style>
+        /* Messages */
+        .message { margin: 0 0 24px; padding: 13px 16px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+        .message.error { background: #fff0f0; border: 1px solid #f2cbd1; color: #a22735; }
+
+        [hidden] { display: none !important; }
+        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #8dded4; outline-offset: 3px; }
+
+        /* Tablet layout */
+        @media (max-width: 1000px) {
+            .dashboard-layout { grid-template-columns: 200px minmax(0, 1fr); }
+            .main-content { padding: 36px 28px; }
+            .form-panel { padding: 28px; }
+        }
+
+        /* Mobile layout */
+        @media (max-width: 720px) {
+            .topbar { height: auto; min-height: 70px; padding: 16px 20px; }
+            .brand { font-size: 21px; }
+            .topbar-right { gap: 12px; }
+            .user-details { display: none; }
+            .logout-button { padding: 9px 12px; }
+            .dashboard-layout { display: block; }
+            .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
+            .sidebar-title { display: none; }
+            .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+            .main-content { padding: 30px 20px; }
+            .page-title { font-size: 26px; }
+            .form-panel { padding: 22px; }
+            .form-actions { gap: 10px; }
+            .cancel-button, .submit-button { min-width: 0; flex: 1; }
+        }
+    </style>
 </head>
 
 <body>
-{% set display_username = username | default("Platform Manager", true) %}
+    {% set display_username = username | default("Platform Manager", true) %}
+    {% set category_name = form_data.category_name if form_data is defined and form_data else category.category_name %}
+    {% set category_description = form_data.category_description if form_data is defined and form_data else category.category_description %}
 
-<!-- Top Bar -->
-<header class="topbar">
-    <div class="brand">RENO<span>VO</span></div>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">RENO<span>VO</span></div>
 
-    <div class="topbar-right">
-        <div class="user-info">
-            <div class="user-avatar">PM</div>
+        <div class="topbar-right">
 
-            <div class="user-details">
-                <strong>Hi, {{ display_username }}</strong>
-                <small>Platform Manager</small>
+            <div class="user-info">
+
+                <div class="user-avatar">PM</div>
+
+                <div class="user-details">
+                    <strong>Hi, {{ display_username }}</strong>
+                    <small>Platform Manager</small>
+                </div>
+
             </div>
+
+            <button class="logout-button"
+                    id="logoutButton"
+                    type="button">
+                Log out
+            </button>
+
         </div>
+    </header>
 
-        <button class="logout-button" id="logoutButton" type="button">
-            Log out
-        </button>
-    </div>
-</header>
+    <div class="dashboard-layout">
 
-<div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
+            <p class="sidebar-title">Management</p>
 
-        <p class="sidebar-title">Management</p>
+            <nav class="sidebar-nav">
 
-        <nav class="sidebar-nav">
-
-            <a class="nav-link active" id="categoryLink" href="#">
-                IDP Category
-            </a>
-
-            <a class="nav-link" id="reportLink" href="#">
-                Report
-            </a>
-
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-
-        <!-- Feedback Message -->
-        <div class="message" id="actionMessage"
-             role="status" aria-live="polite" hidden></div>
-
-        <section class="category-panel">
-
-            <!-- Page Heading -->
-            <div class="panel-header">
-
-                <h1 class="page-title">Update IDP Category</h1>
-
-                <a class="close-link" id="closeCategoryLink" href="#">
-                    Close
+                <!-- IDP Category -->
+                <a class="nav-link active"
+                   id="categoryLink"
+                   href="#">
+                    IDP Category
                 </a>
 
-            </div>
+                <!-- Report -->
+                <a class="nav-link"
+                   id="reportLink"
+                   href="#">
+                    Report
+                </a>
 
-            <h2 class="section-title">Category Information</h2>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Back to Category -->
+            <button class="back-link"
+                    id="backButton"
+                    type="button">
+
+                <span aria-hidden="true">&larr;</span>
+                Back to Category
+
+            </button>
+
+            <div class="page-label">Category Management</div>
+
+            <h1 class="page-title">Update IDP Category</h1>
+
+            <p class="page-description">
+                Edit the category's details below and save your changes.
+            </p>
 
             <!-- Update Category Form -->
-            <form id="updateCategoryForm" novalidate>
+            <div class="form-panel">
 
-                <div class="form-grid">
+                <h2 class="form-heading">Category Details</h2>
 
-                    <!-- Category ID -->
-                    <div class="form-group">
+                <!-- Error returned by Flask Boundary -->
+                {% if error %}
+                <p class="message error"
+                   id="backendError"
+                   role="alert">
+                    {{ error }}
+                </p>
+                {% endif %}
 
-                        <label class="form-label" for="categoryId">
-                            Category ID
+                <form id="updateCategoryForm"
+                      method="POST"
+                      novalidate>
+
+                    <!-- Category Name -->
+                    <div class="field">
+
+                        <label for="category_name">
+                            Category Name
+                            <span class="required">*</span>
                         </label>
 
-                        <input
-                            class="form-input"
-                            type="text"
-                            id="categoryId"
-                            value="{{ category.category_id }}"
-                            disabled
-                        >
+                        <input class="control"
+                               id="category_name"
+                               name="category_name"
+                               type="text"
+                               maxlength="255"
+                               value="{{ category_name }}"
+                               required>
+
+                        <p class="field-error"
+                           id="category_name_error"></p>
 
                     </div>
 
-                    <!-- Category Name -->
-                    <div class="form-group">
+                    <!-- Category Description -->
+                    <div class="field">
 
-                        <label class="form-label" for="categoryName">
-                            Category Name <span class="required">*</span>
+                        <label for="category_description">
+                            Category Description
+                            <span class="required">*</span>
                         </label>
 
-                        <input
-                            class="form-input"
-                            type="text"
-                            id="categoryName"
-                            name="category_name"
-                            value="{{ category.category_name }}"
-                            placeholder="Enter category name"
-                            autocomplete="off"
-                            required
-                        >
+                        <textarea class="control"
+                                  id="category_description"
+                                  name="category_description"
+                                  maxlength="5000"
+                                  required>{{ category_description }}</textarea>
 
-                        <p class="field-error" id="categoryNameError" hidden></p>
+                        <p class="field-error"
+                           id="category_description_error"></p>
 
                     </div>
 
                     <!-- Category Status -->
-                    <div class="form-group">
+                    <div class="field">
 
-                        <label class="form-label">
-                            Status
-                        </label>
+                        <label>Category Status</label>
 
-                        <div class="read-only-field">
+                        <div class="status-badge {{ category.status | lower }}">
 
-                            <span class="status-badge {{ category.status | lower }}">
-                                {{ category.status }}
-                            </span>
+                            <span class="status-dot"></span>
+
+                            {% if category.status == "active" %}
+                                Active
+                            {% else %}
+                                Suspended
+                            {% endif %}
 
                         </div>
 
                     </div>
 
-                </div>
+                    <!-- Category ID -->
+                    <div class="field">
 
-                <!-- Actions -->
-                <div class="form-actions">
+                        <label>Category ID</label>
 
-                    <button class="action-button" id="cancelButton" type="button">
-                        Cancel
-                    </button>
+                        <div class="read-only-field">
+                            {{ category.category_id }}
+                        </div>
 
-                    <button class="action-button primary" id="saveButton" type="submit">
-                        Save Changes
-                    </button>
+                    </div>
 
-                </div>
+                    <!-- Form Actions -->
+                    <div class="form-actions">
 
-            </form>
+                        <button class="cancel-button"
+                                id="cancelButton"
+                                type="button">
+                            Cancel
+                        </button>
 
-        </section>
+                        <button class="submit-button"
+                                id="submitButton"
+                                type="submit">
+                            Save Changes
+                        </button>
 
-    </main>
+                    </div>
 
-</div>
+                </form>
+            </div>
 
-<script>
-class UpdateIDPCategoryPage {
+        </main>
+    </div>
 
-    constructor() {
+    <script>
+        class UpdateIDPCategoryPage {
 
-        // Existing Category details from Flask Boundary
-        this.category = {{ category | tojson }};
+            constructor() {
 
-        // Navigation information
-        this.accountId = {{ account_id | default("", true) | tojson }};
-        this.username = {{ display_username | tojson }};
+                // Navigation details provided by Boundary
+                this.accountId = {{ account_id | default("", true) | tojson }};
+                this.username = {{ display_username | tojson }};
 
-        // Form elements
-        this.form = document.getElementById("updateCategoryForm");
-        this.categoryNameInput = document.getElementById("categoryName");
-        this.categoryNameError = document.getElementById("categoryNameError");
-        this.saveButton = document.getElementById("saveButton");
-        this.message = document.getElementById("actionMessage");
+                // Existing category information
+                this.categoryId = {{ category.category_id | tojson }};
 
-        this.isSubmitting = false;
+                // Form elements
+                this.form = document.getElementById("updateCategoryForm");
 
-        this.setupNavigation();
-        this.setupForm();
-    }
-
-    // Set up sidebar navigation, Close, Cancel and Logout
-    setupNavigation() {
-
-        const params = new URLSearchParams({
-            account_id: String(this.accountId),
-            username: this.username
-        });
-
-        this.categoriesUrl =
-            "/platform-manager/categories?" + params.toString();
-
-        this.reportsUrl =
-            "/platform-manager/reports?" + params.toString();
-
-        this.viewCategoryUrl =
-            `/platform-manager/categories/${this.category.category_id}?${params.toString()}`;
-
-        this.updateCategoryUrl =
-            `/platform-manager/categories/${this.category.category_id}/edit?${params.toString()}`;
-
-        // IDP Category sidebar link
-        document.getElementById("categoryLink").href =
-            this.categoriesUrl;
-
-        // Report sidebar link
-        document.getElementById("reportLink").href =
-            this.reportsUrl;
-
-        // Close returns to View Category without saving
-        document.getElementById("closeCategoryLink").href =
-            this.viewCategoryUrl;
-
-        // Cancel returns to View Category without saving
-        document.getElementById("cancelButton").addEventListener(
-            "click",
-            () => {
-                window.location.href = this.viewCategoryUrl;
-            }
-        );
-
-        // Direct logout
-        document.getElementById("logoutButton").addEventListener(
-            "click",
-            () => {
-                window.location.href = "/";
-            }
-        );
-    }
-
-    // Set up form submission and input events
-    setupForm() {
-
-        this.form.addEventListener("submit", event => {
-
-            event.preventDefault();
-
-            this.updateCategory();
-        });
-
-        // Clear validation errors when editing
-        this.categoryNameInput.addEventListener("input", () => {
-
-            this.clearFieldError();
-        });
-    }
-
-    // Validate Category Name
-    validateForm() {
-
-        const categoryName = this.categoryNameInput.value.trim();
-
-        this.clearFieldError();
-
-        if (!categoryName) {
-
-            this.categoryNameInput.classList.add("invalid");
-
-            this.categoryNameError.textContent =
-                "Category Name is required.";
-
-            this.categoryNameError.hidden = false;
-
-            this.categoryNameInput.focus();
-
-            return null;
-        }
-
-        return categoryName;
-    }
-
-    // Clear field validation errors
-    clearFieldError() {
-
-        this.categoryNameInput.classList.remove("invalid");
-        this.categoryNameError.hidden = true;
-        this.categoryNameError.textContent = "";
-    }
-
-    // Submit updated Category Name through the Boundary
-    async updateCategory() {
-
-        if (this.isSubmitting) {
-            return;
-        }
-
-        const categoryName = this.validateForm();
-
-        if (categoryName === null) {
-            return;
-        }
-
-        this.isSubmitting = true;
-        this.saveButton.disabled = true;
-        this.message.hidden = true;
-
-        try {
-
-            // Prepare form data for the Flask Boundary
-            const formData = new FormData();
-
-            formData.append("category_name", categoryName);
-
-            const response = await fetch(this.updateCategoryUrl, {
-                method: "POST",
-                body: formData
-            });
-
-            const contentType =
-                response.headers.get("content-type") || "";
-
-            if (!contentType.includes("application/json")) {
-                throw new Error("Unexpected response from the server.");
-            }
-
-            const result = await response.json();
-
-            // Handle failed updates or duplicate names
-            if (!response.ok || !result.success) {
-
-                this.showMessage(
-                    result.message || "Unable to update category.",
-                    false
+                this.categoryName = document.getElementById(
+                    "category_name"
                 );
 
-                return;
+                this.categoryDescription = document.getElementById(
+                    "category_description"
+                );
+
+                this.nameError = document.getElementById(
+                    "category_name_error"
+                );
+
+                this.descriptionError = document.getElementById(
+                    "category_description_error"
+                );
+
+                this.submitButton = document.getElementById(
+                    "submitButton"
+                );
+
+                this.submitting = false;
+
+                // Store the displayed form values to detect changes
+                this.originalName = this.categoryName.value;
+                this.originalDescription = this.categoryDescription.value;
+
+                this.setupNavigation();
+                this.setupForm();
             }
 
-            // Return to View Category after successful update
-            window.location.href = this.viewCategoryUrl;
+            // Create URL parameters for navigation
+            getNavigationParams() {
 
-        } catch (error) {
+                return new URLSearchParams({
+                    account_id: String(this.accountId),
+                    username: this.username
+                });
+            }
 
-            this.showMessage(
-                error.message || "Unable to update category.",
-                false
-            );
+            // Configure the sidebar and form action
+            setupNavigation() {
 
-        } finally {
+                const params = this.getNavigationParams();
 
-            this.isSubmitting = false;
-            this.saveButton.disabled = false;
+                this.categoriesUrl =
+                    "/platform-manager/categories?" + params.toString();
+
+                this.reportsUrl =
+                    "/platform-manager/reports?" + params.toString();
+
+                this.viewCategoryUrl =
+                    "/platform-manager/categories/" +
+                    this.categoryId +
+                    "?" + params.toString();
+
+                this.updateCategoryUrl =
+                    "/platform-manager/categories/" +
+                    this.categoryId +
+                    "/edit?" + params.toString();
+
+                // Preserve account details for normal form submission
+                this.form.action = this.updateCategoryUrl;
+
+                // Sidebar links
+                document.getElementById("categoryLink").href =
+                    this.categoriesUrl;
+
+                document.getElementById("reportLink").href =
+                    this.reportsUrl;
+
+                // Back to Category
+                document.getElementById("backButton").addEventListener(
+                    "click",
+                    () => {
+                        this.navigateAway(this.viewCategoryUrl);
+                    }
+                );
+
+                // Cancel
+                document.getElementById("cancelButton").addEventListener(
+                    "click",
+                    () => {
+                        this.navigateAway(this.viewCategoryUrl);
+                    }
+                );
+
+                // Confirm unsaved changes before sidebar navigation
+                document.getElementById("categoryLink").addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+                        this.navigateAway(this.categoriesUrl);
+                    }
+                );
+
+                document.getElementById("reportLink").addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+                        this.navigateAway(this.reportsUrl);
+                    }
+                );
+
+                // Direct logout without confirmation
+                document.getElementById("logoutButton").addEventListener(
+                    "click",
+                    () => {
+                        window.location.href = "/";
+                    }
+                );
+            }
+
+            // Detect unsaved changes
+            hasUnsavedChanges() {
+
+                return (
+                    this.categoryName.value !== this.originalName ||
+                    this.categoryDescription.value !== this.originalDescription
+                );
+            }
+
+            // Confirm before leaving an edited form
+            navigateAway(url) {
+
+                if (this.hasUnsavedChanges()) {
+
+                    const discard = confirm(
+                        "Discard unsaved changes?"
+                    );
+
+                    if (!discard) {
+                        return;
+                    }
+                }
+
+                window.location.href = url;
+            }
+
+            // Set up form validation
+            setupForm() {
+
+                this.categoryName.addEventListener(
+                    "input",
+                    () => {
+                        this.clearFieldError(
+                            this.categoryName,
+                            this.nameError
+                        );
+                    }
+                );
+
+                this.categoryDescription.addEventListener(
+                    "input",
+                    () => {
+                        this.clearFieldError(
+                            this.categoryDescription,
+                            this.descriptionError
+                        );
+                    }
+                );
+
+                this.form.addEventListener(
+                    "submit",
+                    event => {
+
+                        event.preventDefault();
+                        this.saveCategory();
+                    }
+                );
+            }
+
+            // Remove validation feedback from a field
+            clearFieldError(input, errorElement) {
+
+                input.classList.remove("invalid");
+
+                errorElement.classList.remove("show");
+                errorElement.textContent = "";
+            }
+
+            // Display a validation error
+            showFieldError(input, errorElement, message) {
+
+                input.classList.add("invalid");
+
+                errorElement.textContent = message;
+                errorElement.classList.add("show");
+            }
+
+            // Validate required fields
+            validateForm() {
+
+                const categoryName = this.categoryName.value.trim();
+
+                const categoryDescription =
+                    this.categoryDescription.value.trim();
+
+                this.clearFieldError(
+                    this.categoryName,
+                    this.nameError
+                );
+
+                this.clearFieldError(
+                    this.categoryDescription,
+                    this.descriptionError
+                );
+
+                let valid = true;
+
+                if (!categoryName) {
+
+                    this.showFieldError(
+                        this.categoryName,
+                        this.nameError,
+                        "Category Name is required."
+                    );
+
+                    valid = false;
+                }
+
+                if (!categoryDescription) {
+
+                    this.showFieldError(
+                        this.categoryDescription,
+                        this.descriptionError,
+                        "Category Description is required."
+                    );
+
+                    valid = false;
+                }
+
+                return valid;
+            }
+
+            // Submit the updated category to the Flask Boundary
+            saveCategory() {
+
+                if (this.submitting) {
+                    return;
+                }
+
+                if (!this.validateForm()) {
+                    return;
+                }
+
+                // Trim the fields before submitting
+                this.categoryName.value =
+                    this.categoryName.value.trim();
+
+                this.categoryDescription.value =
+                    this.categoryDescription.value.trim();
+
+                this.submitting = true;
+
+                this.submitButton.disabled = true;
+                this.submitButton.textContent = "Saving...";
+
+                // Submit normally because the Boundary uses request.form
+                // and redirects after a successful update.
+                this.form.submit();
+            }
         }
-    }
 
-    // Display success or error message
-    showMessage(text, success) {
-
-        this.message.hidden = false;
-        this.message.textContent = text;
-
-        this.message.className =
-            "message " + (success ? "success" : "error");
-    }
-}
-
-// Initialise Update Category page
-new UpdateIDPCategoryPage();
-</script>
+        // Initialise Update IDP Category page
+        new UpdateIDPCategoryPage();
+    </script>
 
 </body>
 </html>

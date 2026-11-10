@@ -7,6 +7,8 @@ What this code does?
 - Sort project names and display five projects per page.
 - Show project category, progress and PIC.
 - Open IDPs and navigate to the Saved List.
+- Match other Renovo listing pages with section headings,
+  sidebar icons, boxed View buttons and five-number pagination.
 - Log out directly without confirmation.
 -->
 <!DOCTYPE html>
@@ -38,11 +40,15 @@ button, input, select { font: inherit; }
 .sidebar { background: white; border-right: 1px solid #e4e9f2; padding: 32px 16px; }
 .sidebar-title { margin: 0 14px 18px; color: #8290a3; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
-.nav-link { padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 9px; color: #52647a; font-size: 14px; text-decoration: none; }
+.nav-link svg { width: 20px; height: 20px; flex-shrink: 0; }
 .nav-link:hover { background: #f0f5f7; }
 .nav-link.active { background: #e6f3f3; color: #1c5062; font-weight: 750; }
 .main-content { padding: 46px 50px; min-width: 0; }
-.page-title { margin: 0 0 28px; color: #14253e; font-size: 32px; }
+.page-label { color: #387c83; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+.page-title { margin: 0 0 10px; color: #14253e; font-size: 32px; font-weight: 750; letter-spacing: -.03em; }
+.page-description { margin: 0; color: #738096; font-size: 14px; line-height: 1.6; }
+.page-header { margin-bottom: 32px; }
 .list-panel { background: white; border: 1px solid #e4e9f2; border-radius: 14px; padding: 28px; }
 
 /* Search and Filters */
@@ -69,8 +75,10 @@ button, input, select { font: inherit; }
 .progress-badge.ongoing { background: #e8f0ff; color: #315b9a; }
 .progress-badge.completed { background: #e6f6f0; color: #186b4d; }
 .actions-cell { text-align: right; }
-.view-button { display: inline-block; padding: 10px 18px; border-radius: 8px; background: #1c5062; color: white; font-size: 12px; font-weight: 700; text-decoration: none; }
-.view-button:hover { background: #256d7f; }
+
+/* Boxed View Button: Same as User Accounts */
+.view-button { display: inline-block; border: 1px solid #cdd7e4; border-radius: 7px; background: white; padding: 8px 16px; color: #1c5062; font-size: 12px; font-weight: 700; text-decoration: none; }
+.view-button:hover { background: #e6f3f3; border-color: #8fc8ce; }
 
 /* Empty State and Pagination */
 .empty-state { padding: 50px 20px; text-align: center; }
@@ -78,10 +86,12 @@ button, input, select { font: inherit; }
 .empty-description { color: #8290a3; font-size: 13px; }
 .pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 20px; margin-top: 8px; border-top: 1px solid #edf0f5; }
 .pagination-info { color: #8290a3; font-size: 12px; }
-.pagination-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-.page-button { min-width: 35px; height: 35px; border: 1px solid #cdd7e4; border-radius: 7px; background: white; color: #52647a; font-size: 12px; cursor: pointer; }
+.pagination-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.page-button { min-width: 35px; height: 35px; padding: 0 10px; border: 1px solid #cdd7e4; border-radius: 7px; background: white; color: #52647a; font-size: 12px; font-weight: 700; cursor: pointer; }
+.page-button:hover:not(:disabled) { background: #e6f3f3; border-color: #8fc8ce; }
 .page-button.active { background: #1c5062; border-color: #1c5062; color: white; }
 .page-button:disabled { opacity: .4; cursor: not-allowed; }
+.page-ellipsis { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 35px; color: #8290a3; font-size: 13px; }
 [hidden] { display: none !important; }
 
 /* Responsive Layout */
@@ -96,7 +106,9 @@ button, input, select { font: inherit; }
     .dashboard-layout { display: block; }
     .sidebar { padding: 12px; border-right: none; border-bottom: 1px solid #e4e9f2; }
     .sidebar-title { display: none; }
-    .sidebar-nav { flex-direction: row; }
+    .sidebar-nav { flex-direction: row; gap: 6px; overflow-x: auto; }
+    .nav-link { white-space: nowrap; font-size: 12px; padding: 11px 13px; }
+    .nav-link svg { width: 17px; height: 17px; }
     .main-content { padding: 28px 18px; }
     .list-panel { padding: 16px; }
     .filter-bar { grid-template-columns: 1fr; }
@@ -128,39 +140,70 @@ button, input, select { font: inherit; }
     <aside class="sidebar">
         <p class="sidebar-title">Browse</p>
         <nav class="sidebar-nav">
-            <a class="nav-link active" id="projectsLink" href="#" aria-current="page">IDPs</a>
-            <a class="nav-link" id="savedListLink" href="#">Saved List</a>
+            <a class="nav-link active" id="projectsLink" href="#" aria-current="page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="16" rx="2"/>
+                    <path d="M3 9h18"/>
+                    <path d="M7 5V3h6l2 2"/>
+                </svg>
+                IDPs
+            </a>
+
+            <a class="nav-link" id="savedListLink" href="#">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 4h14v17l-7-5-7 5V4z"/>
+                </svg>
+                Saved List
+            </a>
         </nav>
     </aside>
 
     <!-- IDPs Page -->
     <main class="main-content">
-        <h1 class="page-title">IDPs</h1>
+
+        <!-- Page Heading -->
+        <div class="page-label">Project Browsing</div>
+        <div class="page-header">
+            <h1 class="page-title">IDPs</h1>
+            <p class="page-description">
+                Explore ongoing and completed interior design projects on Renovo.
+            </p>
+        </div>
 
         <section class="list-panel">
 
             <!-- Search, Progress and Category Filters -->
             <div class="filter-bar">
                 <input class="search-input" id="searchInput" type="search"
-                       placeholder="Search project name" aria-label="Search projects">
+                       placeholder="Search project name"
+                       aria-label="Search projects">
 
-                <select class="filter-select" id="progressFilter" aria-label="Filter by progress">
+                <select class="filter-select" id="progressFilter"
+                        aria-label="Filter by progress">
                     <option value="all">All progress</option>
                     <option value="current">Ongoing</option>
                     <option value="past">Completed</option>
                 </select>
 
-                <select class="filter-select" id="categoryFilter" aria-label="Filter by category">
+                <select class="filter-select" id="categoryFilter"
+                        aria-label="Filter by category">
                     <option value="all">All categories</option>
                     {% for category in categories | default([]) %}
-                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                        <option value="{{ category.category_id }}">
+                            {{ category.category_name }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
             <p class="search-feedback" id="searchFeedback" hidden>
                 <span id="searchMessage"></span>
-                <button class="clear-button" id="clearFiltersButton" type="button">Clear search</button>
+                <button class="clear-button" id="clearFiltersButton"
+                        type="button">Clear search</button>
             </p>
 
             <!-- IDPs Table -->
@@ -170,8 +213,10 @@ button, input, select { font: inherit; }
                         <tr>
                             <th scope="col">ID</th>
                             <th scope="col">
-                                <button class="sort-button" id="sortNameButton" type="button">
-                                    Project Name <span id="sortIndicator">↕</span>
+                                <button class="sort-button" id="sortNameButton"
+                                        type="button">
+                                    Project Name
+                                    <span id="sortIndicator">↕</span>
                                 </button>
                             </th>
                             <th scope="col">Category</th>
@@ -192,7 +237,10 @@ button, input, select { font: inherit; }
                             <td class="id-cell">P{{ project.project_id }}</td>
 
                             <td>
-                                <span class="project-name">{{ project.project_name }}</span>
+                                <span class="project-name">
+                                    {{ project.project_name }}
+                                </span>
+
                                 <span class="project-date">
                                     {% if project.project_type == "past" and project.end_date %}
                                         {{ project.start_date }} to {{ project.end_date }}
@@ -213,13 +261,19 @@ button, input, select { font: inherit; }
 
                             <td>
                                 {% if project.project_type == "current" %}
-                                    <span class="progress-badge ongoing">Ongoing</span>
+                                    <span class="progress-badge ongoing">
+                                        Ongoing
+                                    </span>
                                 {% else %}
-                                    <span class="progress-badge completed">Completed</span>
+                                    <span class="progress-badge completed">
+                                        Completed
+                                    </span>
                                 {% endif %}
                             </td>
 
-                            <td>{{ project.pic_name | default("-", true) }}</td>
+                            <td>
+                                {{ project.pic_name | default("-", true) }}
+                            </td>
 
                             <td class="actions-cell">
                                 <a class="view-button"
@@ -227,6 +281,7 @@ button, input, select { font: inherit; }
                                     View
                                 </a>
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -235,14 +290,19 @@ button, input, select { font: inherit; }
 
             <!-- Empty Results -->
             <div class="empty-state" id="emptyState" hidden>
-                <h2 class="empty-title" id="emptyTitle">No projects found</h2>
+                <h2 class="empty-title" id="emptyTitle">
+                    No projects found
+                </h2>
                 <p class="empty-description" id="emptyDescription"></p>
             </div>
 
             <!-- Pagination -->
             <div class="pagination">
-                <span class="pagination-info" id="paginationInfo">Showing 0 of 0</span>
-                <div class="pagination-buttons" id="paginationButtons"></div>
+                <span class="pagination-info" id="paginationInfo">
+                    Showing 0 of 0
+                </span>
+                <nav class="pagination-buttons" id="paginationButtons"
+                     aria-label="Customer IDP pages"></nav>
             </div>
 
         </section>
@@ -253,16 +313,30 @@ button, input, select { font: inherit; }
 class CustomerSearchProjectPage {
 
     constructor() {
+
+        // Account details from Boundary
         this.accountId = {{ account_id | tojson }};
         this.username = {{ display_username | tojson }};
+
+        // Search and filter controls
         this.searchInput = document.getElementById("searchInput");
         this.progressFilter = document.getElementById("progressFilter");
         this.categoryFilter = document.getElementById("categoryFilter");
+
+        // Project records supplied by Flask
         this.tableBody = document.getElementById("projectTableBody");
-        this.rows = Array.from(document.querySelectorAll(".project-row"));
+        this.rows = Array.from(
+            document.querySelectorAll(".project-row")
+        );
+
         this.filteredRows = [];
+
+        // Standard Renovo pagination
         this.pageSize = 5;
         this.currentPage = 1;
+        this.maxVisiblePages = 5;
+
+        // Original ordering from the server
         this.sortOrder = "newest";
 
         this.setupEvents();
@@ -271,42 +345,81 @@ class CustomerSearchProjectPage {
 
     // Navigation and Filter Events
     setupEvents() {
+
         const params = new URLSearchParams({
             account_id: String(this.accountId),
             username: this.username
         });
 
-        document.getElementById("projectsLink").href = "/customer/projects?" + params;
-        document.getElementById("savedListLink").href = "/customer/saved-projects?" + params;
+        document.getElementById("projectsLink").href =
+            "/customer/projects?" + params.toString();
+
+        document.getElementById("savedListLink").href =
+            "/customer/saved-projects?" + params.toString();
 
         // Logout directly without confirmation
-        document.getElementById("logoutButton").addEventListener("click", () => {
-            window.location.href = "/";
-        });
+        document.getElementById("logoutButton").addEventListener(
+            "click",
+            () => {
+                window.location.href = "/";
+            }
+        );
 
-        this.searchInput.addEventListener("input", () => this.applyFilters());
-        this.progressFilter.addEventListener("change", () => this.applyFilters());
-        this.categoryFilter.addEventListener("change", () => this.applyFilters());
+        // Live search and filtering
+        this.searchInput.addEventListener(
+            "input",
+            () => this.applyFilters()
+        );
 
-        document.getElementById("sortNameButton").addEventListener("click", () => {
-            this.sortOrder = this.sortOrder === "name_asc" ? "name_desc" : "name_asc";
-            document.getElementById("sortIndicator").textContent =
-                this.sortOrder === "name_asc" ? "↑" : "↓";
-            this.applyFilters();
-        });
+        this.progressFilter.addEventListener(
+            "change",
+            () => this.applyFilters()
+        );
 
-        document.getElementById("clearFiltersButton").addEventListener("click", () => {
-            this.searchInput.value = "";
-            this.progressFilter.value = "all";
-            this.categoryFilter.value = "all";
-            this.sortOrder = "newest";
-            document.getElementById("sortIndicator").textContent = "↕";
-            this.applyFilters();
-        });
+        this.categoryFilter.addEventListener(
+            "change",
+            () => this.applyFilters()
+        );
+
+        // Sort projects by name
+        document.getElementById("sortNameButton").addEventListener(
+            "click",
+            () => {
+
+                this.sortOrder =
+                    this.sortOrder === "name_asc"
+                        ? "name_desc"
+                        : "name_asc";
+
+                document.getElementById("sortIndicator").textContent =
+                    this.sortOrder === "name_asc" ? "↑" : "↓";
+
+                this.applyFilters();
+            }
+        );
+
+        // Clear search and filters
+        document.getElementById("clearFiltersButton").addEventListener(
+            "click",
+            () => {
+
+                this.searchInput.value = "";
+                this.progressFilter.value = "all";
+                this.categoryFilter.value = "all";
+
+                this.sortOrder = "newest";
+
+                document.getElementById("sortIndicator").textContent =
+                    "↕";
+
+                this.applyFilters();
+            }
+        );
     }
 
     // Search, Filter and Sort Projects in the Browser
     applyFilters() {
+
         const search = this.searchInput.value.trim().toLowerCase();
         const progress = this.progressFilter.value;
         const category = this.categoryFilter.value;
@@ -317,92 +430,266 @@ class CustomerSearchProjectPage {
             (category === "all" || row.dataset.category === category)
         );
 
+        // Preserve the existing name sorting behaviour
         if (this.sortOrder === "name_asc") {
-            this.filteredRows.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+
+            this.filteredRows.sort((a, b) =>
+                a.dataset.name.localeCompare(b.dataset.name)
+            );
+
         } else if (this.sortOrder === "name_desc") {
-            this.filteredRows.sort((a, b) => b.dataset.name.localeCompare(a.dataset.name));
+
+            this.filteredRows.sort((a, b) =>
+                b.dataset.name.localeCompare(a.dataset.name)
+            );
+
         } else {
-            this.filteredRows.sort((a, b) => Number(a.dataset.index) - Number(b.dataset.index));
+
+            // Default server ordering
+            this.filteredRows.sort((a, b) =>
+                Number(a.dataset.index) - Number(b.dataset.index)
+            );
         }
 
+        // Show feedback when searching or filtering
         const feedback = document.getElementById("searchFeedback");
-        feedback.hidden = !search && progress === "all" && category === "all";
 
-        document.getElementById("searchMessage").textContent = search
-            ? 'Search results for "' + this.searchInput.value.trim() + '".'
-            : "Showing projects matching your selected filters.";
+        feedback.hidden =
+            !search && progress === "all" && category === "all";
 
-        const emptyDescription = document.getElementById("emptyDescription");
+        document.getElementById("searchMessage").textContent =
+            search
+                ? 'Search results for "' +
+                  this.searchInput.value.trim() + '".'
+                : "Showing projects matching your selected filters.";
+
+        // Appropriate empty-state message
+        const emptyDescription =
+            document.getElementById("emptyDescription");
 
         if (this.rows.length === 0) {
-            emptyDescription.textContent = "There are no active projects available.";
-        } else if (search) {
+
             emptyDescription.textContent =
-                'No projects match "' + this.searchInput.value.trim() + '".';
+                "There are no active projects available.";
+
+        } else if (search) {
+
+            emptyDescription.textContent =
+                'No projects match "' +
+                this.searchInput.value.trim() + '".';
+
         } else {
-            emptyDescription.textContent = "No projects match your selected filters.";
+
+            emptyDescription.textContent =
+                "No projects match your selected filters.";
         }
 
+        // Reset to Page 1 after every search, filter or sort
         this.showPage(1);
     }
 
     // Display Five Projects Per Page
     showPage(page) {
+
         const total = this.filteredRows.length;
         const totalPages = Math.ceil(total / this.pageSize);
-        this.currentPage = totalPages ? Math.max(1, Math.min(page, totalPages)) : 1;
 
-        const start = (this.currentPage - 1) * this.pageSize;
-        const visibleRows = this.filteredRows.slice(start, start + this.pageSize);
+        this.currentPage = totalPages
+            ? Math.max(1, Math.min(page, totalPages))
+            : 1;
 
-        this.rows.forEach(row => row.hidden = true);
+        const start =
+            (this.currentPage - 1) * this.pageSize;
 
+        const visibleRows = this.filteredRows.slice(
+            start,
+            start + this.pageSize
+        );
+
+        // Hide all project rows
+        this.rows.forEach(row => {
+            row.hidden = true;
+        });
+
+        // Show only the records for the current page
         visibleRows.forEach(row => {
             row.hidden = false;
             this.tableBody.appendChild(row);
         });
 
-        document.getElementById("emptyState").hidden = total !== 0;
-        document.getElementById("paginationInfo").textContent = total
-            ? `Showing ${start + 1}–${Math.min(start + this.pageSize, total)} of ${total}`
-            : "Showing 0 of 0";
+        document.getElementById("emptyState").hidden =
+            total !== 0;
+
+        // Update displayed record count
+        document.getElementById("paginationInfo").textContent =
+            total
+                ? `Showing ${start + 1}–${Math.min(start + this.pageSize, total)} of ${total}`
+                : "Showing 0 of 0";
 
         this.updatePagination(totalPages);
     }
 
-    // Build Pagination Controls
+    // Build Standard Renovo Pagination
     updatePagination(totalPages) {
-        const container = document.getElementById("paginationButtons");
+
+        const container =
+            document.getElementById("paginationButtons");
+
         container.replaceChildren();
 
-        if (totalPages <= 1) return;
+        // One page requires no navigation buttons
+        if (totalPages <= 1) {
+            return;
+        }
 
-        const addButton = (label, page, disabled = false) => {
+        // Create numbered buttons and arrow buttons
+        const addButton = (
+            label,
+            page,
+            disabled = false,
+            active = false
+        ) => {
+
             const button = document.createElement("button");
+
             button.type = "button";
             button.textContent = label;
             button.className = "page-button";
             button.disabled = disabled;
 
-            if (label === String(page) && page === this.currentPage) {
-                button.classList.add("active");
-                button.setAttribute("aria-current", "page");
+            if (label === "‹") {
+
+                button.setAttribute(
+                    "aria-label",
+                    "Previous page"
+                );
+
+            } else if (label === "›") {
+
+                button.setAttribute(
+                    "aria-label",
+                    "Next page"
+                );
+
+            } else {
+
+                button.setAttribute(
+                    "aria-label",
+                    `Page ${page}`
+                );
             }
 
-            button.addEventListener("click", () => this.showPage(page));
+            // Highlight the current page
+            if (active) {
+
+                button.classList.add("active");
+
+                button.setAttribute(
+                    "aria-current",
+                    "page"
+                );
+            }
+
+            button.addEventListener("click", () => {
+
+                if (!disabled && page !== this.currentPage) {
+                    this.showPage(page);
+                }
+            });
+
             container.appendChild(button);
         };
 
-        addButton("‹", this.currentPage - 1, this.currentPage === 1);
+        // Display ellipsis for skipped pages
+        const addEllipsis = () => {
 
-        for (let page = 1; page <= totalPages; page++) {
-            addButton(String(page), page);
+            const ellipsis = document.createElement("span");
+
+            ellipsis.className = "page-ellipsis";
+            ellipsis.textContent = "…";
+
+            ellipsis.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            container.appendChild(ellipsis);
+        };
+
+        // Previous page arrow
+        addButton(
+            "‹",
+            this.currentPage - 1,
+            this.currentPage === 1
+        );
+
+        // Calculate five consecutive page numbers
+        const visibleCount = Math.min(
+            this.maxVisiblePages,
+            totalPages
+        );
+
+        const startPage = Math.max(
+            1,
+            Math.min(
+                this.currentPage -
+                Math.floor(visibleCount / 2),
+
+                totalPages - visibleCount + 1
+            )
+        );
+
+        const endPage =
+            startPage + visibleCount - 1;
+
+        // First page shortcut
+        if (startPage > 1) {
+
+            addButton("1", 1);
+
+            if (startPage > 2) {
+                addEllipsis();
+            }
         }
 
-        addButton("›", this.currentPage + 1, this.currentPage === totalPages);
+        // Display five consecutive numbered pages
+        for (
+            let page = startPage;
+            page <= endPage;
+            page++
+        ) {
+
+            addButton(
+                String(page),
+                page,
+                false,
+                page === this.currentPage
+            );
+        }
+
+        // Last page shortcut
+        if (endPage < totalPages) {
+
+            if (endPage < totalPages - 1) {
+                addEllipsis();
+            }
+
+            addButton(
+                String(totalPages),
+                totalPages
+            );
+        }
+
+        // Next page arrow
+        addButton(
+            "›",
+            this.currentPage + 1,
+            this.currentPage === totalPages
+        );
     }
 }
 
+// Initialise Customer IDPs page
 new CustomerSearchProjectPage();
 </script>
 </body>
