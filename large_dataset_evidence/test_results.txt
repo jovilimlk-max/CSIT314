@@ -1,0 +1,32 @@
+RENOVO LARGE DATASET TEST
+Isolated database copies
+Output folder: /Users/zeliang/Documents/University/CSIT 314 Software Development Methodologies/CSIT314/large_dataset_evidence
+
+DATABASE COUNTS
+User profiles: 106 total records
+User accounts: 218 total records
+Company information: 105 total records
+IDP categories: 103 total records
+Projects: 108 total records
+Project views: 105 total records
+Saved projects: 104 total records
+Reports: 107 total records
+
+DATABASE QUERY CHECKS
+(Single-run timings, not performance benchmarks)
+PASS | Profile search | found 100, expected 100 | 0.018 ms
+PASS | Account search | found 100, expected 100 | 0.022 ms
+PASS | Account status filter | found 10, expected 10 | 0.035 ms
+PASS | Company search | found 100, expected 100 | 0.017 ms
+PASS | Project search | found 100, expected 100 | 0.015 ms
+PASS | Current project filter | found 50, expected 50 | 0.019 ms
+PASS | Past project filter | found 50, expected 50 | 0.018 ms
+PASS | Category search | found 100, expected 100 | 0.013 ms
+PASS | Saved project search | found 100, expected 100 | 0.023 ms
+PASS | View count retrieval | found 100, expected 100 | 0.020 ms
+PASS | Report listing | found 100, expected 100 | 0.010 ms
+PASS | Account pagination (5 rows) | found 5, expected 5 | 0.037 ms
+
+RESULT: 12/12 checks passed.
+Scope: SQLite database checks, not Flask UI tests.
+All synthetic records were written to database copies.
